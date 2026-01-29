@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Zap, Shield, Database, TrendingUp } from 'lucide-react';
+import { Sparkles, Zap, Shield, Database, TrendingUp } from 'lucide-react';
 import ModelSearchAutocomplete from '../components/common/ModelSearchAutocomplete';
 import FilterPanel from '../components/common/FilterPanel';
 import { getTrendingModels } from '../services/huggingface';
 import { applyFilters } from '../utils/filterUtils';
 
-const HomePage = ({ onSearch, loading }) => {
+const HomePage = ({ onSearch, loading, onViewRecommender }) => {
   const [filters, setFilters] = useState({});
   const [popularModels, setPopularModels] = useState([]);
   const [modelsLoading, setModelsLoading] = useState(true);
@@ -133,10 +133,28 @@ const HomePage = ({ onSearch, loading }) => {
             <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
               Instantly understand any HuggingFace model's parameters, requirements, and deployment implications
             </p>
+
+            {/* NEW: Recommender CTA */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+              <button
+                onClick={onViewRecommender}
+                className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl font-bold text-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+              >
+                <Sparkles className="w-6 h-6" />
+                Find My Perfect Model
+              </button>
+              
+              <button
+                onClick={() => document.getElementById('search').scrollIntoView({ behavior: 'smooth' })}
+                className="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold text-lg hover:bg-white/20 transition-all"
+              >
+                Search Manually
+              </button>
+            </div>
           </div>
 
           {/* Search Bar */}
-          <div className="max-w-4xl mx-auto mb-8">
+          <div id="search" className="max-w-4xl mx-auto mb-8">
             <ModelSearchAutocomplete onSearch={onSearch} loading={loading} />
           </div>
 
@@ -212,9 +230,9 @@ const HomePage = ({ onSearch, loading }) => {
                                  ~{model.vramEstimates.totalParams}B Params
                                </span>
                                {model.config.max_position_embeddings > 4096 && (
-                                <span className="text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded border border-green-500/20">
-                                  {formatNumber(model.config.max_position_embeddings)} ctx
-                                </span>
+                                 <span className="text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded border border-green-500/20">
+                                   {formatNumber(model.config.max_position_embeddings)} ctx
+                                 </span>
                                )}
                             </div>
 

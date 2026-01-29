@@ -1,24 +1,34 @@
 import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react'; // Added missing import
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import HomePage from './pages/HomePage';
 import ModelDetailPage from './pages/ModelDetailPage';
 import ComparisonPage from './pages/ComparisonPage';
+import RecommenderPage from './pages/RecommenderPage';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorDisplay from './components/common/ErrorDisplay';
 import ComparisonBar from './components/comparison/ComparisonBar';
+import FavoritesPanel from './components/favorites/FavoritesPanel';
 import SEO from './components/common/SEO';
 import { useModelData } from './hooks/useModelData';
-import { useFavorites } from './hooks/useFavorites';
-import FavoritesPanel from './components/favorites/FavoritesPanel';
 import { useComparison } from './hooks/useComparison';
+import { useFavorites } from './hooks/useFavorites';
+import { useModelDatabase } from './hooks/useModelDatabase';
 
 function App() {
   const [searchQuery, setSearchQuery] = useState(null);
-  const [viewMode, setViewMode] = useState('home'); // 'home' | 'detail' | 'compare' | 'favorites'
+  const [viewMode, setViewMode] = useState('home');
   
   const { data: modelData, loading, error } = useModelData(searchQuery);
+  
+  // Destructured progress from useModelDatabase
+  const { 
+    models: modelDatabase, 
+    loading: dbLoading, 
+    progress: dbProgress 
+  } = useModelDatabase();
+  
   const {
     comparisonList,
     addToComparison,
@@ -78,6 +88,12 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleViewRecommender = () => {
+    setViewMode('recommender');
+    setSearchQuery(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
       {/* Dynamic SEO */}
@@ -86,7 +102,13 @@ function App() {
       {viewMode === 'compare' && (
         <SEO 
           title={`Compare ${comparisonList.length} Models | HF Model Explorer`}
-          description={`Side-by-side comparison of ${comparisonList.join(', ')} - VRAM, licenses, parameters, and more.`}
+          description={`Side-by-side comparison of ${comparisonList.join(', ')}`}
+        />
+      )}
+      {viewMode === 'recommender' && (
+        <SEO 
+          title="Smart Model Recommender | HF Model Explorer"
+          description="Find the perfect LLM for your use case in 3 easy steps"
         />
       )}
 
@@ -98,7 +120,11 @@ function App() {
       <main className="min-h-screen pb-24">
         {/* HOME PAGE */}
         {viewMode === 'home' && (
-          <HomePage onSearch={handleSearch} loading={loading} />
+          <HomePage 
+            onSearch={handleSearch} 
+            loading={loading}
+            onViewRecommender={handleViewRecommender}
+          />
         )}
 
         {/* MODEL DETAIL PAGE */}
@@ -150,9 +176,20 @@ function App() {
             />
           </div>
         )}
+
+        {/* RECOMMENDER PAGE - Updated with progress prop */}
+        {viewMode === 'recommender' && (
+          <RecommenderPage
+            onBack={() => setViewMode('home')}
+            onSelectModel={handleSearch}
+            allModels={modelDatabase}
+            loading={dbLoading}
+            progress={dbProgress}
+          />
+        )}
       </main>
 
-      {/* Comparison Bar (Sticky Bottom) */}
+      {/* Comparison Bar */}
       {viewMode !== 'compare' && (
         <ComparisonBar
           comparisonList={comparisonList}
