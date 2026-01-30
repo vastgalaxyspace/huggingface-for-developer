@@ -1,10 +1,14 @@
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, BarChart3, Table } from 'lucide-react';
 import { useModelData } from '../hooks/useModelData';
 import ComparisonTable from '../components/comparison/ComparisonTable';
+import VisualComparison from '../components/charts/VisualComparison';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import ErrorDisplay from '../components/common/ErrorDisplay';
 
 const ComparisonPage = ({ modelIds, onBack }) => {
+  const [viewMode, setViewMode] = useState('visual'); // 'visual' | 'table'
+  
   // Fetch data for all models
   const model1 = useModelData(modelIds[0]);
   const model2 = useModelData(modelIds[1]);
@@ -32,12 +36,45 @@ const ComparisonPage = ({ modelIds, onBack }) => {
             <span>Back to Search</span>
           </button>
 
-          <h1 className="text-4xl font-bold text-white mb-2">
-            Model Comparison
-          </h1>
-          <p className="text-gray-400">
-            Comparing {modelIds.length} models side-by-side
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold text-white mb-2">
+                Model Comparison
+              </h1>
+              <p className="text-gray-400">
+                Comparing {modelIds.length} models side-by-side
+              </p>
+            </div>
+
+            {/* View Toggle */}
+            {allLoaded && !hasError && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setViewMode('visual')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                    viewMode === 'visual'
+                      ? 'bg-purple-500/30 border-purple-500/50 text-white'
+                      : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                  }`}
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  <span className="font-semibold">Visual</span>
+                </button>
+                
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                    viewMode === 'table'
+                      ? 'bg-purple-500/30 border-purple-500/50 text-white'
+                      : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                  }`}
+                >
+                  <Table className="w-4 h-4" />
+                  <span className="font-semibold">Table</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Loading State */}
@@ -46,7 +83,7 @@ const ComparisonPage = ({ modelIds, onBack }) => {
             {modelIds.map((id, idx) => (
               <div key={id} className="bg-white/5 border border-white/10 rounded-xl p-6">
                 <div className="flex items-center gap-3">
-                  <Loader2 className="w-5 h-5 text-purple-400 animate-spin" />
+                  <div className="w-5 h-5 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
                   <span className="text-gray-300">
                     Loading {id}...
                   </span>
@@ -65,8 +102,21 @@ const ComparisonPage = ({ modelIds, onBack }) => {
           </div>
         )}
 
-        {/* Comparison Table */}
-        {allLoaded && !hasError && loadedModels.length >= 2 && (
+        {/* Visual Comparison */}
+        {allLoaded && !hasError && loadedModels.length >= 2 && viewMode === 'visual' && (
+          <div>
+            <VisualComparison 
+              models={loadedModels}
+              onSelectModel={(modelId) => {
+                console.log('Navigate to:', modelId);
+                // Could add navigation here
+              }}
+            />
+          </div>
+        )}
+
+        {/* Table Comparison */}
+        {allLoaded && !hasError && loadedModels.length >= 2 && viewMode === 'table' && (
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden">
             <ComparisonTable models={loadedModels} />
           </div>
@@ -84,17 +134,26 @@ const ComparisonPage = ({ modelIds, onBack }) => {
                 <div className="text-white font-semibold">
                   {getBestForProduction(loadedModels)}
                 </div>
+                <div className="text-xs text-gray-400 mt-1">
+                  Commercial license + high adoption
+                </div>
               </div>
               <div className="bg-black/20 rounded-lg p-4">
                 <div className="text-gray-400 mb-2">Most Efficient</div>
                 <div className="text-white font-semibold">
                   {getMostEfficient(loadedModels)}
                 </div>
+                <div className="text-xs text-gray-400 mt-1">
+                  Best quality per GB VRAM
+                </div>
               </div>
               <div className="bg-black/20 rounded-lg p-4">
                 <div className="text-gray-400 mb-2">Longest Context</div>
                 <div className="text-white font-semibold">
                   {getLongestContext(loadedModels)}
+                </div>
+                <div className="text-xs text-gray-400 mt-1">
+                  Maximum context window
                 </div>
               </div>
             </div>
@@ -109,14 +168,17 @@ const ComparisonPage = ({ modelIds, onBack }) => {
 const getBestForProduction = (models) => {
   const commercial = models.filter(m => m.licenseInfo?.commercial === true);
   if (commercial.length === 0) return 'None (check licenses)';
-  return commercial[0].modelId.split('/')[1];
+  
+  // Sort by downloads
+  const sorted = commercial.sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
+  return sorted[0].modelId.split('/')[1];
 };
 
 const getMostEfficient = (models) => {
   const sorted = [...models].sort((a, b) => {
-    const vramA = parseFloat(a.vramEstimates?.int8 || 999);
-    const vramB = parseFloat(b.vramEstimates?.int8 || 999);
-    return vramA - vramB;
+    const effA = parseFloat(a.vramEstimates?.totalParams || 0) / parseFloat(a.vramEstimates?.fp16 || 1);
+    const effB = parseFloat(b.vramEstimates?.totalParams || 0) / parseFloat(b.vramEstimates?.fp16 || 1);
+    return effB - effA;
   });
   return sorted[0].modelId.split('/')[1];
 };

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { getFilterPresets } from '../../utils/filterUtils';
 
-const FilterPanel = ({ onFilterChange, activeFilters = {} }) => {
+const FilterPanel = ({ onFilterChange, activeFilters = {}, activeTemplate = null }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState(activeFilters);
   const presets = getFilterPresets();
@@ -36,6 +36,13 @@ const FilterPanel = ({ onFilterChange, activeFilters = {} }) => {
         <div className="flex items-center gap-3">
           <Filter className="w-5 h-5 text-purple-400" />
           <span className="font-semibold text-white">Filters & Sorting</span>
+          
+          {activeTemplate && (
+            <span className="px-3 py-1 bg-purple-500/20 text-purple-400 text-xs rounded-lg border border-purple-500/30">
+              Template: {activeTemplate}
+            </span>
+          )}
+
           {hasActiveFilters && (
             <span className="px-2 py-1 bg-purple-500/20 text-purple-400 text-xs rounded-lg">
               {Object.keys(filters).length} active
@@ -203,7 +210,7 @@ const FilterPanel = ({ onFilterChange, activeFilters = {} }) => {
             </div>
           </div>
 
-          {/* Sort By */}
+          {/* Sort By - Commented out as in original */}
           {/* <div>
             <label className="block text-sm font-semibold text-white mb-2">
               Sort By
@@ -214,14 +221,14 @@ const FilterPanel = ({ onFilterChange, activeFilters = {} }) => {
               className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="" className="text-gray-900">Default</option>
-              {/* <option value="downloads" className="text-gray-900">Most Downloads</option>
+              <option value="downloads" className="text-gray-900">Most Downloads</option>
               <option value="likes" className="text-gray-900">Most Likes</option>
               <option value="name" className="text-gray-900">Name (A-Z)</option>
               <option value="vram_low" className="text-gray-900">Lowest VRAM</option>
               <option value="vram_high" className="text-gray-900">Highest VRAM</option>
-              <option value="context" className="text-gray-900">Longest Context</option> */}
-            {/* </select>
-          </div> */} 
+              <option value="context" className="text-gray-900">Longest Context</option>
+            </select>
+          </div> */}
 
           {/* Clear Filters */}
           {hasActiveFilters && (

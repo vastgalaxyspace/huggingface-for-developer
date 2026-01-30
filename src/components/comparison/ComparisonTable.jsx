@@ -1,8 +1,15 @@
 import { CheckCircle, XCircle, AlertCircle, TrendingUp, TrendingDown } from 'lucide-react';
+import ScoreBadge from '../scoring/ScoreBadge';
 
 const ComparisonTable = ({ models }) => {
   // Key parameters to compare
   const comparisonFields = [
+    {
+    key: 'deployment_score',
+    label: 'Deployment Score',
+    getValue: (model) => <ScoreBadge modelData={model} size="medium" />,
+    compare: 'higher_better'
+  },
     { 
       key: 'license', 
       label: 'License',

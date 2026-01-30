@@ -4,11 +4,23 @@ import ModelSearchAutocomplete from '../components/common/ModelSearchAutocomplet
 import FilterPanel from '../components/common/FilterPanel';
 import { getTrendingModels } from '../services/huggingface';
 import { applyFilters } from '../utils/filterUtils';
+import UseCaseTemplates from '../components/recommender/UseCaseTemplates';
+import { applyTemplate } from '../utils/useCaseTemplates';
 
-const HomePage = ({ onSearch, loading, onViewRecommender }) => {
+const HomePage = ({ onSearch, loading, onViewRecommender, onApplyTemplate }) => {
   const [filters, setFilters] = useState({});
+  const [activeTemplate, setActiveTemplate] = useState(null);
   const [popularModels, setPopularModels] = useState([]);
   const [modelsLoading, setModelsLoading] = useState(true);
+
+  // Handler for applying a template
+  const handleApplyTemplate = (template) => {
+    setActiveTemplate(template.id);
+    setFilters(template.filters);
+    if (onApplyTemplate) {
+      onApplyTemplate(template);
+    }
+  };
 
   // Helper: Estimate data from the raw API response so filters can work
   const enrichModelData = (model) => {
@@ -134,7 +146,7 @@ const HomePage = ({ onSearch, loading, onViewRecommender }) => {
               Instantly understand any HuggingFace model's parameters, requirements, and deployment implications
             </p>
 
-            {/* NEW: Recommender CTA */}
+            {/* Recommender CTA */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <button
                 onClick={onViewRecommender}
@@ -163,6 +175,14 @@ const HomePage = ({ onSearch, loading, onViewRecommender }) => {
             <FilterPanel 
               onFilterChange={setFilters}
               activeFilters={filters}
+            />
+          </div>
+
+          {/* USE-CASE TEMPLATES - NEW SECTION */}
+          <div className="max-w-7xl mx-auto mb-16">
+            <UseCaseTemplates 
+              onApplyTemplate={handleApplyTemplate}
+              activeTemplateId={activeTemplate}
             />
           </div>
 

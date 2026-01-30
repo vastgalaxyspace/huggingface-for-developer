@@ -1,7 +1,12 @@
 import { Star, Download, Calendar, ExternalLink } from 'lucide-react';
+import { Shield } from 'lucide-react';
+import { calculateDeploymentScore } from '../../utils/scoringEngine';
 
 const ModelHeader = ({ modelData }) => {
   const { modelId, author, lastModified, downloads, likes } = modelData;
+
+  const scoreData = calculateDeploymentScore(modelData);
+  const { total, rating } = scoreData;
 
   const formatNumber = (num) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -35,6 +40,15 @@ const ModelHeader = ({ modelData }) => {
             >
               <ExternalLink className="w-5 h-5" />
             </a>
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-lg border ${
+              rating.color === 'green' ? 'bg-green-500/20 border-green-500/50 text-green-400' :
+              rating.color === 'yellow' ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400' :
+              rating.color === 'orange' ? 'bg-orange-500/20 border-orange-500/50 text-orange-400' :
+              'bg-red-500/20 border-red-500/50 text-red-400'
+            }`}>
+              <Shield className="w-4 h-4" />
+              <span className="text-sm font-bold">{total}/100</span>
+            </div>
           </div>
           
           <div className="flex items-center gap-4 text-sm text-gray-300">

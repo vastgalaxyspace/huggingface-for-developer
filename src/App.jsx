@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react'; // Added missing import
+import { useState, useEffect } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import HomePage from './pages/HomePage';
@@ -19,6 +19,7 @@ import { useModelDatabase } from './hooks/useModelDatabase';
 function App() {
   const [searchQuery, setSearchQuery] = useState(null);
   const [viewMode, setViewMode] = useState('home');
+  const [activeTemplate, setActiveTemplate] = useState(null);
   
   const { data: modelData, loading, error } = useModelData(searchQuery);
   
@@ -54,6 +55,18 @@ function App() {
     setViewMode('detail');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Listen for search events from alternatives (e.g. Visual Charts)
+  useEffect(() => {
+    const handleSearchEvent = (event) => {
+      handleSearch(event.detail);
+    };
+
+    window.addEventListener('searchModel', handleSearchEvent);
+    return () => {
+      window.removeEventListener('searchModel', handleSearchEvent);
+    };
+  }, []);
 
   const handleBack = () => {
     setSearchQuery(null);
@@ -94,6 +107,12 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleApplyTemplate = (template) => {
+    setActiveTemplate(template.id);
+    // Template filters will be applied through FilterPanel
+    console.log('Applied template:', template.name);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
       {/* Dynamic SEO */}
@@ -124,13 +143,15 @@ function App() {
             onSearch={handleSearch} 
             loading={loading}
             onViewRecommender={handleViewRecommender}
+            onApplyTemplate={handleApplyTemplate}
+            activeTemplate={activeTemplate}
           />
         )}
 
         {/* MODEL DETAIL PAGE */}
         {viewMode === 'detail' && (
           <>
-            {loading && <LoadingSpinner />}
+           {(loading || (!modelData && !error)) && <LoadingSpinner />}
             {!loading && error && <ErrorDisplay error={error} onRetry={handleRetry} />}
             {!loading && !error && modelData && (
               <ModelDetailPage 
@@ -142,6 +163,7 @@ function App() {
                 canAddMore={canAddMore}
                 onToggleFavorite={toggleFavorite}
                 isFavorite={isFavorite(searchQuery)}
+                allModels={modelDatabase} // Passing allModels for radar chart comparisons
               />
             )}
           </>
