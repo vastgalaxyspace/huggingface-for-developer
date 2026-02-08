@@ -28,6 +28,10 @@ export const fetchModelMetadata = async (modelId) => {
       if (response.status === 404) {
         throw new Error('Model not found. Check the model ID and try again.');
       }
+      // Specific check for gated models at the metadata level
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('This is a gated model. You must have access permissions on Hugging Face to view its details.');
+      }
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
     
@@ -43,12 +47,19 @@ export const fetchModelMetadata = async (modelId) => {
  */
 export const fetchModelConfig = async (modelId) => {
   try {
+    // Try primary raw path
     const response = await fetch(
       `${HF_API_BASE}/${modelId}/raw/main/config.json`,
       { headers: getHeaders() }
     );
     
     if (!response.ok) {
+      // If unauthorized, it's likely a gated model or requires a token
+      if (response.status === 401 || response.status === 403) {
+        console.warn(`Access restricted for ${modelId} config. It may be a gated model.`);
+        return null;
+      }
+
       // Try alternative path (resolve)
       const altResponse = await fetch(
         `${HF_API_BASE}/${modelId}/resolve/main/config.json`,
@@ -56,7 +67,7 @@ export const fetchModelConfig = async (modelId) => {
       );
       
       if (!altResponse.ok) {
-        throw new Error('config.json not found');
+        return null; // Return null gracefully instead of throwing to prevent app crash
       }
       
       return await altResponse.json();
@@ -113,16 +124,19 @@ export const fetchCompleteModelData = async (modelId) => {
       throw new Error('Invalid model ID format. Use: author/model-name');
     }
     
-    const [metadata, config, readme, tokenizerConfig] = await Promise.all([
-      fetchModelMetadata(modelId),
-      fetchModelConfig(modelId),
-      fetchModelReadme(modelId),
-      fetchTokenizerConfig(modelId)
-    ]);
+    // Metadata is fetched first to check existence and gated status
+    const metadata = await fetchModelMetadata(modelId);
     
     if (!metadata) {
       throw new Error('Could not fetch model metadata');
     }
+
+    // Parallel fetch for remaining assets
+    const [config, readme, tokenizerConfig] = await Promise.all([
+      fetchModelConfig(modelId),
+      fetchModelReadme(modelId),
+      fetchTokenizerConfig(modelId)
+    ]);
     
     return {
       metadata,
@@ -143,7 +157,6 @@ export const fetchCompleteModelData = async (modelId) => {
  */
 export const searchModels = async (query, limit = 5) => {
   try {
-    // We sort by downloads to show the most popular relevant models first
     const response = await fetch(
       `${HF_API_MODELS}?search=${encodeURIComponent(query)}&limit=${limit}&sort=downloads&direction=-1`
     );
@@ -182,6 +195,15 @@ export const handleAPIError = (error) => {
       title: 'Model Not Found',
       message: 'The model ID you entered does not exist on HuggingFace.',
       suggestion: 'Check the spelling or try searching for similar models.'
+    };
+  }
+
+  if (error.message.includes('gated') || error.message.includes('permissions')) {
+    return {
+      type: 'validation',
+      title: 'Gated Model',
+      message: 'This model is gated and requires approved access from the author.',
+      suggestion: 'Visit the model page on Hugging Face to request access or use an open-access model.'
     };
   }
   

@@ -5,7 +5,6 @@ import FilterPanel from '../components/common/FilterPanel';
 import { getTrendingModels } from '../services/huggingface';
 import { applyFilters } from '../utils/filterUtils';
 import UseCaseTemplates from '../components/recommender/UseCaseTemplates';
-import { applyTemplate } from '../utils/useCaseTemplates';
 
 const HomePage = ({ onSearch, loading, onViewRecommender, onApplyTemplate }) => {
   const [filters, setFilters] = useState({});
@@ -29,6 +28,7 @@ const HomePage = ({ onSearch, loading, onViewRecommender, onApplyTemplate }) => 
     const params = paramMatch ? parseInt(paramMatch[1]) : 7; // Default to 7B if unknown
 
     // 2. Estimate VRAM (rough rule of thumb: params * 2 for FP16)
+    // Updated to ensure these are stored as Numbers for compatibility with updated vramCalculator
     const estimatedVRAM = params * 2;
 
     // 3. Check License from tags
@@ -50,8 +50,8 @@ const HomePage = ({ onSearch, loading, onViewRecommender, onApplyTemplate }) => 
       
       // Properties expected by filterUtils.js
       vramEstimates: {
-        fp16: estimatedVRAM,
-        totalParams: params
+        fp16: Number(estimatedVRAM),
+        totalParams: Number(params)
       },
       licenseInfo: {
         commercial: isCommercial
@@ -96,9 +96,10 @@ const HomePage = ({ onSearch, loading, onViewRecommender, onApplyTemplate }) => 
   // Helper to format large numbers
   const formatNumber = (num) => {
     if (!num) return '0';
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
+    const n = typeof num === 'string' ? parseFloat(num) : num;
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+    return n.toString();
   };
 
   const features = [

@@ -9,7 +9,7 @@
 export const parseModelMetadata = (apiResponse) => {
   return {
     modelId: apiResponse.modelId || apiResponse.id || 'unknown',
-    author: apiResponse.author || extractAuthor(apiResponse.modelId),
+    author: apiResponse.author || extractAuthor(apiResponse.modelId || apiResponse.id),
     lastModified: apiResponse.lastModified || apiResponse.last_modified || null,
     downloads: apiResponse.downloads || 0,
     likes: apiResponse.likes || 0,
@@ -27,7 +27,7 @@ export const parseModelMetadata = (apiResponse) => {
  * @returns {string} Author name
  */
 const extractAuthor = (modelId) => {
-  if (!modelId) return 'unknown';
+  if (!modelId || typeof modelId !== 'string') return 'unknown';
   const parts = modelId.split('/');
   return parts.length > 1 ? parts[0] : 'unknown';
 };
@@ -45,17 +45,17 @@ export const parseModelConfig = (config) => {
     model_type: config.model_type || config.architectures?.[0] || 'unknown',
     architectures: config.architectures || [],
     
-    // Dimensions
-    hidden_size: config.hidden_size || config.d_model || null,
-    num_hidden_layers: config.num_hidden_layers || config.n_layer || config.num_layers || null,
-    num_attention_heads: config.num_attention_heads || config.n_head || null,
-    num_key_value_heads: config.num_key_value_heads || config.num_attention_heads || null,
+    // Dimensions - Default to standard values if missing to prevent UI NaN errors
+    hidden_size: config.hidden_size || config.d_model || 4096,
+    num_hidden_layers: config.num_hidden_layers || config.n_layer || config.num_layers || 32,
+    num_attention_heads: config.num_attention_heads || config.n_head || 32,
+    num_key_value_heads: config.num_key_value_heads || config.num_attention_heads || 32,
     
-    // Context
-    max_position_embeddings: config.max_position_embeddings || config.n_positions || config.max_sequence_length || null,
+    // Context - Many models don't define this explicitly; default to 2048 or 4096
+    max_position_embeddings: config.max_position_embeddings || config.n_positions || config.max_sequence_length || 4096,
     
     // Vocabulary
-    vocab_size: config.vocab_size || null,
+    vocab_size: config.vocab_size || 32000,
     
     // Advanced features
     rope_theta: config.rope_theta || config.rotary_emb_base || 10000,
@@ -200,6 +200,6 @@ export const parseCompleteModel = (apiData) => {
     ...parseModelMetadata(metadata),
     config: parseModelConfig(config),
     card: parseModelCard(readme),
-    quantization: detectQuantization(config, metadata?.modelId)
+    quantization: detectQuantization(config, metadata?.modelId || metadata?.id)
   };
 };

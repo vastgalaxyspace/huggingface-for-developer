@@ -75,6 +75,7 @@ function App() {
 
   const handleRetry = () => {
     if (searchQuery) {
+      // Clear and re-set to trigger refetch in useModelData
       setSearchQuery(null);
       setTimeout(() => {
         setSearchQuery(searchQuery);
@@ -150,9 +151,25 @@ function App() {
 
         {/* MODEL DETAIL PAGE */}
         {viewMode === 'detail' && (
-          <>
-           {(loading || (!modelData && !error)) && <LoadingSpinner />}
-            {!loading && error && <ErrorDisplay error={error} onRetry={handleRetry} />}
+          <div className="max-w-7xl mx-auto px-6 py-8">
+            {/* Improved loading and error container */}
+            <div className="mb-6">
+              {(loading || (!modelData && !error)) && <LoadingSpinner />}
+              
+              {!loading && error && (
+                <div className="flex flex-col gap-6">
+                  <button
+                    onClick={handleBack}
+                    className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors group self-start"
+                  >
+                    <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+                    <span>Back to Search</span>
+                  </button>
+                  <ErrorDisplay error={error} onRetry={handleRetry} />
+                </div>
+              )}
+            </div>
+
             {!loading && !error && modelData && (
               <ModelDetailPage 
                 modelData={modelData} 
@@ -163,10 +180,10 @@ function App() {
                 canAddMore={canAddMore}
                 onToggleFavorite={toggleFavorite}
                 isFavorite={isFavorite(searchQuery)}
-                allModels={modelDatabase} // Passing allModels for radar chart comparisons
+                allModels={modelDatabase} 
               />
             )}
-          </>
+          </div>
         )}
 
         {/* COMPARISON PAGE */}
@@ -199,7 +216,7 @@ function App() {
           </div>
         )}
 
-        {/* RECOMMENDER PAGE - Updated with progress prop */}
+        {/* RECOMMENDER PAGE */}
         {viewMode === 'recommender' && (
           <RecommenderPage
             onBack={() => setViewMode('home')}

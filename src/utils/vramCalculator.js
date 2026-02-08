@@ -4,14 +4,13 @@
 /**
  * Calculate VRAM requirements for a model
  * @param {object} config - Model configuration
- * @returns {object} VRAM estimates in GB for different precisions
+ * @returns {object} VRAM estimates in GB for different precisions (as Numbers)
  */
 export const calculateVRAM = (config) => {
   // Extract key parameters
   const hiddenSize = config.hidden_size || 4096;
   const numLayers = config.num_hidden_layers || 32;
   const vocabSize = config.vocab_size || 32000;
-  const numHeads = config.num_attention_heads || 32;
   
   // Estimate total parameters (billions)
   // Formula: approximate params = (hidden_size^2 * num_layers * 12) + (vocab_size * hidden_size)
@@ -24,12 +23,13 @@ export const calculateVRAM = (config) => {
   // Add 20% overhead for activations and KV cache
   const overhead = 1.2;
   
+  // UPDATED: Returning raw numbers to prevent logic errors in other components
   const vramEstimates = {
-    fp32: (totalParams * 4 * overhead).toFixed(1),
-    fp16: (totalParams * 2 * overhead).toFixed(1),
-    int8: (totalParams * 1 * overhead).toFixed(1),
-    int4: (totalParams * 0.5 * overhead).toFixed(1),
-    totalParams: totalParams.toFixed(1)
+    fp32: Number((totalParams * 4 * overhead).toFixed(1)),
+    fp16: Number((totalParams * 2 * overhead).toFixed(1)),
+    int8: Number((totalParams * 1 * overhead).toFixed(1)),
+    int4: Number((totalParams * 0.5 * overhead).toFixed(1)),
+    totalParams: Number(totalParams.toFixed(1))
   };
   
   return vramEstimates;
@@ -37,7 +37,7 @@ export const calculateVRAM = (config) => {
 
 /**
  * Get recommended GPU for a model
- * @param {number} vramGB - VRAM requirement in GB
+ * @param {number|string} vramGB - VRAM requirement in GB
  * @returns {object} GPU recommendation
  */
 export const getGPURecommendation = (vramGB) => {
@@ -90,20 +90,19 @@ export const getGPURecommendation = (vramGB) => {
 
 /**
  * Calculate context length impact on VRAM
- * @param {number} baseVRAM - Base VRAM in GB
+ * @param {number|string} baseVRAM - Base VRAM in GB
  * @param {number} contextLength - Context window size
  * @param {number} batchSize - Batch size
  * @returns {object} Adjusted VRAM estimates
  */
 export const calculateContextVRAM = (baseVRAM, contextLength, batchSize = 1) => {
-  // KV cache scales linearly with context length
-  // Approximate: 2 bytes per token per layer for FP16
   const kvCacheOverhead = (contextLength * batchSize * 0.002); // GB
+  const parsedBase = parseFloat(baseVRAM);
   
   return {
-    baseVRAM: parseFloat(baseVRAM),
-    kvCache: kvCacheOverhead.toFixed(1),
-    total: (parseFloat(baseVRAM) + kvCacheOverhead).toFixed(1),
+    baseVRAM: parsedBase,
+    kvCache: Number(kvCacheOverhead.toFixed(1)),
+    total: Number((parsedBase + kvCacheOverhead).toFixed(1)),
     warning: contextLength > 8192 ? "High context increases memory significantly" : null
   };
 };
@@ -119,8 +118,8 @@ export const formatVRAMDisplay = (vramEstimates) => {
 
 /**
  * Check if model fits in available VRAM
- * @param {number} modelVRAM - Required VRAM in GB
- * @param {number} availableVRAM - Available VRAM in GB
+ * @param {number|string} modelVRAM - Required VRAM in GB
+ * @param {number|string} availableVRAM - Available VRAM in GB
  * @returns {object} Compatibility info
  */
 export const checkVRAMCompatibility = (modelVRAM, availableVRAM) => {
@@ -128,12 +127,12 @@ export const checkVRAMCompatibility = (modelVRAM, availableVRAM) => {
   const available = parseFloat(availableVRAM);
   
   const fits = required <= available;
-  const utilizationPercent = ((required / available) * 100).toFixed(0);
+  const utilizationPercent = available > 0 ? ((required / available) * 100).toFixed(0) : "0";
   
   return {
     fits,
     utilizationPercent,
-    headroom: (available - required).toFixed(1),
+    headroom: Number((available - required).toFixed(1)),
     recommendation: fits 
       ? "Model will fit comfortably" 
       : `Need ${(required - available).toFixed(1)}GB more VRAM`
