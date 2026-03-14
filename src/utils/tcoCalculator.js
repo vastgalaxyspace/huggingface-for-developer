@@ -257,22 +257,35 @@ const calculateBreakEven = (tokensPerMonth, vram) => {
 
   const cheapestAPI = Math.min(...Object.values(api).map(p => p.monthly));
   
+  // Guard against division by zero and negative values
+  const cloudVsAPIDiff = cheapestAPI - cloud.recommended.monthly;
+  const cloudVsAPIMonths = cloudVsAPIDiff > 0 
+    ? Math.ceil(cloud.recommended.setup / cloudVsAPIDiff) 
+    : null;
+
+  const selfHostedVsAPICost = cheapestAPI * 12;
+  const selfHostedVsAPIMonths = selfHostedVsAPICost > 0 
+    ? Math.ceil(selfHosted.total.yearOne / selfHostedVsAPICost) 
+    : null;
+
+  const cloudMonthlyTotal = cloud.recommended.monthly + cloud.recommended.maintenance;
+  const selfHostedVsCloudMonths = cloudMonthlyTotal > 0 
+    ? Math.ceil(selfHosted.total.yearOne / cloudMonthlyTotal) 
+    : null;
+
   return {
     cloudVsAPI: {
-      months: Math.ceil(cloud.recommended.setup / (cheapestAPI - cloud.recommended.monthly)),
-      note: cheapestAPI > cloud.recommended.monthly 
+      months: cloudVsAPIMonths,
+      note: cloudVsAPIDiff <= 0
         ? 'Cloud GPU never breaks even - API cheaper'
         : 'Cloud GPU cheaper from month 1'
     },
     selfHostedVsAPI: {
-      months: Math.ceil(selfHosted.total.yearOne / (cheapestAPI * 12)),
+      months: selfHostedVsAPIMonths,
       note: 'Self-hosted breaks even vs API'
     },
     selfHostedVsCloud: {
-      months: Math.ceil(
-        selfHosted.total.yearOne / 
-        (cloud.recommended.monthly + cloud.recommended.maintenance)
-      ),
+      months: selfHostedVsCloudMonths,
       note: 'Self-hosted breaks even vs Cloud GPU'
     }
   };

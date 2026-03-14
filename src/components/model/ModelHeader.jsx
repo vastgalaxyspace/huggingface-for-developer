@@ -1,9 +1,11 @@
-import { Star, Download, Calendar, ExternalLink } from 'lucide-react';
+import { useState } from 'react';
+import { Star, Download, Calendar, ExternalLink, Copy, Check, Tag } from 'lucide-react';
 import { Shield } from 'lucide-react';
 import { calculateDeploymentScore } from '../../utils/scoringEngine';
 
 const ModelHeader = ({ modelData }) => {
   const { modelId, author, lastModified, downloads, likes } = modelData;
+  const [copied, setCopied] = useState(false);
 
   const scoreData = calculateDeploymentScore(modelData);
   const { total, rating } = scoreData;
@@ -24,13 +26,96 @@ const ModelHeader = ({ modelData }) => {
     });
   };
 
+  const handleCopyModelId = () => {
+    navigator.clipboard.writeText(modelId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Extract tags from metadata
+  const tags = modelData.tags || modelData.metadata?.tags || [];
+  const pipelineTag = modelData.pipeline_tag || modelData.metadata?.pipeline_tag;
+  const library = modelData.library_name || modelData.metadata?.library_name;
+
+  // Categorize tags for display
+  const tagCategories = {
+    task: [],
+    library: [],
+    language: [],
+    format: [],
+    other: []
+  };
+
+  // Common language codes
+  const languageCodes = ['en', 'zh', 'fr', 'de', 'es', 'ja', 'ko', 'pt', 'ru', 'ar', 'hi', 'it', 'multilingual'];
+  const formatTags = ['safetensors', 'gguf', 'gptq', 'awq', 'onnx', 'pytorch', 'tensorflow', 'jax', 'torch'];
+  const libraryTags = ['transformers', 'diffusers', 'peft', 'trl', 'vllm', 'llama.cpp', 'sentence-transformers'];
+
+  if (pipelineTag) tagCategories.task.push(pipelineTag);
+  if (library) tagCategories.library.push(library);
+
+  tags.forEach(tag => {
+    const lower = tag.toLowerCase();
+    if (languageCodes.includes(lower)) {
+      tagCategories.language.push(tag);
+    } else if (formatTags.includes(lower)) {
+      tagCategories.format.push(tag);
+    } else if (libraryTags.includes(lower)) {
+      tagCategories.library.push(tag);
+    } else if (lower.startsWith('arxiv:') || lower.startsWith('license:') || lower.startsWith('dataset:')) {
+      tagCategories.other.push(tag);
+    } else if (!tagCategories.task.includes(tag)) {
+      tagCategories.other.push(tag);
+    }
+  });
+
+  // Tag styling by category
+  const tagStyles = {
+    task: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/25',
+    library: 'bg-blue-500/15 text-blue-300 border-blue-500/25',
+    language: 'bg-green-500/15 text-green-300 border-green-500/25',
+    format: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/25',
+    other: 'bg-gray-500/15 text-gray-300 border-gray-500/25'
+  };
+
+  const allTags = [
+    ...tagCategories.task.map(t => ({ tag: t, style: tagStyles.task, icon: '🎯' })),
+    ...tagCategories.library.map(t => ({ tag: t, style: tagStyles.library, icon: '📦' })),
+    ...tagCategories.format.map(t => ({ tag: t, style: tagStyles.format, icon: '💾' })),
+    ...tagCategories.language.map(t => ({ tag: t, style: tagStyles.language, icon: '🌐' })),
+    ...tagCategories.other.slice(0, 5).map(t => ({ tag: t, style: tagStyles.other, icon: '🏷️' })),
+  ];
+
   return (
     <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm border border-white/20 rounded-2xl p-6">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
         {/* Model Info */}
         <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3 mb-2 flex-wrap">
             <h2 className="text-3xl font-bold text-white">{modelId}</h2>
+            
+            {/* Copy Model ID Button */}
+            <button
+              onClick={handleCopyModelId}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all ${
+                copied
+                  ? 'bg-green-500/20 border-green-500/50 text-green-400'
+                  : 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/20 hover:text-white'
+              }`}
+              title="Copy model ID"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4" />
+                  <span>Copy ID</span>
+                </>
+              )}
+            </button>
             
             <a
               href={`https://huggingface.co/${modelId}`}
@@ -94,6 +179,27 @@ const ModelHeader = ({ modelData }) => {
         <p className="mt-4 text-gray-300 leading-relaxed">
           {modelData.card.description}
         </p>
+      )}
+
+      {/* Tags Section */}
+      {allTags.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-white/10">
+          <div className="flex items-center gap-2 mb-3">
+            <Tag className="w-4 h-4 text-gray-400" />
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Tags</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {allTags.map(({ tag, style, icon }, idx) => (
+              <span
+                key={`${tag}-${idx}`}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md border ${style}`}
+              >
+                <span className="text-[10px]">{icon}</span>
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

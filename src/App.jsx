@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -50,11 +50,21 @@ function App() {
     count: favoritesCount
   } = useFavorites();
 
-  const handleSearch = (modelId) => {
+  const handleSearch = useCallback((modelId) => {
+    // If the query doesn't contain '/', it's a keyword search
+    // Stay on homepage so the user sees autocomplete suggestions
+    if (!modelId.includes('/')) {
+      setViewMode('home');
+      // Scroll to search area
+      const searchEl = document.getElementById('search');
+      if (searchEl) searchEl.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    
     setSearchQuery(modelId);
     setViewMode('detail');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
   // Listen for search events from alternatives (e.g. Visual Charts)
   useEffect(() => {
@@ -66,7 +76,7 @@ function App() {
     return () => {
       window.removeEventListener('searchModel', handleSearchEvent);
     };
-  }, []);
+  }, [handleSearch]);
 
   const handleBack = () => {
     setSearchQuery(null);
@@ -75,10 +85,11 @@ function App() {
 
   const handleRetry = () => {
     if (searchQuery) {
-      // Clear and re-set to trigger refetch in useModelData
+      // Save query before clearing to avoid stale closure
+      const savedQuery = searchQuery;
       setSearchQuery(null);
       setTimeout(() => {
-        setSearchQuery(searchQuery);
+        setSearchQuery(savedQuery);
         setViewMode('detail');
       }, 100);
     }

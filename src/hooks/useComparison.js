@@ -18,7 +18,8 @@ export const useComparison = () => {
       
       // Don't add if at max capacity
       if (prev.length >= MAX_COMPARE) {
-        alert(`Maximum ${MAX_COMPARE} models can be compared at once`);
+        // Schedule alert outside the state updater to avoid side effects
+        setTimeout(() => alert(`Maximum ${MAX_COMPARE} models can be compared at once`), 0);
         return prev;
       }
       

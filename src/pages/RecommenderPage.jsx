@@ -88,7 +88,7 @@ const RecommenderPage = ({ onBack, onSelectModel, allModels, loading, progress =
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <section aria-label="Smart Model Recommender" className="max-w-7xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <button
@@ -222,7 +222,7 @@ const RecommenderPage = ({ onBack, onSelectModel, allModels, loading, progress =
             </button>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 };

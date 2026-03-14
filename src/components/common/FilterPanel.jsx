@@ -210,14 +210,14 @@ const FilterPanel = ({ onFilterChange, activeFilters = {}, activeTemplate = null
             </div>
           </div>
 
-          {/* Sort By - Commented out as in original */}
-          {/* <div>
+          {/* Sort By */}
+          <div>
             <label className="block text-sm font-semibold text-white mb-2">
               Sort By
             </label>
             <select
               value={filters.sortBy || ''}
-              onChange={(e) => updateFilter('sortBy', e.target.value)}
+              onChange={(e) => updateFilter('sortBy', e.target.value || null)}
               className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="" className="text-gray-900">Default</option>
@@ -228,7 +228,7 @@ const FilterPanel = ({ onFilterChange, activeFilters = {}, activeTemplate = null
               <option value="vram_high" className="text-gray-900">Highest VRAM</option>
               <option value="context" className="text-gray-900">Longest Context</option>
             </select>
-          </div> */}
+          </div>
 
           {/* Clear Filters */}
           {hasActiveFilters && (

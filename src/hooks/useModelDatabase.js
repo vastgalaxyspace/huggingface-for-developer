@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getTrendingModels, fetchCompleteModelData } from '../services/huggingface';
+import { fetchCompleteModelData } from '../services/huggingface';
 import { parseCompleteModel } from '../utils/dataParser';
 import { calculateVRAM } from '../utils/vramCalculator';
 import { getLicenseInfo } from '../utils/licenseChecker';

@@ -1,11 +1,13 @@
-import { ArrowLeft, Layers, Code, Copy, Check, Terminal, AlertTriangle, Info } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { ArrowLeft, Layers, Code, Copy, Check, Terminal, AlertTriangle, Info, Share2, Shield, Cpu, Zap, Server, Award, Play, BarChart3 } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
 import ModelHeader from '../components/model/ModelHeader';
 import QuickDecisionPanel from '../components/model/QuickDecisionPanel';
 import ParameterCard from '../components/model/ParameterCard';
 import HardwareRecommendations from '../components/model/HardwareRecommendations';
 import FavoriteButton from '../components/common/FavoriteButton';
 import CompareButton from '../components/common/CompareButton';
+import CollapsibleSection from '../components/common/CollapsibleSection';
+import StickyNav from '../components/common/StickyNav';
 import { getParameterExplanation } from '../utils/parameterExplanations';
 import DeploymentScore from '../components/scoring/DeploymentScore';
 import ModelRadarChart from '../components/charts/ModelRadarChart';
@@ -25,10 +27,11 @@ const ModelDetailPage = ({
   canAddMore,
   onToggleFavorite,
   isFavorite,
-  allModels = [] // Added prop
+  allModels = []
 }) => {
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [similarModels, setSimilarModels] = useState([]);
+  const [shareStatus, setShareStatus] = useState(null); // null | 'copied'
 
   // Find similar models based on VRAM
   useEffect(() => {
@@ -38,9 +41,9 @@ const ModelDetailPage = ({
         .filter(m => m.modelId !== modelData.modelId)
         .filter(m => {
           const vram = parseFloat(m.vramEstimates?.fp16 || 0);
-          return Math.abs(vram - currentVRAM) <= 8; // Within 8GB
+          return Math.abs(vram - currentVRAM) <= 8;
         })
-        .slice(0, 2); // Top 2 similar
+        .slice(0, 2);
 
       setSimilarModels([modelData, ...similar]);
     }
@@ -51,6 +54,24 @@ const ModelDetailPage = ({
     navigator.clipboard.writeText(code);
     setCopiedIndex(index);
     setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  // Share Analysis - generates a concise summary card
+  const handleShareAnalysis = () => {
+    const summary = `📊 Model Analysis: ${modelData.modelId}
+
+🏷️ ${modelData.vramEstimates?.totalParams || '?'}B Parameters
+💾 ${modelData.vramEstimates?.fp16 || '?'}GB VRAM (FP16) | ${modelData.vramEstimates?.int4 || '?'}GB (INT4)
+📜 License: ${modelData.licenseInfo?.name || 'Unknown'}
+${modelData.licenseInfo?.commercial ? '✅ Commercial Use Allowed' : '⚠️ Check License Terms'}
+📄 Context: ${(modelData.config?.max_position_embeddings || 4096).toLocaleString()} tokens
+
+🔗 View on HuggingFace: https://huggingface.co/${modelData.modelId}
+📊 Analyzed with HF Model Explorer`;
+
+    navigator.clipboard.writeText(summary);
+    setShareStatus('copied');
+    setTimeout(() => setShareStatus(null), 3000);
   };
 
   // Helper function to parse notices from model card
@@ -64,7 +85,6 @@ const ModelDetailPage = ({
 
     const cardText = modelData.card.text || modelData.card.description || '';
 
-    // Check for deprecation warnings
     const deprecationPatterns = [
       /⚠️.*?(?:deprecated|older version|previous generation|superseded)/i,
       /This (?:model|repository) (?:contains|has) (?:been )?(?:deprecated|superseded|replaced)/i,
@@ -77,7 +97,6 @@ const ModelDetailPage = ({
         const endIndex = Math.min(cardText.length, match.index + match[0].length + 200);
         const context = cardText.substring(startIndex, endIndex).trim();
 
-        // Extract replacement model link if present
         const replacementMatch = cardText.match(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/);
 
         notices.deprecation = {
@@ -90,7 +109,6 @@ const ModelDetailPage = ({
       }
     });
 
-    // Check for general notices
     const noticePatterns = [/⚠️.*?$/gm, /📢.*?$/gm];
     noticePatterns.forEach(pattern => {
       const matches = cardText.matchAll(pattern);
@@ -111,7 +129,6 @@ const ModelDetailPage = ({
     const modelId = modelData.modelId || 'model-name';
     const snippets = [];
 
-    // Basic Transformers usage
     snippets.push({
       title: 'Basic Usage with Transformers',
       language: 'Python',
@@ -132,7 +149,6 @@ print(response)`,
       description: 'Basic inference using Hugging Face Transformers library'
     });
 
-    // Advanced generation
     snippets.push({
       title: 'Advanced Generation with Parameters',
       language: 'Python',
@@ -165,7 +181,6 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=True))`,
       description: 'Use custom generation parameters for better control over outputs'
     });
 
-    // Mistral-specific if applicable
     if (modelId.toLowerCase().includes('mistral')) {
       snippets.push({
         title: 'Using Mistral Tokenizer',
@@ -200,7 +215,6 @@ out_tokens, _ = generate(
       });
     }
 
-    // llama.cpp
     snippets.push({
       title: 'Local Inference with llama.cpp',
       language: 'Bash',
@@ -220,7 +234,6 @@ make
       description: 'Run the model locally using llama.cpp for efficient CPU/GPU inference'
     });
 
-    // API usage
     snippets.push({
       title: 'Hugging Face Inference API',
       language: 'Python',
@@ -247,7 +260,6 @@ print(output)`,
       description: 'Use the Hugging Face Inference API for quick testing without local setup'
     });
 
-    // JavaScript/Node.js
     snippets.push({
       title: 'Node.js Integration',
       language: 'JavaScript',
@@ -300,7 +312,6 @@ generateText();`,
     });
   }
 
-  // Category display order and colors
   const categoryConfig = {
     'Architecture': { icon: '🏗️', color: 'purple' },
     'Memory': { icon: '💾', color: 'blue' },
@@ -314,9 +325,26 @@ generateText();`,
     'Other': { icon: '📦', color: 'slate' }
   };
 
+  // Sticky nav sections
+  const navSections = [
+    { id: 'section-overview', label: 'Overview', icon: Info },
+    { id: 'section-decision', label: 'Decision', icon: Zap },
+    { id: 'section-score', label: 'Score', icon: Shield },
+    { id: 'section-code', label: 'Code', icon: Code },
+    { id: 'section-hardware', label: 'Hardware', icon: Server },
+    { id: 'section-compatibility', label: 'Compat.', icon: Cpu },
+    { id: 'section-tco', label: 'TCO', icon: BarChart3 },
+    { id: 'section-benchmarks', label: 'Benchmarks', icon: Award },
+    { id: 'section-tester', label: 'Tester', icon: Play },
+    { id: 'section-params', label: 'Params', icon: Layers },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      {/* Sticky Navigation */}
+      <StickyNav sections={navSections} />
+
+      <div className="max-w-7xl mx-auto px-6 py-8 xl:pr-48">
         {/* Back Button and Actions */}
         <div className="flex items-center justify-between mb-6">
           <button
@@ -329,6 +357,28 @@ generateText();`,
 
           {/* Action Buttons */}
           <div className="flex items-center gap-3">
+            {/* Share Analysis Button */}
+            <button
+              onClick={handleShareAnalysis}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border font-medium text-sm transition-all ${
+                shareStatus === 'copied'
+                  ? 'bg-green-500/20 border-green-500/50 text-green-400'
+                  : 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/20 hover:text-white'
+              }`}
+            >
+              {shareStatus === 'copied' ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  Summary Copied!
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4" />
+                  Share Analysis
+                </>
+              )}
+            </button>
+
             <FavoriteButton
               isFavorite={isFavorite}
               onToggle={() => onToggleFavorite(modelData)}
@@ -346,7 +396,7 @@ generateText();`,
         </div>
 
         {/* Model Header */}
-        <div className="mb-6">
+        <div id="section-overview" className="mb-6">
           <ModelHeader modelData={modelData} />
         </div>
 
@@ -409,168 +459,188 @@ generateText();`,
         )}
 
         {/* Quick Decision Panel */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-            <span>⚡</span>
-            Quick Decision Panel
-          </h2>
-          <QuickDecisionPanel
-            licenseInfo={modelData.licenseInfo}
-            vramEstimates={modelData.vramEstimates}
-          />
+        <div id="section-decision">
+          <CollapsibleSection title="Quick Decision Panel" icon={Zap} iconColor="text-yellow-400" defaultOpen={true}>
+            <QuickDecisionPanel
+              licenseInfo={modelData.licenseInfo}
+              vramEstimates={modelData.vramEstimates}
+            />
+          </CollapsibleSection>
         </div>
 
-        <div className="mb-8">
-          <DeploymentScore modelData={modelData} />
+        {/* Deployment Score */}
+        <div id="section-score">
+          <CollapsibleSection title="Deployment Readiness" icon={Shield} iconColor="text-purple-400" defaultOpen={true}>
+            <DeploymentScore modelData={modelData} />
+          </CollapsibleSection>
         </div>
 
         {/* Code Snippets Section */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-            <Code className="w-6 h-6 text-purple-400" />
-            Usage Examples
-          </h2>
-          <div className="space-y-4">
-            {codeSnippets.map((snippet, index) => (
-              <div
-                key={index}
-                className="bg-slate-950/50 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden hover:border-purple-500/30 transition-colors"
-              >
-                {/* Header */}
-                <div className="bg-white/5 px-4 py-3 border-b border-white/10 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Terminal className="w-4 h-4 text-purple-400" />
-                    <span className="text-sm font-medium text-gray-300">
-                      {snippet.title}
-                    </span>
-                    <span className="text-xs text-gray-500 bg-white/5 px-2 py-0.5 rounded">
-                      {snippet.language}
-                    </span>
+        <div id="section-code">
+          <CollapsibleSection 
+            title="Usage Examples" 
+            icon={Code} 
+            iconColor="text-purple-400" 
+            defaultOpen={false}
+            badge={`${codeSnippets.length} snippets`}
+          >
+            <div className="space-y-4">
+              {codeSnippets.map((snippet, index) => (
+                <div
+                  key={index}
+                  className="bg-slate-950/50 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden hover:border-purple-500/30 transition-colors"
+                >
+                  {/* Header */}
+                  <div className="bg-white/5 px-4 py-3 border-b border-white/10 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Terminal className="w-4 h-4 text-purple-400" />
+                      <span className="text-sm font-medium text-gray-300">
+                        {snippet.title}
+                      </span>
+                      <span className="text-xs text-gray-500 bg-white/5 px-2 py-0.5 rounded">
+                        {snippet.language}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleCopy(snippet.code, index)}
+                      className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
+                    >
+                      {copiedIndex === index ? (
+                        <>
+                          <Check className="w-4 h-4 text-green-400" />
+                          <span className="text-green-400">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleCopy(snippet.code, index)}
-                    className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
-                  >
-                    {copiedIndex === index ? (
-                      <>
-                        <Check className="w-4 h-4 text-green-400" />
-                        <span className="text-green-400">Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        <span>Copy</span>
-                      </>
-                    )}
-                  </button>
-                </div>
 
-                {/* Code Block */}
-                <div className="relative">
-                  <pre className="p-4 overflow-x-auto text-sm leading-relaxed">
-                    <code className="text-gray-300 font-mono whitespace-pre">
-                      {snippet.code}
-                    </code>
-                  </pre>
-                </div>
-
-                {/* Description */}
-                {snippet.description && (
-                  <div className="px-4 py-3 bg-blue-500/5 border-t border-white/10">
-                    <p className="text-xs text-blue-200/80 leading-relaxed">
-                      💡 {snippet.description}
-                    </p>
+                  {/* Code Block */}
+                  <div className="relative">
+                    <pre className="p-4 overflow-x-auto text-sm leading-relaxed">
+                      <code className="text-gray-300 font-mono whitespace-pre">
+                        {snippet.code}
+                      </code>
+                    </pre>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
+
+                  {/* Description */}
+                  {snippet.description && (
+                    <div className="px-4 py-3 bg-blue-500/5 border-t border-white/10">
+                      <p className="text-xs text-blue-200/80 leading-relaxed">
+                        💡 {snippet.description}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CollapsibleSection>
         </div>
 
         {/* Hardware Recommendations */}
-        <div className="mb-8">
-          <HardwareRecommendations modelData={modelData} />
+        <div id="section-hardware">
+          <CollapsibleSection title="Hardware & Deployment" icon={Server} iconColor="text-blue-400" defaultOpen={true}>
+            <HardwareRecommendations modelData={modelData} />
+          </CollapsibleSection>
         </div>
-        {/* COMPATIBILITY CHECKER - NEW */}
-        <div className="mb-8">
-          <CompatibilityChecker modelData={modelData} />
+
+        {/* Compatibility Checker */}
+        <div id="section-compatibility">
+          <CollapsibleSection title="Compatibility" icon={Cpu} iconColor="text-cyan-400" defaultOpen={true}>
+            <CompatibilityChecker modelData={modelData} />
+          </CollapsibleSection>
         </div>
+
+        {/* Alternatives Suggester */}
         {allModels && allModels.length > 0 && (
-          <div className="mb-8">
+          <CollapsibleSection title="Alternative Models" icon={Layers} iconColor="text-pink-400" defaultOpen={false}>
             <AlternativesSuggester
               modelData={modelData}
               allModels={allModels}
               onSelectModel={(modelId) => {
-                // Navigate to the alternative model
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                onBack(); // Go back to trigger re-search
+                onBack();
                 setTimeout(() => {
-                  // Trigger search for new model
                   const searchEvent = new CustomEvent('searchModel', { detail: modelId });
                   window.dispatchEvent(searchEvent);
                 }, 100);
               }}
             />
-          </div>
+          </CollapsibleSection>
         )}
 
-        <div className="mb-8">
-          <TCOCalculator modelData={modelData} />
-        </div>
-        <div className="mb-8">
-          <BenchmarkVisualizer modelData={modelData} />
-        </div>
-        <div className="mb-8">
-          <LiveModelTester modelData={modelData} />
+        {/* TCO Calculator */}
+        <div id="section-tco">
+          <CollapsibleSection title="Total Cost of Ownership" icon={BarChart3} iconColor="text-green-400" defaultOpen={false}>
+            <TCOCalculator modelData={modelData} />
+          </CollapsibleSection>
         </div>
 
+        {/* Benchmarks */}
+        <div id="section-benchmarks">
+          <CollapsibleSection title="Benchmark Performance" icon={Award} iconColor="text-yellow-400" defaultOpen={true}>
+            <BenchmarkVisualizer modelData={modelData} />
+          </CollapsibleSection>
+        </div>
 
+        {/* Live Model Tester */}
+        <div id="section-tester">
+          <CollapsibleSection title="Test This Model" icon={Play} iconColor="text-green-400" defaultOpen={false}>
+            <LiveModelTester modelData={modelData} />
+          </CollapsibleSection>
+        </div>
 
         {/* Parameters by Category */}
         {Object.keys(categorizedParams).length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-              <Layers className="w-6 h-6 text-purple-400" />
-              Model Parameters Explained
-            </h2>
+          <div id="section-params">
+            <CollapsibleSection 
+              title="Model Parameters Explained" 
+              icon={Layers} 
+              iconColor="text-purple-400" 
+              defaultOpen={false}
+              badge={`${Object.values(categorizedParams).flat().length} params`}
+            >
+              <div className="space-y-8">
+                {Object.entries(categorizedParams).map(([category, params]) => {
+                  const config = categoryConfig[category] || categoryConfig['Other'];
 
-            <div className="space-y-8">
-              {Object.entries(categorizedParams).map(([category, params]) => {
-                const config = categoryConfig[category] || categoryConfig['Other'];
+                  return (
+                    <div key={category}>
+                      <div className="flex items-center gap-3 mb-4">
+                        <span className="text-3xl">{config.icon}</span>
+                        <h3 className="text-xl font-bold text-white">
+                          {category}
+                        </h3>
+                        <div className="flex-1 h-px bg-white/10"></div>
+                        <span className="text-sm text-gray-400">
+                          {params.length} {params.length === 1 ? 'parameter' : 'parameters'}
+                        </span>
+                      </div>
 
-                return (
-                  <div key={category}>
-                    {/* Category Header */}
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className="text-3xl">{config.icon}</span>
-                      <h3 className="text-xl font-bold text-white">
-                        {category}
-                      </h3>
-                      <div className="flex-1 h-px bg-white/10"></div>
-                      <span className="text-sm text-gray-400">
-                        {params.length} {params.length === 1 ? 'parameter' : 'parameters'}
-                      </span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {params.map((param) => (
+                          <ParameterCard
+                            key={param.key}
+                            paramKey={param.key}
+                            paramValue={param.value}
+                            explanation={param.explanation}
+                          />
+                        ))}
+                      </div>
                     </div>
-
-                    {/* Parameter Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {params.map((param) => (
-                        <ParameterCard
-                          key={param.key}
-                          paramKey={param.key}
-                          paramValue={param.value}
-                          explanation={param.explanation}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            </CollapsibleSection>
           </div>
         )}
 
-        {/* Benchmarks (if available) */}
+        {/* Benchmarks (if available from card) */}
         {modelData.card?.benchmarks && Object.keys(modelData.card.benchmarks).length > 0 && (
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
@@ -596,19 +666,12 @@ generateText();`,
 
         {/* Similar Models Radar Chart */}
         {similarModels.length >= 2 && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-              <span>📊</span>
-              How This Compares to Similar Models
-            </h2>
-            <ModelRadarChart models={similarModels} />
-          </div>
-        )}
-        {/* DECISION MATRIX - ADD THIS HERE */}
-        {similarModels.length >= 2 && (
-          <div className="mb-12">
-            <DecisionMatrix models={similarModels} />
-          </div>
+          <CollapsibleSection title="Model Comparison" icon={BarChart3} iconColor="text-purple-400" defaultOpen={false}>
+            <div className="space-y-8">
+              <ModelRadarChart models={similarModels} />
+              <DecisionMatrix models={similarModels} />
+            </div>
+          </CollapsibleSection>
         )}
 
         {/* Raw Config (Collapsible) */}

@@ -8,6 +8,7 @@ const FAVORITES_KEY = 'hf_model_explorer_favorites';
  */
 export const useFavorites = () => {
   const [favorites, setFavorites] = useState([]);
+  const [loaded, setLoaded] = useState(false);
 
   // Load favorites from localStorage on mount
   useEffect(() => {
@@ -21,16 +22,18 @@ export const useFavorites = () => {
       console.error('Error loading favorites:', error);
       setFavorites([]);
     }
+    setLoaded(true);
   }, []);
 
-  // Save favorites to localStorage whenever they change
+  // Save favorites to localStorage whenever they change (skip initial mount)
   useEffect(() => {
+    if (!loaded) return;
     try {
       localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
     } catch (error) {
       console.error('Error saving favorites:', error);
     }
-  }, [favorites]);
+  }, [favorites, loaded]);
 
   // Add model to favorites
   const addFavorite = useCallback((modelData) => {
@@ -61,6 +64,11 @@ export const useFavorites = () => {
     setFavorites(prev => prev.filter(fav => fav.modelId !== modelId));
   }, []);
 
+  // Check if model is favorited (must be defined before toggleFavorite)
+  const isFavorite = useCallback((modelId) => {
+    return favorites.some(fav => fav.modelId === modelId);
+  }, [favorites]);
+
   // Toggle favorite status
   const toggleFavorite = useCallback((modelData) => {
     if (isFavorite(modelData.modelId)) {
@@ -68,12 +76,7 @@ export const useFavorites = () => {
     } else {
       addFavorite(modelData);
     }
-  }, [favorites]);
-
-  // Check if model is favorited
-  const isFavorite = useCallback((modelId) => {
-    return favorites.some(fav => fav.modelId === modelId);
-  }, [favorites]);
+  }, [isFavorite, addFavorite, removeFavorite]);
 
   // Clear all favorites
   const clearFavorites = useCallback(() => {

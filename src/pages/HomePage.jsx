@@ -71,7 +71,7 @@ const HomePage = ({ onSearch, loading, onViewRecommender, onApplyTemplate }) => 
       try {
         setModelsLoading(true);
         // Fetch top 15 models to give filters more to work with
-        const trending = await getTrendingModels(15);
+        const trending = await getTrendingModels(30);
         
         // Transform the API data into a rich object our filters can understand
         const enrichedModels = trending.map(enrichModelData);
@@ -128,7 +128,7 @@ const HomePage = ({ onSearch, loading, onViewRecommender, onApplyTemplate }) => 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
+      <section aria-label="Hero - Decode Any LLM" className="relative overflow-hidden">
         {/* Background decoration */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500 rounded-full blur-3xl"></div>
@@ -188,7 +188,7 @@ const HomePage = ({ onSearch, loading, onViewRecommender, onApplyTemplate }) => 
           </div>
 
           {/* Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          <section aria-label="Key Features" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             {features.map((feature, idx) => (
               <div
                 key={idx}
@@ -203,14 +203,25 @@ const HomePage = ({ onSearch, loading, onViewRecommender, onApplyTemplate }) => 
                 </p>
               </div>
             ))}
-          </div>
+          </section>
 
           {/* Popular Models */}
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+          <section aria-label="Trending AI Models" className="max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
               <TrendingUp className="w-6 h-6 text-purple-400" />
               {Object.keys(filters).length > 0 ? 'Filtered Models' : 'Trending Models'}
             </h2>
+            <p className="text-sm text-gray-400 mb-6">
+              Showing {filteredModels.length} of {popularModels.length} models
+              {Object.keys(filters).length > 0 && (
+                <button 
+                  onClick={() => setFilters({})}
+                  className="ml-2 text-purple-400 hover:text-purple-300 underline"
+                >
+                  Clear filters
+                </button>
+              )}
+            </p>
             
             {modelsLoading ? (
               <div className="text-center py-12">
@@ -269,9 +280,9 @@ const HomePage = ({ onSearch, loading, onViewRecommender, onApplyTemplate }) => 
                 )}
               </>
             )}
-          </div>
+          </section>
         </div>
-      </div>
+      </section>
     </div>
   );
 };

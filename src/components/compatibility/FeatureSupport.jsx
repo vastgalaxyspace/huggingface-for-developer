@@ -33,6 +33,14 @@ const FeatureSupport = ({ features }) => {
         </div>
       </div>
 
+      {/* Speculative Warning */}
+      <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 flex items-start gap-3">
+        <Info className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+        <div className="text-sm text-orange-200">
+          <strong className="text-orange-300">Heuristic Data:</strong> These features are inferred from standard configuration keys. Custom model implementations may support these implicitly or lack them despite config flags. Verify with official documentation.
+        </div>
+      </div>
+
       {/* Feature Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {featureList.map((item) => {

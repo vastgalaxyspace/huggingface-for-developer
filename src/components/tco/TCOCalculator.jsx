@@ -31,6 +31,14 @@ const TCOCalculator = ({ modelData }) => {
         </p>
       </div>
 
+      {/* Speculative Warning */}
+      <div className="mx-6 mt-6 bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 flex items-start gap-3">
+        <AlertCircle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+        <div className="text-sm text-orange-200">
+          <strong className="text-orange-300">Illustrative Estimates:</strong> Cost comparisons are highly speculative and depend heavily on GPU provider, batch size, throughput, and utilization rate. These figures should not be used as final financial projections.
+        </div>
+      </div>
+
       {/* Usage Parameters */}
       <div className="border-b border-white/10 p-6 bg-black/20">
         <h3 className="text-lg font-bold text-white mb-4">

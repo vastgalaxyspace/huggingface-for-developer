@@ -42,46 +42,46 @@ export const parseModelConfig = (config) => {
   
   return {
     // Core architecture
-    model_type: config.model_type || config.architectures?.[0] || 'unknown',
-    architectures: config.architectures || [],
+    model_type: config.model_type ?? config.architectures?.[0] ?? 'unknown',
+    architectures: config.architectures ?? [],
     
-    // Dimensions - Default to standard values if missing to prevent UI NaN errors
-    hidden_size: config.hidden_size || config.d_model || 4096,
-    num_hidden_layers: config.num_hidden_layers || config.n_layer || config.num_layers || 32,
-    num_attention_heads: config.num_attention_heads || config.n_head || 32,
-    num_key_value_heads: config.num_key_value_heads || config.num_attention_heads || 32,
+    // Dimensions - Use ?? to handle explicit 0 values correctly
+    hidden_size: config.hidden_size ?? config.d_model ?? 4096,
+    num_hidden_layers: config.num_hidden_layers ?? config.n_layer ?? config.num_layers ?? 32,
+    num_attention_heads: config.num_attention_heads ?? config.n_head ?? 32,
+    num_key_value_heads: config.num_key_value_heads ?? config.num_attention_heads ?? 32,
     
     // Context - Many models don't define this explicitly; default to 2048 or 4096
-    max_position_embeddings: config.max_position_embeddings || config.n_positions || config.max_sequence_length || 4096,
+    max_position_embeddings: config.max_position_embeddings ?? config.n_positions ?? config.max_sequence_length ?? 4096,
     
     // Vocabulary
-    vocab_size: config.vocab_size || 32000,
+    vocab_size: config.vocab_size ?? 32000,
     
     // Advanced features
-    rope_theta: config.rope_theta || config.rotary_emb_base || 10000,
-    rope_scaling: config.rope_scaling || null,
-    sliding_window: config.sliding_window || null,
+    rope_theta: config.rope_theta ?? config.rotary_emb_base ?? 10000,
+    rope_scaling: config.rope_scaling ?? null,
+    sliding_window: config.sliding_window ?? null,
     
     // MoE parameters
-    num_experts: config.num_local_experts || config.num_experts || null,
-    num_experts_per_tok: config.num_experts_per_tok || null,
+    num_experts: config.num_local_experts ?? config.num_experts ?? null,
+    num_experts_per_tok: config.num_experts_per_tok ?? null,
     
     // Technical
-    torch_dtype: config.torch_dtype || 'float16',
+    torch_dtype: config.torch_dtype ?? 'float16',
     use_cache: config.use_cache !== false, // Default true
     
     // Tokenizer references
-    bos_token_id: config.bos_token_id || null,
-    eos_token_id: config.eos_token_id || null,
-    pad_token_id: config.pad_token_id || null,
+    bos_token_id: config.bos_token_id ?? null,
+    eos_token_id: config.eos_token_id ?? null,
+    pad_token_id: config.pad_token_id ?? null,
     
     // Generation defaults
-    max_new_tokens: config.max_new_tokens || null,
-    temperature: config.temperature || null,
-    top_p: config.top_p || null,
+    max_new_tokens: config.max_new_tokens ?? null,
+    temperature: config.temperature ?? null,
+    top_p: config.top_p ?? null,
     
     // Quantization
-    quantization_config: config.quantization_config || null
+    quantization_config: config.quantization_config ?? null
   };
 };
 
@@ -141,13 +141,37 @@ const extractFirstParagraph = (text) => {
   // Remove YAML frontmatter if present
   const withoutFrontmatter = text.replace(/^---[\s\S]*?---/, '');
   
-  // Get first non-empty paragraph
-  const paragraphs = withoutFrontmatter
-    .split('\n\n')
-    .map(p => p.trim())
-    .filter(p => p && !p.startsWith('#'));
+  // Split into paragraphs
+  const paragraphs = withoutFrontmatter.split('\n\n');
   
-  return paragraphs[0] || '';
+  for (let p of paragraphs) {
+    p = p.trim();
+    
+    // Skip empty or heading paragraphs
+    if (!p || p.startsWith('#')) continue;
+    
+    // Remove HTML tags (like <p align="center"> <img> </p>)
+    let cleanText = p.replace(/<[^>]*>?/gm, '');
+    
+    // Remove markdown image links ![alt](url)
+    cleanText = cleanText.replace(/!\[[^\]]*\]\([^\)]*\)/g, '');
+    
+    // Strip markdown links but keep the link text [text](url) -> text
+    cleanText = cleanText.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1');
+    
+    // Strip bold/italic markdown formatting for cleaner plain text display
+    cleanText = cleanText.replace(/(\*\*|__|\*|_)(.*?)\1/g, '$2');
+    
+    cleanText = cleanText.trim();
+    
+    // If the paragraph has substantial text left after stripping media/links, return it
+    if (cleanText.length > 20) {
+      // Return a truncated version if it's too long, but usually first paragraphs are fine
+      return cleanText;
+    }
+  }
+  
+  return '';
 };
 
 /**

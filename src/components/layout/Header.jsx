@@ -11,9 +11,9 @@ const Header = ({ onViewFavorites, favoritesCount = 0 }) => {
               <Database className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" role="heading" aria-level="2">
                 HuggingFace Model Explorer
-              </h1>
+              </span>
               <p className="text-sm text-gray-400">
                 Decode any LLM in seconds
               </p>

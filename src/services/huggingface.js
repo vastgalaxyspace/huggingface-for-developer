@@ -154,11 +154,18 @@ export const fetchCompleteModelData = async (modelId) => {
 /**
  * Search models (Autocomplete)
  * Connects to HuggingFace Search API
+ * Filters by text-generation for keyword searches to return relevant LLMs
  */
-export const searchModels = async (query, limit = 5) => {
+export const searchModels = async (query, limit = 10) => {
   try {
+    // If query contains '/', it's likely a specific model ID — search broadly
+    // Otherwise filter to text-generation models for more relevant results
+    const isKeywordSearch = !query.includes('/');
+    const filterParam = isKeywordSearch ? '&filter=text-generation' : '';
+    
     const response = await fetch(
-      `${HF_API_MODELS}?search=${encodeURIComponent(query)}&limit=${limit}&sort=downloads&direction=-1`
+      `${HF_API_MODELS}?search=${encodeURIComponent(query)}&limit=${limit}&sort=downloads&direction=-1${filterParam}`,
+      { headers: getHeaders() }
     );
     
     if (!response.ok) throw new Error('Search failed');

@@ -59,6 +59,14 @@ const DeploymentScore = ({ modelData }) => {
         </p>
       </div>
 
+      {/* Heuristic Warning */}
+      <div className="mx-6 mt-6 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex items-start gap-3">
+        <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+        <div className="text-sm text-blue-200">
+          <strong className="text-blue-300">Automated Heuristic Score:</strong> This rating is an automated estimate based on metadata completeness, size, and generic metrics. It is subjective and not an authoritative tech benchmark.
+        </div>
+      </div>
+
       {/* Score Display */}
       <div className="p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

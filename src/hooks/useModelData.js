@@ -35,8 +35,10 @@ export const useModelData = (modelId) => {
       const parsedData = parseCompleteModel(rawData);
       
       // Enrich with calculations
+      // Pass safetensors.total from HuggingFace API for accurate parameter count
+      const safetensorsTotal = rawData.metadata?.safetensors?.total || null;
       const vramEstimates = parsedData.config 
-        ? calculateVRAM(parsedData.config) 
+        ? calculateVRAM(parsedData.config, { safetensorsTotal }) 
         : null;
       
       const licenseInfo = getLicenseInfo(

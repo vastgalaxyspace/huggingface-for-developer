@@ -32,7 +32,7 @@ const FrameworkMatrix = ({ frameworks }) => {
           className={`bg-white/5 border rounded-xl p-5 transition-all ${
             framework.compatible
               ? 'border-green-500/30 hover:bg-white/10'
-              : 'border-red-500/30 opacity-75'
+              : 'border-orange-500/30 opacity-75'
           }`}
         >
           <div className="flex items-start justify-between mb-4">
@@ -48,12 +48,12 @@ const FrameworkMatrix = ({ frameworks }) => {
                     {framework.compatible ? (
                       <CheckCircle className="w-4 h-4 text-green-400" />
                     ) : (
-                      <XCircle className="w-4 h-4 text-red-400" />
+                      <AlertCircle className="w-4 h-4 text-orange-400" />
                     )}
                     <span className={`text-sm font-semibold ${
-                      framework.compatible ? 'text-green-400' : 'text-red-400'
+                      framework.compatible ? 'text-green-400' : 'text-orange-400'
                     }`}>
-                      {framework.compatible ? 'Compatible' : 'Not Compatible'}
+                      {framework.compatible ? 'Compatible' : 'Unknown / Untested'}
                     </span>
                     
                     {framework.compatible && (
