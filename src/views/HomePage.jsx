@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect, useMemo } from 'react';
 import { Sparkles, Zap, Shield, Database, TrendingUp } from 'lucide-react';
 import ModelSearchAutocomplete from '../components/common/ModelSearchAutocomplete';

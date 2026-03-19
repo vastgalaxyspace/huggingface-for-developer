@@ -2,7 +2,7 @@
 
 const HF_API_BASE = 'https://huggingface.co';
 const HF_API_MODELS = 'https://huggingface.co/api/models';
-const HF_TOKEN = import.meta.env.VITE_HF_TOKEN;
+const HF_TOKEN = process.env.NEXT_PUBLIC_HF_TOKEN;
 
 /**
  * Get headers for authenticated requests

@@ -1,7 +1,14 @@
+"use client";
 import { X, ArrowRight } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
+import { useComparison } from '../../hooks/useComparison';
 
-const ComparisonBar = ({ comparisonList, onRemove, onCompare, onClear }) => {
-  if (comparisonList.length === 0) return null;
+const ComparisonBar = () => {
+  const { comparisonList, removeFromComparison, clearComparison } = useComparison();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  if (comparisonList.length === 0 || pathname === '/compare') return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-purple-900 to-pink-900 border-t border-white/20 backdrop-blur-lg shadow-2xl z-50">
@@ -23,7 +30,7 @@ const ComparisonBar = ({ comparisonList, onRemove, onCompare, onClear }) => {
                     {modelId.split('/')[1] || modelId}
                   </span>
                   <button
-                    onClick={() => onRemove(modelId)}
+                    onClick={() => removeFromComparison(modelId)}
                     className="text-gray-400 hover:text-white transition-colors"
                   >
                     <X className="w-4 h-4" />
@@ -36,14 +43,14 @@ const ComparisonBar = ({ comparisonList, onRemove, onCompare, onClear }) => {
           {/* Actions */}
           <div className="flex items-center gap-3">
             <button
-              onClick={onClear}
+              onClick={clearComparison}
               className="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors"
             >
               Clear All
             </button>
             
             <button
-              onClick={onCompare}
+              onClick={() => router.push('/compare')}
               disabled={comparisonList.length < 2}
               className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >

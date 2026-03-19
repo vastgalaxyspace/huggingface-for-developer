@@ -1,12 +1,17 @@
+"use client";
 import { Database, Heart } from 'lucide-react';
+import Link from 'next/link';
+import { useFavorites } from '../../hooks/useFavorites';
 
-const Header = ({ onViewFavorites, favoritesCount = 0 }) => {
+const Header = () => {
+  const { count: favoritesCount } = useFavorites();
+
   return (
     <header className="bg-black/30 backdrop-blur-sm border-b border-white/10 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="flex items-center justify-between">
           {/* Logo & Title */}
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3">
             <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
               <Database className="w-7 h-7 text-white" />
             </div>
@@ -18,12 +23,12 @@ const Header = ({ onViewFavorites, favoritesCount = 0 }) => {
                 Decode any LLM in seconds
               </p>
             </div>
-          </div>
+          </Link>
 
           {/* Navigation */}
           <nav className="flex items-center gap-6 text-sm">
-            <button
-              onClick={onViewFavorites}
+            <Link
+              href="/favorites"
               className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors relative"
             >
               <Heart className={`w-5 h-5 ${favoritesCount > 0 ? 'fill-current text-red-400' : ''}`} />
@@ -33,7 +38,7 @@ const Header = ({ onViewFavorites, favoritesCount = 0 }) => {
                   {favoritesCount}
                 </span>
               )}
-            </button>
+            </Link>
             
             <a 
               href="https://huggingface.co/models" 
