@@ -21,7 +21,6 @@ export const analyzeCompatibility = (modelData) => {
  */
 const analyzeFrameworkCompatibility = (modelData) => {
   const modelType = modelData.config?.model_type?.toLowerCase();
-  const architectures = modelData.config?.architectures || [];
   
   const frameworks = {
     transformers: {
@@ -37,7 +36,7 @@ const analyzeFrameworkCompatibility = (modelData) => {
     vllm: {
       name: 'vLLM',
       icon: '⚡',
-      compatible: checkVLLMCompatibility(modelType, architectures),
+      compatible: checkVLLMCompatibility(modelType),
       confidence: getVLLMConfidence(modelType),
       notes: getVLLMNotes(modelType),
       installCmd: 'pip install vllm',
@@ -79,7 +78,7 @@ const analyzeFrameworkCompatibility = (modelData) => {
 };
 
 // vLLM compatibility checks
-const checkVLLMCompatibility = (modelType, architectures) => {
+const checkVLLMCompatibility = (modelType) => {
   const supportedTypes = ['llama', 'mistral', 'qwen', 'phi', 'gemma', 'yi', 'deepseek'];
   return supportedTypes.includes(modelType);
 };
@@ -129,7 +128,7 @@ const getOllamaNotes = (modelData) => {
 };
 
 // llama.cpp compatibility
-const checkLlamaCppCompatibility = (modelType) => {
+const checkLlamaCppCompatibility = () => {
   return true; // Most models can be converted
 };
 
@@ -138,7 +137,7 @@ const getLlamaCppConfidence = (modelType) => {
   return 75;
 };
 
-const getLlamaCppNotes = (modelType) => {
+const getLlamaCppNotes = () => {
   return [
     'CPU inference capable',
     'GGUF format conversion needed',
@@ -157,7 +156,7 @@ const getTensorRTConfidence = (modelType) => {
   return 60;
 };
 
-const getTensorRTNotes = (modelType) => {
+const getTensorRTNotes = () => {
   return [
     'NVIDIA GPUs only',
     'Fastest inference performance',
@@ -456,7 +455,7 @@ const analyzeDeploymentOptions = (modelData) => {
  * Get compatibility summary
  */
 export const getCompatibilitySummary = (compatibilityData) => {
-  const { frameworks, hardware, quantization, features } = compatibilityData;
+  const { frameworks, quantization, features } = compatibilityData;
   
   const compatibleFrameworks = Object.values(frameworks).filter(f => f.compatible).length;
   const supportedFormats = Object.values(quantization).filter(q => q.supported).length;

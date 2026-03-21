@@ -373,7 +373,7 @@ export const getParametersByCategory = () => {
 
 export const getCriticalParameters = () => {
   return Object.entries(parameterExplanations)
-    .filter(([_, value]) => value.importance === 'critical')
+    .filter(([, value]) => value.importance === 'critical')
     .map(([key, value]) => ({ key, ...value }));
 };
 

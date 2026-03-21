@@ -61,7 +61,7 @@ export const prepareRadarData = (models) => {
   return metrics.map(metric => {
     const dataPoint = { metric: metric.label };
     
-    models.forEach((model, idx) => {
+    models.forEach((model) => {
       const modelName = model.modelId.split('/')[1] || model.modelId;
       dataPoint[modelName] = metric.getValue(model);
     });

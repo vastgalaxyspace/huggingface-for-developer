@@ -1,11 +1,9 @@
 "use client";
 
-import { createContext, useContext } from 'react';
 import { useFavorites as useFavoritesOriginal } from '../../hooks/useFavoritesBase';
 import { useComparison as useComparisonOriginal } from '../../hooks/useComparisonBase';
 import { useModelDatabase as useModelDatabaseOriginal } from '../../hooks/useModelDatabaseBase';
-
-export const AppContext = createContext(null);
+import { AppContext } from './AppContext';
 
 export function AppProviders({ children }) {
   const favorites = useFavoritesOriginal();

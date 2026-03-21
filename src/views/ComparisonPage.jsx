@@ -3,7 +3,6 @@ import { ArrowLeft, BarChart3, Table } from 'lucide-react';
 import { useModelData } from '../hooks/useModelData';
 import ComparisonTable from '../components/comparison/ComparisonTable';
 import VisualComparison from '../components/charts/VisualComparison';
-import LoadingSpinner from '../components/common/LoadingSpinner';
 import ErrorDisplay from '../components/common/ErrorDisplay';
 
 const ComparisonPage = ({ modelIds, onBack }) => {
@@ -80,7 +79,7 @@ const ComparisonPage = ({ modelIds, onBack }) => {
         {/* Loading State */}
         {!allLoaded && !hasError && (
           <div className="space-y-4">
-            {modelIds.map((id, idx) => (
+            {modelIds.map((id) => (
               <div key={id} className="bg-white/5 border border-white/10 rounded-xl p-6">
                 <div className="flex items-center gap-3">
                   <div className="w-5 h-5 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>

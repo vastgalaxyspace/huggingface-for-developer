@@ -10,11 +10,11 @@
 export const generateCodeSnippet = (modelData, framework = 'transformers') => {
   const modelId = modelData.modelId;
   const hasQuantization = modelData.quantization?.quantized;
-  const contextLength = modelData.config?.max_position_embeddings || 4096;
+  const maxContextLength = modelData.config?.max_position_embeddings || 4096;
 
   const snippets = {
-    transformers: generateTransformersCode(modelId, hasQuantization, contextLength),
-    vllm: generateVLLMCode(modelId, contextLength),
+    transformers: generateTransformersCode(modelId, hasQuantization),
+    vllm: generateVLLMCode(modelId, maxContextLength),
     ollama: generateOllamaCode(modelId),
     llamacpp: generateLlamaCppCode(modelId),
     curl: generateCurlCode(modelId)
@@ -24,7 +24,7 @@ export const generateCodeSnippet = (modelData, framework = 'transformers') => {
 };
 
 // Transformers (Hugging Face)
-const generateTransformersCode = (modelId, quantized, contextLength) => {
+const generateTransformersCode = (modelId, quantized) => {
   const quantizationCode = quantized 
     ? `\n# Load in 8-bit for lower VRAM\nmodel = AutoModelForCausalLM.from_pretrained(\n    "${modelId}",\n    load_in_8bit=True,\n    device_map="auto"\n)`
     : `\nmodel = AutoModelForCausalLM.from_pretrained(\n    "${modelId}",\n    device_map="auto",\n    torch_dtype=torch.float16\n)`;
@@ -164,7 +164,7 @@ curl https://api-inference.huggingface.co/models/${modelId} \\
  * @param {object} modelData - Model data
  * @returns {array} List of compatible frameworks
  */
-export const getCompatibleFrameworks = (modelData) => {
+export const getCompatibleFrameworks = () => {
   const frameworks = [
     {
       id: 'transformers',

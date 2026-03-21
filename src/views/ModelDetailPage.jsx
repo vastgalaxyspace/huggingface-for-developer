@@ -1,5 +1,5 @@
 import { ArrowLeft, Layers, Code, Copy, Check, Terminal, AlertTriangle, Info, Share2, Shield, Cpu, Zap, Server, Award, Play, BarChart3 } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import ModelHeader from '../components/model/ModelHeader';
 import QuickDecisionPanel from '../components/model/QuickDecisionPanel';
 import ParameterCard from '../components/model/ParameterCard';
@@ -30,24 +30,24 @@ const ModelDetailPage = ({
   allModels = []
 }) => {
   const [copiedIndex, setCopiedIndex] = useState(null);
-  const [similarModels, setSimilarModels] = useState([]);
   const [shareStatus, setShareStatus] = useState(null); // null | 'copied'
 
-  // Find similar models based on VRAM
-  useEffect(() => {
-    if (modelData && allModels.length > 0) {
-      const currentVRAM = parseFloat(modelData.vramEstimates?.fp16 || 0);
-      const similar = allModels
-        .filter(m => m.modelId !== modelData.modelId)
-        .filter(m => {
-          const vram = parseFloat(m.vramEstimates?.fp16 || 0);
-          return Math.abs(vram - currentVRAM) <= 8;
-        })
-        .slice(0, 2);
-
-      setSimilarModels([modelData, ...similar]);
+  const similarModels = useMemo(() => {
+    if (!modelData || allModels.length === 0) {
+      return [];
     }
-  }, [modelData, allModels]);
+
+    const currentVRAM = parseFloat(modelData.vramEstimates?.fp16 || 0);
+    const similar = allModels
+      .filter((m) => m.modelId !== modelData.modelId)
+      .filter((m) => {
+        const vram = parseFloat(m.vramEstimates?.fp16 || 0);
+        return Math.abs(vram - currentVRAM) <= 8;
+      })
+      .slice(0, 2);
+
+    return [modelData, ...similar];
+  }, [allModels, modelData]);
 
   // Helper function to copy code to clipboard
   const handleCopy = (code, index) => {
@@ -97,10 +97,10 @@ ${modelData.licenseInfo?.commercial ? '✅ Commercial Use Allowed' : '⚠️ Che
         const endIndex = Math.min(cardText.length, match.index + match[0].length + 200);
         const context = cardText.substring(startIndex, endIndex).trim();
 
-        const replacementMatch = cardText.match(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/);
+        const replacementMatch = cardText.match(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/);
 
         notices.deprecation = {
-          message: context.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-300 hover:text-blue-200 underline">$1</a>'),
+          message: context.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-300 hover:text-blue-200 underline">$1</a>'),
           replacement: replacementMatch ? {
             name: replacementMatch[1],
             url: replacementMatch[2]

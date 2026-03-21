@@ -1,15 +1,6 @@
-import { Shield, Cpu, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+import { Shield, Cpu, AlertCircle } from 'lucide-react';
 
 const QuickDecisionPanel = ({ licenseInfo, vramEstimates }) => {
-  const getLicenseIcon = (color) => {
-    switch (color) {
-      case 'green': return <CheckCircle className="w-5 h-5" />;
-      case 'yellow': return <AlertCircle className="w-5 h-5" />;
-      case 'red': return <XCircle className="w-5 h-5" />;
-      default: return <AlertCircle className="w-5 h-5" />;
-    }
-  };
-
   const getColorClasses = (color) => {
     switch (color) {
       case 'green': return 'bg-green-500/20 border-green-500/30 text-green-400';

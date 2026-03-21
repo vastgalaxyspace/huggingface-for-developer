@@ -54,8 +54,6 @@ const estimateParamsFromConfig = (config) => {
 
   // Check if this is a Mixture-of-Experts (MoE) model
   const numExperts = config.num_local_experts || config.num_experts || null;
-  const numExpertsPerTok = config.num_experts_per_tok || config.experts_per_token || null;
-
   let transformerParams;
 
   if (numExperts && numExperts > 1) {

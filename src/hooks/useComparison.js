@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { AppContext } from '../components/providers/AppProviders';
+import { AppContext } from '../components/providers/AppContext';
 
 export const useComparison = () => {
   const context = useContext(AppContext);

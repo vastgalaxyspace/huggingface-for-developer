@@ -1,6 +1,29 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { TrendingUp, Info, Award } from 'lucide-react';
 
+const BenchmarkTooltip = ({ active, payload, benchmarkInfo }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    const key = data.payload.name.toLowerCase();
+    const info = benchmarkInfo[key];
+
+    return (
+      <div className="bg-slate-800/95 backdrop-blur-sm border border-white/20 rounded-lg p-4 shadow-xl max-w-xs">
+        <p className="font-bold text-white mb-2">{data.payload.fullName}</p>
+        <p className="text-2xl font-bold text-purple-400 mb-2">{data.value}%</p>
+        {info && (
+          <>
+            <p className="text-sm text-gray-300 mb-2">{info.interpretation(data.value)}</p>
+            <p className="text-xs text-gray-400">{info.description}</p>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  return null;
+};
+
 const BenchmarkVisualizer = ({ modelData }) => {
   const benchmarks = modelData.card?.benchmarks || {};
   
@@ -116,28 +139,6 @@ const BenchmarkVisualizer = ({ modelData }) => {
     return '#ef4444';
   };
 
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0];
-      const key = data.payload.name.toLowerCase();
-      const info = benchmarkInfo[key];
-
-      return (
-        <div className="bg-slate-800/95 backdrop-blur-sm border border-white/20 rounded-lg p-4 shadow-xl max-w-xs">
-          <p className="font-bold text-white mb-2">{data.payload.fullName}</p>
-          <p className="text-2xl font-bold text-purple-400 mb-2">{data.value}%</p>
-          {info && (
-            <>
-              <p className="text-sm text-gray-300 mb-2">{info.interpretation(data.value)}</p>
-              <p className="text-xs text-gray-400">{info.description}</p>
-            </>
-          )}
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden">
       {/* Header */}
@@ -170,7 +171,7 @@ const BenchmarkVisualizer = ({ modelData }) => {
               label={{ value: 'Score (%)', angle: -90, position: 'insideLeft', fill: '#9ca3af' }}
               domain={[0, 100]}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<BenchmarkTooltip benchmarkInfo={benchmarkInfo} />} />
             <Bar dataKey="score" radius={[8, 8, 0, 0]}>
               {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />

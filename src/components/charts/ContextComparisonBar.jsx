@@ -1,22 +1,23 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { prepareContextComparisonData } from '../../utils/chartDataUtils';
 
+const ContextTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-slate-800/95 backdrop-blur-sm border border-white/20 rounded-lg p-3 shadow-xl">
+        <p className="font-bold text-white mb-1">{data.name}</p>
+        <p className="text-sm text-gray-300">Context: {data.contextK} tokens</p>
+        <p className="text-sm text-gray-300">VRAM: {data.vram}GB</p>
+      </div>
+    );
+  }
+
+  return null;
+};
+
 const ContextComparisonBar = ({ models, onSelectModel }) => {
   const data = prepareContextComparisonData(models);
-
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-slate-800/95 backdrop-blur-sm border border-white/20 rounded-lg p-3 shadow-xl">
-          <p className="font-bold text-white mb-1">{data.name}</p>
-          <p className="text-sm text-gray-300">Context: {data.contextK} tokens</p>
-          <p className="text-sm text-gray-300">VRAM: {data.vram}GB</p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   const getBarColor = (context) => {
     if (context >= 32768) return '#10b981'; // green
@@ -56,7 +57,7 @@ const ContextComparisonBar = ({ models, onSelectModel }) => {
             label={{ value: 'Context Length (tokens)', angle: -90, position: 'insideLeft', fill: '#9ca3af' }}
             tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<ContextTooltip />} />
           <Bar 
             dataKey="context" 
             onClick={(data) => onSelectModel && onSelectModel(data.fullName)}

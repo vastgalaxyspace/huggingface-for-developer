@@ -148,13 +148,13 @@ const CLOUD_PRICING = {
  * @param {string} useCase - Use case type
  * @returns {array} Recommended GPUs
  */
-export const getGPURecommendations = (requiredVRAM, useCase = 'inference') => {
+export const getGPURecommendations = (requiredVRAM) => {
   const margin = 1.3; // 30% overhead for safety
   const targetVRAM = requiredVRAM * margin;
   
   // Find suitable GPUs
   const suitable = Object.entries(GPU_DATABASE)
-    .filter(([_, gpu]) => gpu.vram >= targetVRAM)
+    .filter(([, gpu]) => gpu.vram >= targetVRAM)
     .map(([id, gpu]) => ({
       id,
       ...gpu,
@@ -183,11 +183,11 @@ export const calculateCloudCosts = (vram, hoursPerMonth = 730) => {
   
   // Find appropriate instance for each provider
   Object.entries(CLOUD_PRICING).forEach(([provider, instances]) => {
-    const suitable = Object.entries(instances)
+  const suitable = Object.entries(instances)
       .map(([key, instance]) => {
         // Extract VRAM from GPU name
         const vramMatch = instance.gpu.match(/(\d+)GB/);
-        const instanceVRAM = vramMatch ? parseInt(vramMatch[1]) : 999;
+        const instanceVRAM = vramMatch ? parseInt(vramMatch[1], 10) : 999;
         
         return {
           key,

@@ -1,24 +1,25 @@
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ZAxis } from 'recharts';
-import { prepareVRAMQualityData, getLicenseColor } from '../../utils/chartDataUtils';
+import { prepareVRAMQualityData } from '../../utils/chartDataUtils';
+
+const VRAMTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-slate-800/95 backdrop-blur-sm border border-white/20 rounded-lg p-3 shadow-xl">
+        <p className="font-bold text-white mb-1">{data.name}</p>
+        <p className="text-sm text-gray-300">VRAM: {data.vram}GB</p>
+        <p className="text-sm text-gray-300">Quality: {data.quality}</p>
+        <p className="text-sm text-gray-300">Size: {data.params}B params</p>
+        <p className="text-sm text-gray-300">License: {data.license}</p>
+      </div>
+    );
+  }
+
+  return null;
+};
 
 const VRAMQualityScatter = ({ models, onSelectModel }) => {
   const data = prepareVRAMQualityData(models);
-
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-slate-800/95 backdrop-blur-sm border border-white/20 rounded-lg p-3 shadow-xl">
-          <p className="font-bold text-white mb-1">{data.name}</p>
-          <p className="text-sm text-gray-300">VRAM: {data.vram}GB</p>
-          <p className="text-sm text-gray-300">Quality: {data.quality}</p>
-          <p className="text-sm text-gray-300">Size: {data.params}B params</p>
-          <p className="text-sm text-gray-300">License: {data.license}</p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   // Group by license for multiple scatter series
   const commercialData = data.filter(d => d.license === 'Commercial');
@@ -55,7 +56,7 @@ const VRAMQualityScatter = ({ models, onSelectModel }) => {
             label={{ value: 'Quality Score', angle: -90, position: 'insideLeft', fill: '#9ca3af' }}
           />
           <ZAxis type="number" dataKey="params" range={[50, 400]} name="Parameters" unit="B" />
-          <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3' }} />
+          <Tooltip content={<VRAMTooltip />} cursor={{ strokeDasharray: '3 3' }} />
           <Legend />
           
           {commercialData.length > 0 && (

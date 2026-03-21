@@ -1,34 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { Lightbulb, TrendingDown, TrendingUp, Shield, FileText, AlertCircle } from 'lucide-react';
 import { findAlternatives, getAlternativesSummary } from '../../utils/alternativesEngine';
 import AlternativeCard from './AlternativeCard';
 
 const AlternativesSuggester = ({ modelData, allModels, onSelectModel }) => {
-  const [alternatives, setAlternatives] = useState(null);
   const [activeCategory, setActiveCategory] = useState('cheaper');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (modelData && allModels.length > 0) {
-      setLoading(true);
-      // Simulate processing delay for better UX
-      setTimeout(() => {
-        const alts = findAlternatives(modelData, allModels);
-        setAlternatives(alts);
-        
-        // Auto-select first non-empty category
-        if (alts.cheaper.length === 0 && alts.better.length > 0) {
-          setActiveCategory('better');
-        } else if (alts.cheaper.length === 0 && alts.better.length === 0 && alts.license.length > 0) {
-          setActiveCategory('license');
-        } else if (alts.cheaper.length === 0 && alts.better.length === 0 && alts.license.length === 0 && alts.context.length > 0) {
-          setActiveCategory('context');
-        }
-        
-        setLoading(false);
-      }, 500);
+  const alternatives = useMemo(() => {
+    if (!modelData || allModels.length === 0) {
+      return null;
     }
+
+    return findAlternatives(modelData, allModels);
   }, [modelData, allModels]);
+  const loading = !alternatives;
 
   if (loading) {
     return (
@@ -94,7 +78,9 @@ const AlternativesSuggester = ({ modelData, allModels, onSelectModel }) => {
     }
   ];
 
-  const activeAlternatives = alternatives[activeCategory] || [];
+  const fallbackCategory = categories.find((category) => category.count > 0)?.id || 'cheaper';
+  const selectedCategory = alternatives[activeCategory]?.length > 0 ? activeCategory : fallbackCategory;
+  const activeAlternatives = alternatives[selectedCategory] || [];
 
   return (
     <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden">
@@ -122,7 +108,7 @@ const AlternativesSuggester = ({ modelData, allModels, onSelectModel }) => {
                 onClick={() => setActiveCategory(category.id)}
                 disabled={category.count === 0}
                 className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-all whitespace-nowrap ${
-                  activeCategory === category.id
+                  selectedCategory === category.id
                     ? 'border-purple-500 text-white bg-white/5'
                     : category.count > 0
                     ? 'border-transparent text-gray-400 hover:text-white hover:bg-white/5'
@@ -145,7 +131,7 @@ const AlternativesSuggester = ({ modelData, allModels, onSelectModel }) => {
       {/* Category Description */}
       <div className="bg-black/20 px-6 py-3 border-b border-white/10">
         <p className="text-sm text-gray-300">
-          {categories.find(c => c.id === activeCategory)?.description}
+          {categories.find(c => c.id === selectedCategory)?.description}
         </p>
       </div>
 
@@ -157,7 +143,7 @@ const AlternativesSuggester = ({ modelData, allModels, onSelectModel }) => {
               <AlternativeCard
                 key={alt.modelId}
                 model={alt}
-                type={activeCategory}
+                type={selectedCategory}
                 onAnalyze={onSelectModel}
               />
             ))}

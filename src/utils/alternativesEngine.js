@@ -33,7 +33,6 @@ const findCheaperAlternatives = (currentModel, candidates) => {
   const cheaper = candidates
     .filter(m => {
       const vram = parseFloat(m.vramEstimates.fp16);
-      const params = parseFloat(m.vramEstimates.totalParams);
       
       // Must be significantly cheaper (at least 20% less VRAM)
       return vram < currentVRAM * 0.8;

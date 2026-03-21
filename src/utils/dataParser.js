@@ -154,10 +154,10 @@ const extractFirstParagraph = (text) => {
     let cleanText = p.replace(/<[^>]*>?/gm, '');
     
     // Remove markdown image links ![alt](url)
-    cleanText = cleanText.replace(/!\[[^\]]*\]\([^\)]*\)/g, '');
+    cleanText = cleanText.replace(/!\[[^\]]*\]\([^)]+\)/g, '');
     
     // Strip markdown links but keep the link text [text](url) -> text
-    cleanText = cleanText.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1');
+    cleanText = cleanText.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
     
     // Strip bold/italic markdown formatting for cleaner plain text display
     cleanText = cleanText.replace(/(\*\*|__|\*|_)(.*?)\1/g, '$2');

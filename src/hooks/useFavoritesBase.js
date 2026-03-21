@@ -2,38 +2,35 @@ import { useState, useEffect, useCallback } from 'react';
 
 const FAVORITES_KEY = 'hf_model_explorer_favorites';
 
+const loadInitialFavorites = () => {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
+  try {
+    const stored = localStorage.getItem(FAVORITES_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Error loading favorites:', error);
+    return [];
+  }
+};
+
 /**
  * Custom hook for managing favorite models
  * @returns {object} Favorites state and methods
  */
 export const useFavorites = () => {
-  const [favorites, setFavorites] = useState([]);
-  const [loaded, setLoaded] = useState(false);
+  const [favorites, setFavorites] = useState(loadInitialFavorites);
 
-  // Load favorites from localStorage on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(FAVORITES_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setFavorites(parsed);
-      }
-    } catch (error) {
-      console.error('Error loading favorites:', error);
-      setFavorites([]);
-    }
-    setLoaded(true);
-  }, []);
-
-  // Save favorites to localStorage whenever they change (skip initial mount)
-  useEffect(() => {
-    if (!loaded) return;
+    if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
     } catch (error) {
       console.error('Error saving favorites:', error);
     }
-  }, [favorites, loaded]);
+  }, [favorites]);
 
   // Add model to favorites
   const addFavorite = useCallback((modelData) => {
@@ -116,7 +113,7 @@ export const useFavorites = () => {
           });
           alert('Favorites imported successfully!');
         }
-      } catch (error) {
+      } catch {
         alert('Error importing favorites. Please check the file format.');
       }
     };

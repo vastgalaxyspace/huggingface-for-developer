@@ -28,7 +28,8 @@ const LoadingSpinner = ({ message = 'Loading model data...' }) => {
   );
 };
 
-const LoadingStep = ({ icon: Icon, text, delay }) => {
+const LoadingStep = ({ icon, text, delay }) => {
+  const Icon = icon;
   return (
     <div 
       className="flex items-center gap-3 text-gray-400 animate-pulse"

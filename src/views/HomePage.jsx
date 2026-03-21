@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Sparkles, Zap, Shield, Database, TrendingUp } from 'lucide-react';
 import ModelSearchAutocomplete from '../components/common/ModelSearchAutocomplete';
 import FilterPanel from '../components/common/FilterPanel';
@@ -23,10 +23,18 @@ const HomePage = ({ onSearch, loading, onViewRecommender, onApplyTemplate }) => 
   };
 
   // Helper: Estimate data from the raw API response so filters can work
-  const enrichModelData = (model) => {
+  const formatNumber = useCallback((num) => {
+    if (!num) return '0';
+    const n = typeof num === 'string' ? parseFloat(num) : num;
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+    return n.toString();
+  }, []);
+
+  const enrichModelData = useCallback((model) => {
     // 1. Estimate Parameters from name (e.g. "7b" -> 7)
     const paramMatch = model.id.match(/(\d+)[bB]/);
-    const params = paramMatch ? parseInt(paramMatch[1]) : 7; // Default to 7B if unknown
+    const params = paramMatch ? parseInt(paramMatch[1], 10) : 7; // Default to 7B if unknown
 
     // 2. Estimate VRAM (rough rule of thumb: params * 2 for FP16)
     // Updated to ensure these are stored as Numbers for compatibility with updated vramCalculator
@@ -64,7 +72,7 @@ const HomePage = ({ onSearch, loading, onViewRecommender, onApplyTemplate }) => 
       name: model.id.split('/')[1] || model.id,
       desc: `${formatNumber(model.downloads)} downloads • ${model.pipeline_tag || 'Text Generation'}`,
     };
-  };
+  }, [formatNumber]);
 
   // Fetch trending models on component mount
   useEffect(() => {
@@ -87,21 +95,12 @@ const HomePage = ({ onSearch, loading, onViewRecommender, onApplyTemplate }) => 
     };
 
     fetchModels();
-  }, []);
+  }, [enrichModelData]);
 
   // Apply filters using useMemo
   const filteredModels = useMemo(() => {
     return applyFilters(popularModels, filters);
   }, [popularModels, filters]);
-
-  // Helper to format large numbers
-  const formatNumber = (num) => {
-    if (!num) return '0';
-    const n = typeof num === 'string' ? parseFloat(num) : num;
-    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-    return n.toString();
-  };
 
   const features = [
     {

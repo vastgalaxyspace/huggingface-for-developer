@@ -1,5 +1,0 @@
-5a7391e chore: ignore next.js build output
-c44346e converted to next
-6e4f7d3 added domain name
-6337ada added google analy
-c38f258 solved errors

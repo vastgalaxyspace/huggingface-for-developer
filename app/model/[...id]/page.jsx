@@ -12,7 +12,7 @@ export async function generateMetadata({ params }) {
       title: `${modelId} | HF Model Explorer`,
       description: `Analysis and hardware requirements for ${modelId} by ${rawData.author || 'HuggingFace'}.`,
     };
-  } catch (e) {
+  } catch {
     return {
       title: `${modelId} | HF Model Explorer`,
       description: `Explore the AI model ${modelId} on HuggingFace.`,

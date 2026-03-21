@@ -1,5 +1,4 @@
 "use client";
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { useModelData } from '../../hooks/useModelData';

@@ -1,6 +1,23 @@
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, ResponsiveContainer, Tooltip } from 'recharts';
 import { prepareRadarData, getModelColors } from '../../utils/chartDataUtils';
 
+const RadarTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-slate-800/95 backdrop-blur-sm border border-white/20 rounded-lg p-3 shadow-xl">
+        <p className="font-bold text-white mb-2">{payload[0].payload.metric}</p>
+        {payload.map((entry, index) => (
+          <p key={index} className="text-sm" style={{ color: entry.color }}>
+            {entry.name}: {entry.value}/100
+          </p>
+        ))}
+      </div>
+    );
+  }
+
+  return null;
+};
+
 const ModelRadarChart = ({ models }) => {
   if (!models || models.length === 0) {
     return (
@@ -12,22 +29,6 @@ const ModelRadarChart = ({ models }) => {
 
   const data = prepareRadarData(models.slice(0, 3)); // Max 3 models
   const colors = getModelColors();
-
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-slate-800/95 backdrop-blur-sm border border-white/20 rounded-lg p-3 shadow-xl">
-          <p className="font-bold text-white mb-2">{payload[0].payload.metric}</p>
-          {payload.map((entry, index) => (
-            <p key={index} className="text-sm" style={{ color: entry.color }}>
-              {entry.name}: {entry.value}/100
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
@@ -52,7 +53,7 @@ const ModelRadarChart = ({ models }) => {
             domain={[0, 100]}
             tick={{ fill: '#9ca3af', fontSize: 10 }}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<RadarTooltip />} />
           <Legend />
           
           {models.slice(0, 3).map((model, index) => {

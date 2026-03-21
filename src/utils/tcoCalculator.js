@@ -10,8 +10,6 @@
 export const calculateTCO = (modelData, usage = {}) => {
   const {
     tokensPerMonth = 1000000,
-    requestsPerDay = 1000,
-    peakConcurrency = 10,
     monthlyActiveUsers = 10000,
     hoursPerDay = 24,
     daysPerMonth = 30
@@ -134,7 +132,7 @@ const calculateCloudGPUCost = (vram, hoursPerDay, daysPerMonth) => {
 
   // Find most suitable instance
   const suitable = Object.entries(instances)
-    .filter(([_, inst]) => inst.suitable)
+    .filter(([, inst]) => inst.suitable)
     .sort((a, b) => a[1].monthly - b[1].monthly);
 
   return {

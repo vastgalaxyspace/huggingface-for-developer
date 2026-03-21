@@ -196,7 +196,7 @@ export const canUseCommercially = (licenseId) => {
  * @param {string} useCase - Intended use case
  * @returns {object} Deployment recommendation
  */
-export const getDeploymentRecommendation = (licenseId, useCase = 'commercial') => {
+export const getDeploymentRecommendation = (licenseId) => {
   const license = getLicenseInfo(licenseId);
   
   const recommendations = {
