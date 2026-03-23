@@ -1,7 +1,6 @@
 import { AppProviders } from '../src/components/providers/AppProviders';
 import Header from '../src/components/layout/Header';
 import Footer from '../src/components/layout/Footer';
-import ComparisonBar from '../src/components/comparison/ComparisonBar';
 import './globals.css';
 
 export const metadata = {
@@ -18,12 +17,11 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <AppProviders>
-          <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
+          <div className="min-h-screen text-slate-800">
             <Header />
             <main className="min-h-screen pb-24">
               {children}
             </main>
-            <ComparisonBar />
             <Footer />
           </div>
         </AppProviders>

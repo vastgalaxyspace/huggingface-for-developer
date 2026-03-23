@@ -183,7 +183,7 @@ export const searchModels = async (query, limit = 10) => {
 export const getTrendingModels = async (limit = 10) => {
   try {
     const response = await fetch(
-      `${HF_API_MODELS}?sort=downloads&direction=-1&limit=${limit}&filter=text-generation`
+      `${HF_API_MODELS}?sort=downloads&direction=-1&limit=${limit}`
     );
     
     if (!response.ok) throw new Error('Failed to fetch trending models');

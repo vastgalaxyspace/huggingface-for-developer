@@ -15,13 +15,13 @@ export default function FavoritesPage() {
   } = useFavorites();
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
+    <div className="max-w-7xl mx-auto px-6 py-10 min-h-[calc(100vh-64px)]">
       <button
         onClick={() => router.push('/')}
-        className="flex items-center gap-2 text-gray-300 hover:text-white mb-6 transition-colors group"
+        className="flex items-center gap-2 text-slate-500 hover:text-slate-800 mb-8 transition-colors group"
       >
-        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-        <span>Back to Search</span>
+        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+        <span className="text-[13px] font-bold">Back to Search</span>
       </button>
 
       <FavoritesPanel

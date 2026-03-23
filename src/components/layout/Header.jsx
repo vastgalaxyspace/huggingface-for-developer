@@ -1,54 +1,75 @@
 "use client";
-import { Database, Heart } from 'lucide-react';
 import Link from 'next/link';
-import { useFavorites } from '../../hooks/useFavorites';
+import { usePathname } from 'next/navigation';
+import { Bell } from 'lucide-react';
 
 const Header = () => {
-  const { count: favoritesCount } = useFavorites();
+  const pathname = usePathname();
+
+  const isActive = (path) => {
+    if (path === '/' && pathname === '/') return true;
+    if (path !== '/' && pathname?.startsWith(path)) return true;
+    return false;
+  };
 
   return (
-    <header className="bg-black/30 backdrop-blur-sm border-b border-white/10 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="flex items-center justify-between">
-          {/* Logo & Title */}
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-              <Database className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent" role="heading" aria-level="2">
-                HuggingFace Model Explorer
-              </span>
-              <p className="text-sm text-gray-400">
-                Decode any LLM in seconds
-              </p>
-            </div>
+    <header className="sticky top-0 z-50 border-b border-[var(--border-soft)] bg-[rgba(251,253,255,0.88)] backdrop-blur-xl">
+      <div className="shell-container flex h-[78px] items-center justify-between gap-6">
+        <div className="flex h-full items-center gap-8 lg:gap-12">
+          <Link href="/" className="flex items-center">
+            <span className="text-[1.15rem] font-extrabold tracking-tight text-[var(--text-strong)]">
+              Model Explorer
+            </span>
           </Link>
 
-          {/* Navigation */}
-          <nav className="flex items-center gap-6 text-sm">
+          <nav className="flex h-full items-center gap-6 text-[15px] font-medium text-[var(--text-muted)] lg:gap-8">
             <Link
-              href="/favorites"
-              className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors relative"
+              href="/"
+              className={`flex h-full items-center border-b-[3px] pt-[3px] transition-colors ${
+                isActive('/')
+                  ? 'border-[var(--text-strong)] text-[var(--text-strong)]'
+                  : 'border-transparent hover:text-[var(--text-strong)]'
+              }`}
             >
-              <Heart className={`w-5 h-5 ${favoritesCount > 0 ? 'fill-current text-red-400' : ''}`} />
-              <span>Favorites</span>
-              {favoritesCount > 0 && (
-                <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
-                  {favoritesCount}
-                </span>
-              )}
+              Home
             </Link>
-            
-            <a 
-              href="https://huggingface.co/models" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-gray-300 hover:text-white transition-colors"
+            <Link
+              href="/compare"
+              className={`flex h-full items-center border-b-[3px] pt-[3px] transition-colors ${
+                isActive('/compare')
+                  ? 'border-[var(--text-strong)] text-[var(--text-strong)]'
+                  : 'border-transparent hover:text-[var(--text-strong)]'
+              }`}
             >
-              HuggingFace →
-            </a>
+              Compare
+            </Link>
+            <Link
+              href="/recommender"
+              className={`flex h-full items-center border-b-[3px] pt-[3px] transition-colors ${
+                isActive('/recommender')
+                  ? 'border-[var(--text-strong)] text-[var(--text-strong)]'
+                  : 'border-transparent hover:text-[var(--text-strong)]'
+              }`}
+            >
+              Recommender
+            </Link>
+            <Link
+              href="/gpu"
+              className={`flex h-full items-center border-b-[3px] pt-[3px] transition-colors ${
+                isActive('/gpu')
+                  ? 'border-[var(--text-strong)] text-[var(--text-strong)]'
+                  : 'border-transparent hover:text-[var(--text-strong)]'
+              }`}
+            >
+              GPU Hub
+            </Link>
           </nav>
+        </div>
+
+        <div className="flex items-center gap-3 text-[var(--text-muted)]">
+          <button className="flex h-10 w-10 items-center justify-center rounded-xl border border-transparent transition-colors hover:border-[var(--border-soft)] hover:bg-white hover:text-[var(--text-strong)]">
+            <Bell className="h-[18px] w-[18px]" />
+          </button>
         </div>
       </div>
     </header>

@@ -1,704 +1,227 @@
-import { ArrowLeft, Layers, Code, Copy, Check, Terminal, AlertTriangle, Info, Share2, Shield, Cpu, Zap, Server, Award, Play, BarChart3 } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import ModelHeader from '../components/model/ModelHeader';
-import QuickDecisionPanel from '../components/model/QuickDecisionPanel';
-import ParameterCard from '../components/model/ParameterCard';
-import HardwareRecommendations from '../components/model/HardwareRecommendations';
-import FavoriteButton from '../components/common/FavoriteButton';
-import CompareButton from '../components/common/CompareButton';
-import CollapsibleSection from '../components/common/CollapsibleSection';
-import StickyNav from '../components/common/StickyNav';
-import { getParameterExplanation } from '../utils/parameterExplanations';
-import DeploymentScore from '../components/scoring/DeploymentScore';
-import ModelRadarChart from '../components/charts/ModelRadarChart';
-import CompatibilityChecker from '../components/compatibility/CompatibilityChecker';
-import AlternativesSuggester from '../components/alternatives/AlternativesSuggester';
-import TCOCalculator from '../components/tco/TCOCalculator';
-import BenchmarkVisualizer from '../components/benchmarks/BenchmarkVisualizer';
-import LiveModelTester from '../components/tester/LiveModelTester';
-import DecisionMatrix from '../components/matrix/DecisionMatrix';
+"use client";
+import { Copy, Check, Info, FileText, FolderOpen, Users, Settings, Database } from 'lucide-react';
+import { useState } from 'react';
 
-const ModelDetailPage = ({
-  modelData,
-  onBack,
-  onAddToComparison,
-  onRemoveFromComparison,
-  isInComparison,
-  canAddMore,
-  onToggleFavorite,
-  isFavorite,
-  allModels = []
-}) => {
-  const [copiedIndex, setCopiedIndex] = useState(null);
-  const [shareStatus, setShareStatus] = useState(null); // null | 'copied'
+const SidebarItem = ({ icon: Icon, text, active }) => (
+  <button className={`w-full flex items-center gap-3 rounded-r-xl px-4 py-3 text-[13px] font-bold transition-colors ${
+    active
+      ? 'bg-[var(--panel-muted)] text-[var(--accent)] border-l-[3px] border-[var(--accent)]'
+      : 'text-[var(--text-muted)] hover:bg-[rgba(243,247,252,0.8)] hover:text-[var(--text-strong)] border-l-[3px] border-transparent'
+  }`}>
+    <Icon className={`h-[15px] w-[15px] ${active ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'}`} />
+    {text}
+  </button>
+);
 
-  const similarModels = useMemo(() => {
-    if (!modelData || allModels.length === 0) {
-      return [];
-    }
+const ModelDetailPage = ({ modelData }) => {
+  const [copied, setCopied] = useState(false);
 
-    const currentVRAM = parseFloat(modelData.vramEstimates?.fp16 || 0);
-    const similar = allModels
-      .filter((m) => m.modelId !== modelData.modelId)
-      .filter((m) => {
-        const vram = parseFloat(m.vramEstimates?.fp16 || 0);
-        return Math.abs(vram - currentVRAM) <= 8;
-      })
-      .slice(0, 2);
-
-    return [modelData, ...similar];
-  }, [allModels, modelData]);
-
-  // Helper function to copy code to clipboard
-  const handleCopy = (code, index) => {
-    navigator.clipboard.writeText(code);
-    setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 2000);
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  // Share Analysis - generates a concise summary card
-  const handleShareAnalysis = () => {
-    const summary = `📊 Model Analysis: ${modelData.modelId}
+  const nameParts = modelData?.modelId ? modelData.modelId.split('/') : ['meta-llama', 'Meta-Llama-3-8B'];
+  const modelName = nameParts.length > 1 ? nameParts[1] : nameParts[0];
 
-🏷️ ${modelData.vramEstimates?.totalParams || '?'}B Parameters
-💾 ${modelData.vramEstimates?.fp16 || '?'}GB VRAM (FP16) | ${modelData.vramEstimates?.int4 || '?'}GB (INT4)
-📜 License: ${modelData.licenseInfo?.name || 'Unknown'}
-${modelData.licenseInfo?.commercial ? '✅ Commercial Use Allowed' : '⚠️ Check License Terms'}
-📄 Context: ${(modelData.config?.max_position_embeddings || 4096).toLocaleString()} tokens
+  const paramCount = modelData?.vramEstimates?.totalParams || 7;
+  const paramString = paramCount >= 1000
+    ? `${(paramCount / 1000).toFixed(1)} Trillion`
+    : `${paramCount} Billion`;
 
-🔗 View on HuggingFace: https://huggingface.co/${modelData.modelId}
-📊 Analyzed with HF Model Explorer`;
+  const codeSnippet = `from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    navigator.clipboard.writeText(summary);
-    setShareStatus('copied');
-    setTimeout(() => setShareStatus(null), 3000);
-  };
+model_id = "${modelData?.modelId || 'precision/architect-7b-instruct'}"
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+model = AutoModelForCausalLM.from_pretrained(model_id, device_map="auto")
 
-  // Helper function to parse notices from model card
-  const parseModelNotices = () => {
-    const notices = {
-      deprecation: null,
-      general: []
-    };
+prompt = "Analyze this blueprint structure: [JSON DATA]"
+inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
+outputs = model.generate(**inputs, max_new_tokens=512)
 
-    if (!modelData.card) return notices;
-
-    const cardText = modelData.card.text || modelData.card.description || '';
-
-    const deprecationPatterns = [
-      /⚠️.*?(?:deprecated|older version|previous generation|superseded)/i,
-      /This (?:model|repository) (?:contains|has) (?:been )?(?:deprecated|superseded|replaced)/i,
-    ];
-
-    deprecationPatterns.forEach(pattern => {
-      const match = cardText.match(pattern);
-      if (match) {
-        const startIndex = Math.max(0, match.index - 50);
-        const endIndex = Math.min(cardText.length, match.index + match[0].length + 200);
-        const context = cardText.substring(startIndex, endIndex).trim();
-
-        const replacementMatch = cardText.match(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/);
-
-        notices.deprecation = {
-          message: context.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-300 hover:text-blue-200 underline">$1</a>'),
-          replacement: replacementMatch ? {
-            name: replacementMatch[1],
-            url: replacementMatch[2]
-          } : null
-        };
-      }
-    });
-
-    const noticePatterns = [/⚠️.*?$/gm, /📢.*?$/gm];
-    noticePatterns.forEach(pattern => {
-      const matches = cardText.matchAll(pattern);
-      for (const match of matches) {
-        if (match[0] && !notices.deprecation?.message?.includes(match[0])) {
-          notices.general.push(match[0].trim());
-        }
-      }
-    });
-
-    return notices;
-  };
-
-  const notices = parseModelNotices();
-
-  // Generate code snippets based on model
-  const generateCodeSnippets = () => {
-    const modelId = modelData.modelId || 'model-name';
-    const snippets = [];
-
-    snippets.push({
-      title: 'Basic Usage with Transformers',
-      language: 'Python',
-      code: `from transformers import AutoTokenizer, AutoModelForCausalLM
-
-# Load model and tokenizer
-tokenizer = AutoTokenizer.from_pretrained("${modelId}")
-model = AutoModelForCausalLM.from_pretrained("${modelId}")
-
-# Generate text
-prompt = "Explain Machine Learning in a nutshell."
-inputs = tokenizer(prompt, return_tensors="pt")
-outputs = model.generate(**inputs, max_length=200)
-
-# Decode output
-response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-print(response)`,
-      description: 'Basic inference using Hugging Face Transformers library'
-    });
-
-    snippets.push({
-      title: 'Advanced Generation with Parameters',
-      language: 'Python',
-      code: `from transformers import AutoTokenizer, AutoModelForCausalLM
-import torch
-
-# Load model with optimizations
-tokenizer = AutoTokenizer.from_pretrained("${modelId}")
-model = AutoModelForCausalLM.from_pretrained(
-    "${modelId}",
-    torch_dtype=torch.float16,
-    device_map="auto"
-)
-
-# Generate with custom parameters
-prompt = "Write a short story about AI:"
-inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-
-outputs = model.generate(
-    **inputs,
-    max_new_tokens=500,
-    temperature=0.7,
-    top_p=0.9,
-    top_k=50,
-    repetition_penalty=1.1,
-    do_sample=True
-)
-
-print(tokenizer.decode(outputs[0], skip_special_tokens=True))`,
-      description: 'Use custom generation parameters for better control over outputs'
-    });
-
-    if (modelId.toLowerCase().includes('mistral')) {
-      snippets.push({
-        title: 'Using Mistral Tokenizer',
-        language: 'Python',
-        code: `from mistral_common.tokens.tokenizers.mistral import MistralTokenizer
-from mistral_common.protocol.instruct.messages import UserMessage
-from mistral_common.protocol.instruct.request import ChatCompletionRequest
-from mistral_inference.transformer import Transformer
-from mistral_inference.generate import generate
-
-# Initialize tokenizer
-tokenizer = MistralTokenizer.v1()
-
-# Create completion request
-completion_request = ChatCompletionRequest(
-    messages=[UserMessage(content="Explain Machine Learning to me in a nutshell.")]
-)
-
-# Encode
-tokens = tokenizer.encode_chat_completion(completion_request).tokens
-
-# Load model and generate
-model = Transformer.from_folder("path/to/model")
-out_tokens, _ = generate(
-    [tokens], 
-    model, 
-    max_tokens=64, 
-    temperature=0.0, 
-    eos_id=tokenizer.instruct_tokenizer.tokenizer.eos_id
-)`,
-        description: 'Official Mistral tokenizer and inference setup'
-      });
-    }
-
-    snippets.push({
-      title: 'Local Inference with llama.cpp',
-      language: 'Bash',
-      code: `# Download and setup llama.cpp
-git clone https://github.com/ggerganov/llama.cpp
-cd llama.cpp
-make
-
-# Run inference (requires GGUF format)
-./main -m /path/to/model.gguf \\
-  -p "Explain Machine Learning:" \\
-  -n 256 \\
-  --temp 0.7 \\
-  --top-p 0.9 \\
-  --repeat-penalty 1.1 \\
-  -ngl 32`,
-      description: 'Run the model locally using llama.cpp for efficient CPU/GPU inference'
-    });
-
-    snippets.push({
-      title: 'Hugging Face Inference API',
-      language: 'Python',
-      code: `import requests
-
-API_URL = "https://api-inference.huggingface.co/models/${modelId}"
-headers = {"Authorization": "Bearer YOUR_HF_TOKEN"}
-
-def query(payload):
-    response = requests.post(API_URL, headers=headers, json=payload)
-    return response.json()
-
-# Make request
-output = query({
-    "inputs": "Explain Machine Learning in a nutshell.",
-    "parameters": {
-        "max_new_tokens": 200,
-        "temperature": 0.7,
-        "top_p": 0.9
-    }
-})
-
-print(output)`,
-      description: 'Use the Hugging Face Inference API for quick testing without local setup'
-    });
-
-    snippets.push({
-      title: 'Node.js Integration',
-      language: 'JavaScript',
-      code: `const { HfInference } = require('@huggingface/inference');
-
-// Initialize client
-const hf = new HfInference('YOUR_HF_TOKEN');
-
-// Generate text
-async function generateText() {
-  const result = await hf.textGeneration({
-    model: '${modelId}',
-    inputs: 'Explain Machine Learning in a nutshell.',
-    parameters: {
-      max_new_tokens: 200,
-      temperature: 0.7,
-      top_p: 0.9
-    }
-  });
-  
-  console.log(result.generated_text);
-}
-
-generateText();`,
-      description: 'Use the Hugging Face JavaScript SDK for Node.js applications'
-    });
-
-    return modelData.codeSnippets || snippets;
-  };
-
-  const codeSnippets = generateCodeSnippets();
-
-  // Group parameters by category
-  const categorizedParams = {};
-
-  if (modelData.config) {
-    Object.entries(modelData.config).forEach(([key, value]) => {
-      const explanation = getParameterExplanation(key);
-      const category = explanation.category || 'Other';
-
-      if (!categorizedParams[category]) {
-        categorizedParams[category] = [];
-      }
-
-      categorizedParams[category].push({
-        key,
-        value,
-        explanation
-      });
-    });
-  }
-
-  const categoryConfig = {
-    'Architecture': { icon: '🏗️', color: 'purple' },
-    'Memory': { icon: '💾', color: 'blue' },
-    'Performance': { icon: '⚡', color: 'cyan' },
-    'Context': { icon: '📄', color: 'green' },
-    'Tokenization': { icon: '🔤', color: 'yellow' },
-    'Advanced': { icon: '⚙️', color: 'orange' },
-    'Generation': { icon: '✨', color: 'pink' },
-    'Technical': { icon: '🔧', color: 'gray' },
-    'Optimization': { icon: '🚀', color: 'emerald' },
-    'Other': { icon: '📦', color: 'slate' }
-  };
-
-  // Sticky nav sections
-  const navSections = [
-    { id: 'section-overview', label: 'Overview', icon: Info },
-    { id: 'section-decision', label: 'Decision', icon: Zap },
-    { id: 'section-score', label: 'Score', icon: Shield },
-    { id: 'section-code', label: 'Code', icon: Code },
-    { id: 'section-hardware', label: 'Hardware', icon: Server },
-    { id: 'section-compatibility', label: 'Compat.', icon: Cpu },
-    { id: 'section-tco', label: 'TCO', icon: BarChart3 },
-    { id: 'section-benchmarks', label: 'Benchmarks', icon: Award },
-    { id: 'section-tester', label: 'Tester', icon: Play },
-    { id: 'section-params', label: 'Params', icon: Layers },
-  ];
+print(tokenizer.decode(outputs[0]))`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Sticky Navigation */}
-      <StickyNav sections={navSections} />
-
-      <div className="max-w-7xl mx-auto px-6 py-8 xl:pr-48">
-        {/* Back Button and Actions */}
-        <div className="flex items-center justify-between mb-6">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors group"
-          >
-            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            <span>Back to Search</span>
-          </button>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3">
-            {/* Share Analysis Button */}
-            <button
-              onClick={handleShareAnalysis}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border font-medium text-sm transition-all ${
-                shareStatus === 'copied'
-                  ? 'bg-green-500/20 border-green-500/50 text-green-400'
-                  : 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/20 hover:text-white'
-              }`}
-            >
-              {shareStatus === 'copied' ? (
-                <>
-                  <Check className="w-4 h-4" />
-                  Summary Copied!
-                </>
-              ) : (
-                <>
-                  <Share2 className="w-4 h-4" />
-                  Share Analysis
-                </>
-              )}
-            </button>
-
-            <FavoriteButton
-              isFavorite={isFavorite}
-              onToggle={() => onToggleFavorite(modelData)}
-              size="lg"
-            />
-
-            <CompareButton
-              modelId={modelData.modelId}
-              isInComparison={isInComparison}
-              onAdd={onAddToComparison}
-              onRemove={onRemoveFromComparison}
-              disabled={!canAddMore && !isInComparison}
-            />
-          </div>
-        </div>
-
-        {/* Model Header */}
-        <div id="section-overview" className="mb-6">
-          <ModelHeader modelData={modelData} />
-        </div>
-
-        {/* Deprecation Warning */}
-        {(notices.deprecation || modelData.deprecated) && (
-          <div className="mb-6 bg-orange-500/10 backdrop-blur-sm border border-orange-500/30 rounded-xl p-5 flex items-start gap-4">
-            <AlertTriangle className="w-6 h-6 text-orange-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h3 className="text-orange-200 font-semibold mb-2">Deprecated Model</h3>
-              <div
-                className="text-orange-100/90 text-sm leading-relaxed mb-3"
-                dangerouslySetInnerHTML={{
-                  __html: notices.deprecation?.message || modelData.deprecationMessage || 'This model has been deprecated. Please check for newer versions.'
-                }}
-              />
-              {(notices.deprecation?.replacement || modelData.replacementModel) && (
-                <a
-                  href={(notices.deprecation?.replacement || modelData.replacementModel).url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-orange-300 hover:text-orange-200 transition-colors font-medium"
-                >
-                  → View {(notices.deprecation?.replacement || modelData.replacementModel).name}
-                </a>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Important Notices */}
-        {notices.general.length > 0 && (
-          <div className="mb-6 space-y-3">
-            {notices.general.map((notice, index) => (
-              <div
-                key={index}
-                className="bg-amber-500/10 backdrop-blur-sm border border-amber-500/30 rounded-xl p-5 flex items-start gap-4"
-              >
-                <Info className="w-6 h-6 text-amber-400 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <div className="text-amber-100/90 text-sm leading-relaxed">
-                    {notice}
+    <div className="min-h-screen">
+      <div className="shell-container">
+        <div className="editorial-panel overflow-hidden rounded-[32px]">
+          <div className="flex min-h-[calc(100vh-170px)] flex-col md:flex-row">
+            <aside className="hidden min-h-full w-full border-r border-[var(--border-soft)] bg-[rgba(249,251,254,0.88)] py-6 md:flex md:w-[248px] md:flex-col md:justify-between">
+              <div>
+                <div className="mb-8 flex items-center gap-3 px-6">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border-soft)] bg-[var(--panel-muted)]">
+                    <Database className="h-4 w-4 text-[var(--accent)]" />
+                  </div>
+                  <div>
+                    <h2 className="flex flex-col text-[12px] font-extrabold leading-tight text-[var(--text-strong)]">
+                      <span>Model Details</span>
+                      <span className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.22em] text-[var(--text-faint)]">V2.4.0-STABLE</span>
+                    </h2>
                   </div>
                 </div>
+
+                <nav className="flex flex-col pr-4">
+                  <SidebarItem icon={FileText} text="Model Card" active={true} />
+                  <SidebarItem icon={FolderOpen} text="Files" active={false} />
+                  <SidebarItem icon={Users} text="Community" active={false} />
+                  <SidebarItem icon={Settings} text="Settings" active={false} />
+                </nav>
               </div>
-            ))}
-          </div>
-        )}
 
-        {/* Custom Notice */}
-        {modelData.notice && !notices.deprecation && (
-          <div className="mb-6 bg-blue-500/10 backdrop-blur-sm border border-blue-500/30 rounded-xl p-5 flex items-start gap-4">
-            <Info className="w-6 h-6 text-blue-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <div
-                className="text-blue-100/90 text-sm leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: modelData.notice }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Quick Decision Panel */}
-        <div id="section-decision">
-          <CollapsibleSection title="Quick Decision Panel" icon={Zap} iconColor="text-yellow-400" defaultOpen={true}>
-            <QuickDecisionPanel
-              licenseInfo={modelData.licenseInfo}
-              vramEstimates={modelData.vramEstimates}
-            />
-          </CollapsibleSection>
-        </div>
-
-        {/* Deployment Score */}
-        <div id="section-score">
-          <CollapsibleSection title="Deployment Readiness" icon={Shield} iconColor="text-purple-400" defaultOpen={true}>
-            <DeploymentScore modelData={modelData} />
-          </CollapsibleSection>
-        </div>
-
-        {/* Code Snippets Section */}
-        <div id="section-code">
-          <CollapsibleSection 
-            title="Usage Examples" 
-            icon={Code} 
-            iconColor="text-purple-400" 
-            defaultOpen={false}
-            badge={`${codeSnippets.length} snippets`}
-          >
-            <div className="space-y-4">
-              {codeSnippets.map((snippet, index) => (
-                <div
-                  key={index}
-                  className="bg-slate-950/50 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden hover:border-purple-500/30 transition-colors"
-                >
-                  {/* Header */}
-                  <div className="bg-white/5 px-4 py-3 border-b border-white/10 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Terminal className="w-4 h-4 text-purple-400" />
-                      <span className="text-sm font-medium text-gray-300">
-                        {snippet.title}
-                      </span>
-                      <span className="text-xs text-gray-500 bg-white/5 px-2 py-0.5 rounded">
-                        {snippet.language}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => handleCopy(snippet.code, index)}
-                      className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
-                    >
-                      {copiedIndex === index ? (
-                        <>
-                          <Check className="w-4 h-4 text-green-400" />
-                          <span className="text-green-400">Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-4 h-4" />
-                          <span>Copy</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Code Block */}
-                  <div className="relative">
-                    <pre className="p-4 overflow-x-auto text-sm leading-relaxed">
-                      <code className="text-gray-300 font-mono whitespace-pre">
-                        {snippet.code}
-                      </code>
-                    </pre>
-                  </div>
-
-                  {/* Description */}
-                  {snippet.description && (
-                    <div className="px-4 py-3 bg-blue-500/5 border-t border-white/10">
-                      <p className="text-xs text-blue-200/80 leading-relaxed">
-                        💡 {snippet.description}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </CollapsibleSection>
-        </div>
-
-        {/* Hardware Recommendations */}
-        <div id="section-hardware">
-          <CollapsibleSection title="Hardware & Deployment" icon={Server} iconColor="text-blue-400" defaultOpen={true}>
-            <HardwareRecommendations modelData={modelData} />
-          </CollapsibleSection>
-        </div>
-
-        {/* Compatibility Checker */}
-        <div id="section-compatibility">
-          <CollapsibleSection title="Compatibility" icon={Cpu} iconColor="text-cyan-400" defaultOpen={true}>
-            <CompatibilityChecker modelData={modelData} />
-          </CollapsibleSection>
-        </div>
-
-        {/* Alternatives Suggester */}
-        {allModels && allModels.length > 0 && (
-          <CollapsibleSection title="Alternative Models" icon={Layers} iconColor="text-pink-400" defaultOpen={false}>
-            <AlternativesSuggester
-              modelData={modelData}
-              allModels={allModels}
-              onSelectModel={(modelId) => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                onBack();
-                setTimeout(() => {
-                  const searchEvent = new CustomEvent('searchModel', { detail: modelId });
-                  window.dispatchEvent(searchEvent);
-                }, 100);
-              }}
-            />
-          </CollapsibleSection>
-        )}
-
-        {/* TCO Calculator */}
-        <div id="section-tco">
-          <CollapsibleSection title="Total Cost of Ownership" icon={BarChart3} iconColor="text-green-400" defaultOpen={false}>
-            <TCOCalculator modelData={modelData} />
-          </CollapsibleSection>
-        </div>
-
-        {/* Benchmarks */}
-        <div id="section-benchmarks">
-          <CollapsibleSection title="Benchmark Performance" icon={Award} iconColor="text-yellow-400" defaultOpen={true}>
-            <BenchmarkVisualizer modelData={modelData} />
-          </CollapsibleSection>
-        </div>
-
-        {/* Live Model Tester */}
-        <div id="section-tester">
-          <CollapsibleSection title="Test This Model" icon={Play} iconColor="text-green-400" defaultOpen={false}>
-            <LiveModelTester modelData={modelData} />
-          </CollapsibleSection>
-        </div>
-
-        {/* Parameters by Category */}
-        {Object.keys(categorizedParams).length > 0 && (
-          <div id="section-params">
-            <CollapsibleSection 
-              title="Model Parameters Explained" 
-              icon={Layers} 
-              iconColor="text-purple-400" 
-              defaultOpen={false}
-              badge={`${Object.values(categorizedParams).flat().length} params`}
-            >
-              <div className="space-y-8">
-                {Object.entries(categorizedParams).map(([category, params]) => {
-                  const config = categoryConfig[category] || categoryConfig['Other'];
-
-                  return (
-                    <div key={category}>
-                      <div className="flex items-center gap-3 mb-4">
-                        <span className="text-3xl">{config.icon}</span>
-                        <h3 className="text-xl font-bold text-white">
-                          {category}
-                        </h3>
-                        <div className="flex-1 h-px bg-white/10"></div>
-                        <span className="text-sm text-gray-400">
-                          {params.length} {params.length === 1 ? 'parameter' : 'parameters'}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {params.map((param) => (
-                          <ParameterCard
-                            key={param.key}
-                            paramKey={param.key}
-                            paramValue={param.value}
-                            explanation={param.explanation}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CollapsibleSection>
-          </div>
-        )}
-
-        {/* Benchmarks (if available from card) */}
-        {modelData.card?.benchmarks && Object.keys(modelData.card.benchmarks).length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-              <span>📊</span>
-              Benchmark Scores
-            </h2>
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {Object.entries(modelData.card.benchmarks).map(([name, score]) => (
-                  <div key={name} className="text-center p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
-                    <div className="text-3xl font-bold text-purple-400 mb-1">
-                      {typeof score === 'number' ? `${score}%` : score}
-                    </div>
-                    <div className="text-sm text-gray-400 uppercase">
-                      {name.replace(/_/g, ' ')}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Similar Models Radar Chart */}
-        {similarModels.length >= 2 && (
-          <CollapsibleSection title="Model Comparison" icon={BarChart3} iconColor="text-purple-400" defaultOpen={false}>
-            <div className="space-y-8">
-              <ModelRadarChart models={similarModels} />
-              <DecisionMatrix models={similarModels} />
-            </div>
-          </CollapsibleSection>
-        )}
-
-        {/* Raw Config (Collapsible) */}
-        {modelData.config && (
-          <details className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden">
-            <summary className="cursor-pointer p-4 hover:bg-white/5 transition-colors flex items-center gap-2">
-              <span className="text-lg">🔍</span>
-              <span className="font-semibold text-white">View Raw Configuration (Advanced)</span>
-            </summary>
-            <div className="p-4 border-t border-white/10 bg-slate-950/50">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs text-gray-400">Configuration JSON</span>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(JSON.stringify(modelData.config, null, 2));
-                  }}
-                  className="text-xs text-purple-400 hover:text-purple-300 transition-colors px-3 py-1 rounded hover:bg-white/5"
-                >
-                  Copy to clipboard
+              <div className="space-y-4 px-6 pb-8">
+                <button className="w-full rounded-xl bg-[var(--accent)] py-3 text-[11px] font-bold uppercase tracking-[0.2em] text-white transition-colors hover:bg-[var(--accent-strong)]">
+                  Deploy Model
                 </button>
+                <div className="flex flex-col gap-3.5 pt-6">
+                  <button className="flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]">
+                    <FileText className="h-3.5 w-3.5" /> Documentation
+                  </button>
+                  <button className="flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]">
+                    <Info className="h-3.5 w-3.5" /> Support
+                  </button>
+                </div>
               </div>
-              <pre className="text-xs text-gray-300 overflow-auto whitespace-pre-wrap break-words max-h-96 bg-slate-900/50 p-4 rounded-lg">
-                {JSON.stringify(modelData.config, null, 2)}
-              </pre>
-            </div>
-          </details>
-        )}
+            </aside>
+
+            <main className="w-full flex-1 px-6 py-10 md:px-12 lg:px-16 lg:py-12">
+              <div className="mx-auto max-w-[860px]">
+                <div className="mb-8">
+                  <div className="mb-5 flex items-center gap-2.5">
+                    <span className="rounded-full border border-[rgba(54,87,132,0.12)] bg-[var(--accent-soft)] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--accent)]">
+                      NATURAL LANGUAGE
+                    </span>
+                    <span className="rounded-full border border-[var(--border-soft)] bg-[rgba(243,245,248,0.88)] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                      TRANSFORMER
+                    </span>
+                  </div>
+                  <h1 className="mb-4 text-4xl font-black tracking-tight text-[var(--text-strong)] lg:text-5xl">
+                    {modelName}
+                  </h1>
+                  <p className="text-lg font-medium leading-relaxed text-[var(--text-muted)]">
+                    A high-precision instruction-following model optimized for technical documentation generation and architectural reasoning. Fine-tuned on 1.2T tokens of specialized structural data.
+                  </p>
+                </div>
+
+                <div className="mb-10 flex gap-3 border-l-4 border-[#35a2f3] bg-[rgba(228,243,255,0.9)] p-5">
+                  <Info className="mt-0.5 h-[18px] w-[18px] flex-shrink-0 text-[#1180d1]" />
+                  <div>
+                    <h4 className="mb-1 text-[13px] font-bold text-[var(--text-strong)]">Stability Notice</h4>
+                    <p className="text-[13px] font-medium leading-relaxed text-[var(--text-main)]">
+                      This model version is currently in stable release. Expect deterministic performance across all architectural benchmarks. Version 2.5.0-beta is available for testing.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mb-14">
+                  <h3 className="section-kicker mb-4">Model Metadata</h3>
+                  <div className="overflow-hidden rounded-[22px] border border-[var(--border-soft)] bg-white">
+                    <div className="grid grid-cols-1 text-[14px] md:grid-cols-12">
+                      <div className="bg-[rgba(245,248,252,0.92)] px-5 py-4 font-semibold text-[var(--text-faint)] md:col-span-4">Parameters</div>
+                      <div className="px-5 py-4 font-bold text-[var(--text-main)] md:col-span-8">{paramString}</div>
+                    </div>
+                    <div className="grid grid-cols-1 border-t border-[var(--border-soft)] text-[14px] md:grid-cols-12">
+                      <div className="bg-[rgba(245,248,252,0.92)] px-5 py-4 font-semibold text-[var(--text-faint)] md:col-span-4">Architecture</div>
+                      <div className="px-5 py-4 font-bold text-[var(--text-main)] md:col-span-8">Decoder-only Transformer</div>
+                    </div>
+                    <div className="grid grid-cols-1 border-t border-[var(--border-soft)] text-[14px] md:grid-cols-12">
+                      <div className="bg-[rgba(245,248,252,0.92)] px-5 py-4 font-semibold text-[var(--text-faint)] md:col-span-4">Context Window</div>
+                      <div className="px-5 py-4 font-bold text-[var(--text-main)] md:col-span-8">
+                        {modelData?.config?.max_position_embeddings ? modelData.config.max_position_embeddings.toLocaleString() : '128,000'} Tokens
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 border-t border-[var(--border-soft)] text-[14px] md:grid-cols-12">
+                      <div className="bg-[rgba(245,248,252,0.92)] px-5 py-4 font-semibold text-[var(--text-faint)] md:col-span-4">Precision</div>
+                      <div className="px-5 py-4 font-bold text-[var(--text-main)] md:col-span-8">BFloat16 / INT8</div>
+                    </div>
+                    <div className="grid grid-cols-1 border-t border-[var(--border-soft)] text-[14px] md:grid-cols-12">
+                      <div className="bg-[rgba(245,248,252,0.92)] px-5 py-4 font-semibold text-[var(--text-faint)] md:col-span-4">License</div>
+                      <div className="px-5 py-4 font-bold text-[var(--text-main)] md:col-span-8">
+                        {modelData?.licenseInfo?.name || 'Apache 2.0'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-14">
+                  <h2 className="mb-4 text-[2rem] font-black tracking-tight text-[var(--text-strong)]">Technical Summary</h2>
+                  <p className="mb-8 text-[15px] font-medium leading-relaxed text-[var(--text-muted)]">
+                    {modelName} leverages a novel attention mechanism designed to maintain high coherence over long-form structural documents. Unlike general-purpose models, it prioritizes logical consistency and hierarchical adherence in its output.
+                  </p>
+
+                  <div className="overflow-hidden rounded-[22px] border border-[var(--border-soft)] bg-white shadow-[0_10px_24px_rgba(59,83,114,0.05)]">
+                    <div className="flex items-center justify-between border-b border-[var(--border-soft)] px-5 py-4">
+                      <div>
+                        <h4 className="text-[14px] font-bold text-[var(--text-strong)]">Quick Start Usage</h4>
+                        <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--text-faint)]">PYTHON IMPLEMENTATION</p>
+                      </div>
+                      <button
+                        onClick={() => handleCopy(codeSnippet)}
+                        className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]"
+                      >
+                        {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                        {copied ? 'COPIED' : 'COPY'}
+                      </button>
+                    </div>
+                    <div className="overflow-x-auto bg-[#0f172a] p-5">
+                      <pre className="text-[12px] leading-relaxed text-[#e2e8f0]">
+                        <code>{codeSnippet}</code>
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-14">
+                  <h2 className="mb-5 text-[2rem] font-black tracking-tight text-[var(--text-strong)]">Benchmark Performance</h2>
+                  <div className="overflow-hidden rounded-[22px] border border-[var(--border-soft)] bg-white">
+                    <table className="w-full text-left text-[13px]">
+                      <thead className="border-b border-[var(--border-soft)] bg-[rgba(245,248,252,0.92)] text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--text-faint)]">
+                        <tr>
+                          <th className="px-5 py-3.5">METRIC</th>
+                          <th className="w-24 px-5 py-3.5 text-right">SCORE</th>
+                        </tr>
+                      </thead>
+                      <tbody className="font-semibold text-[var(--text-main)]">
+                        <tr className="transition-colors hover:bg-[rgba(243,247,252,0.8)]">
+                          <td className="px-5 py-4">MMLU (STEM Focus)</td>
+                          <td className="px-5 py-4 text-right font-bold text-[var(--text-strong)]">82.4%</td>
+                        </tr>
+                        <tr className="border-t border-[var(--border-soft)] transition-colors hover:bg-[rgba(243,247,252,0.8)]">
+                          <td className="px-5 py-4">HumanEval (Structural Code)</td>
+                          <td className="px-5 py-4 text-right font-bold text-[var(--text-strong)]">74.1%</td>
+                        </tr>
+                        <tr className="border-t border-[var(--border-soft)] transition-colors hover:bg-[rgba(243,247,252,0.8)]">
+                          <td className="px-5 py-4">ARC-Challenge</td>
+                          <td className="px-5 py-4 text-right font-bold text-[var(--text-strong)]">89.9%</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <h2 className="mb-5 text-[2rem] font-black tracking-tight text-[var(--text-strong)]">Model Assets</h2>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="group flex cursor-pointer flex-col justify-between rounded-[20px] border border-[var(--border-soft)] bg-white p-5 transition-colors hover:border-[rgba(54,87,132,0.26)]">
+                      <div className="mb-2 flex items-start justify-between">
+                        <FileText className="h-[18px] w-[18px] text-[var(--text-faint)] transition-colors group-hover:text-[var(--accent)]" />
+                        <span className="text-[10px] font-bold text-[var(--text-faint)]">1.2 KB</span>
+                      </div>
+                      <h4 className="text-[14px] font-bold text-[var(--text-main)] transition-colors group-hover:text-[var(--accent)]">config.json</h4>
+                    </div>
+                    <div className="group flex cursor-pointer flex-col justify-between rounded-[20px] border border-[var(--border-soft)] bg-white p-5 transition-colors hover:border-[rgba(54,87,132,0.26)]">
+                      <div className="mb-2 flex items-start justify-between">
+                        <Database className="h-[18px] w-[18px] text-[var(--text-faint)] transition-colors group-hover:text-[var(--accent)]" />
+                        <span className="text-[10px] font-bold text-[var(--text-faint)]">14.5 GB</span>
+                      </div>
+                      <h4 className="text-[14px] font-bold text-[var(--text-main)] transition-colors group-hover:text-[var(--accent)]">model.safetensors</h4>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
       </div>
     </div>
   );

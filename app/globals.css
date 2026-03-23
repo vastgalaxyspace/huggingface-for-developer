@@ -1,1 +1,72 @@
 @import "tailwindcss";
+
+:root {
+  --page-bg: #f4f7fb;
+  --panel-bg: rgba(255, 255, 255, 0.92);
+  --panel-strong: #ffffff;
+  --panel-muted: #edf3f9;
+  --border-soft: rgba(124, 147, 178, 0.18);
+  --border-strong: rgba(96, 121, 154, 0.28);
+  --text-strong: #182433;
+  --text-main: #32465d;
+  --text-muted: #6b8098;
+  --text-faint: #90a2b7;
+  --accent: #365784;
+  --accent-strong: #1e3f68;
+  --accent-soft: #dbe8f7;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(214, 230, 247, 0.85), transparent 34%),
+    linear-gradient(180deg, #fbfdff 0%, var(--page-bg) 48%, #f6f8fb 100%);
+  color: var(--text-main);
+  font-family: Aptos, Manrope, "Segoe UI", sans-serif;
+}
+
+::selection {
+  background: rgba(92, 137, 190, 0.24);
+  color: var(--text-strong);
+}
+
+@layer components {
+  .shell-container {
+    @apply mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8;
+  }
+
+  .editorial-panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 10px 24px rgba(59, 83, 114, 0.08);
+    backdrop-filter: blur(12px);
+  }
+
+  .section-kicker {
+    color: var(--text-faint);
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  .soft-grid {
+    background-image:
+      linear-gradient(rgba(128, 153, 186, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(128, 153, 186, 0.08) 1px, transparent 1px);
+    background-size: 34px 34px;
+  }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
