@@ -176,6 +176,24 @@ const TABS = [
   { key: "tools", label: "Tools" },
 ];
 
+const PHYSICAL_CONCEPTS = [
+  { name: "CUDA (Device Architecture)" },
+  { name: "Streaming Multiprocessor", tag: "SM" },
+  { name: "Core" },
+  { name: "Special Function Unit", tag: "SFU" },
+  { name: "Load/Store Unit", tag: "LSU" },
+  { name: "Warp Scheduler" },
+  { name: "CUDA Core" },
+  { name: "Tensor Core" },
+  { name: "Tensor Memory Accelerator", tag: "TMA" },
+  { name: "Streaming Multiprocessor Architecture" },
+  { name: "Texture Processing Cluster", tag: "TPC" },
+  { name: "Graphics/GPU Processing Cluster", tag: "GPC" },
+  { name: "Register File" },
+  { name: "L1 Data Cache" },
+  { name: "Tensor Memory" },
+];
+
 export default function LearningTopicPage({ params }) {
   const { slug } = use(params);
   const topic = TOPICS[slug];
@@ -216,16 +234,160 @@ export default function LearningTopicPage({ params }) {
             ))}
           </div>
 
-          <div className="mt-6 space-y-2">
-            {items.map((item) => (
-              <article key={item} className="rounded border border-[#dbe3ed] bg-[#fbfdff] px-4 py-3 text-sm leading-6 text-[#4f6882]">
-                <Sparkles className="mr-2 inline h-3.5 w-3.5 text-[#6f849b]" />
-                {item}
-              </article>
-            ))}
-          </div>
+          {slug === "physical-hardware" && activeTab === "learning" ? (
+            <PhysicalHardwareLearning />
+          ) : (
+            <div className="mt-6 space-y-2">
+              {items.map((item) => (
+                <article key={item} className="rounded border border-[#dbe3ed] bg-[#fbfdff] px-4 py-3 text-sm leading-6 text-[#4f6882]">
+                  <Sparkles className="mr-2 inline h-3.5 w-3.5 text-[#6f849b]" />
+                  {item}
+                </article>
+              ))}
+            </div>
+          )}
         </section>
       </div>
+    </div>
+  );
+}
+
+function PhysicalHardwareLearning() {
+  return (
+    <div className="mt-6 space-y-6">
+      <section className="overflow-hidden rounded-xl border border-[#0f3d1f] bg-[#041b09]">
+        <header className="border-b border-[#0f3d1f] px-4 py-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[#7adb8e]">
+          Physical Hardware Concepts
+        </header>
+        <div className="px-4 py-4">
+          <ul className="grid gap-2 md:grid-cols-2">
+            {PHYSICAL_CONCEPTS.map((concept) => (
+              <li key={concept.name} className="flex items-center gap-2 text-sm text-[#58d978]">
+                <span className="text-base leading-none">{"->"}</span>
+                <span>{concept.name}</span>
+                {concept.tag ? (
+                  <span className="rounded bg-[#0f3b1b] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#7aea92]">
+                    {concept.tag}
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-[#dbe3ed] bg-[#f7fafd] p-4 md:p-6">
+        <div className="grid gap-4 lg:grid-cols-[1.45fr_0.55fr]">
+          <article className="rounded-lg border border-[#d8e2ed] bg-white p-5">
+            <h2 className="text-2xl font-black tracking-[-0.01em] text-[#172a3e]">Architecture Hierarchy</h2>
+            <p className="mt-3 text-sm leading-7 text-[#587089]">
+              Modern GPUs are built as modular clusters. Top-level GPCs contain TPCs, and each TPC contains SMs where CUDA, Tensor, and scheduler resources execute kernels.
+            </p>
+
+            <div className="mt-5 rounded border border-[#d9e2ec] bg-[#f8fbff] p-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#607b96]">Silicon Structure</p>
+              <ul className="mt-3 space-y-2 text-sm leading-6 text-[#4f6882]">
+                <li><strong>GPC:</strong> Largest cluster with raster/graphics + compute control.</li>
+                <li><strong>TPC:</strong> Sub-cluster grouping SMs and front-end execution logic.</li>
+                <li><strong>SM:</strong> Main compute unit containing CUDA cores, Tensor cores, and register file.</li>
+              </ul>
+            </div>
+          </article>
+
+          <div className="space-y-4">
+            <aside className="rounded-lg border border-[#d8e2ed] bg-[#eef4fa] p-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#3d5b78]">Hardware Specs (H100)</p>
+              <div className="mt-3 space-y-2 text-sm text-[#425f7c]">
+                <SpecRow label="Max GPCs" value="8" />
+                <SpecRow label="SMs per TPC" value="2" />
+                <SpecRow label="CUDA Cores/SM" value="128" />
+                <SpecRow label="Registers/SM" value="256 KB" />
+                <SpecRow label="L1 Cache/SM" value="256 KB" />
+              </div>
+            </aside>
+
+            <aside className="rounded-lg border border-[#345887] bg-[#3e6393] p-4 text-white">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#cfe1ff]">Peak TFLOP Calculator</p>
+              <div className="mt-3 space-y-2 text-sm">
+                <SpecRow label="Clock (MHz)" value="1755" dark />
+                <SpecRow label="SM Count" value="128" dark />
+                <SpecRow label="Precision" value="FP32" dark />
+              </div>
+              <p className="mt-4 text-xs uppercase tracking-[0.14em] text-[#d5e5ff]">Estimated Peak</p>
+              <p className="text-4xl font-black tracking-tight">42.2 TFLOPS</p>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-[#dbe3ed] bg-[#f7fafd] p-4 md:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="text-2xl font-black tracking-[-0.01em] text-[#172a3e]">SM Architecture Simulator</h3>
+            <p className="text-sm text-[#607990]">Interactive diagram of a single Streaming Multiprocessor.</p>
+          </div>
+          <div className="flex gap-2">
+            <button type="button" className="border border-[#d6e0eb] bg-white px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[#3c5877]">
+              Reset Layout
+            </button>
+            <button type="button" className="border border-[#345887] bg-[#3e6393] px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-white">
+              Download SVG
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-[1.5fr_0.5fr]">
+          <div className="rounded border border-[#d8e2ed] bg-white p-4">
+            <div className="rounded border border-[#cddae8] bg-[#f8fbff] p-4">
+              <div className="mb-3 rounded border border-[#d6e0ec] bg-[#eff4fa] px-3 py-2 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-[#637d97]">
+                Instruction Cache & Scheduler
+              </div>
+              <div className="grid gap-2 md:grid-cols-4">
+                <SimBlock label="Core Quad 0" />
+                <SimBlock label="Core Quad 1" />
+                <SimBlock label="Core Quad 2" />
+                <SimBlock label="Core Quad 3" />
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-2">
+                <SimBlock label="Shared Memory / L1" />
+                <SimBlock label="Polymorph Engine" />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <aside className="rounded border border-[#d8e2ed] bg-white p-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#3e5a77]">Sector Breakdown</p>
+              <ul className="mt-2 space-y-1.5 text-xs text-[#59728a]">
+                <li>FP32 Cores: 16 per quad</li>
+                <li>INT32 Cores: 16 per quad</li>
+                <li>Tensor Cores: 1 (Gen 4)</li>
+              </ul>
+            </aside>
+            <aside className="rounded border border-[#d8e2ed] bg-white p-3 text-xs leading-6 text-[#5a738c]">
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#3e5a77]">Hot Tip</p>
+              Over-allocating registers can lead to register pressure and reduce active warps.
+            </aside>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function SpecRow({ label, value, dark = false }) {
+  return (
+    <div className={`flex items-center justify-between rounded px-2 py-1.5 ${dark ? "bg-[#345887]/60" : "bg-white/65"}`}>
+      <span>{label}</span>
+      <span className="font-bold">{value}</span>
+    </div>
+  );
+}
+
+function SimBlock({ label }) {
+  return (
+    <div className="rounded border border-[#d4dfeb] bg-[#eef4fb] px-3 py-4 text-center text-[10px] font-bold uppercase tracking-[0.16em] text-[#5f7a95]">
+      {label}
     </div>
   );
 }
