@@ -61,6 +61,13 @@ body {
     background-size: 34px 34px;
   }
 
+  .gpu-grid-light {
+    background-image:
+      linear-gradient(rgba(144, 164, 190, 0.13) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(144, 164, 190, 0.13) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
