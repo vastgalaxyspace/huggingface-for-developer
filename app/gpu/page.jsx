@@ -79,7 +79,7 @@ export default function GpuPage() {
 
   return (
     <div className="min-h-[calc(100vh-78px)] bg-[#f2f6fb] py-8 md:py-12">
-      <div className="shell-container max-w-[1200px]">
+      <div className="shell-container">
         <section className="overflow-hidden rounded-[22px] border border-[#d7e0ea] bg-white shadow-[0_12px_30px_rgba(31,45,61,0.08)]">
           <div className="border-b border-[#d7e0ea] bg-[#f8fbff] px-6 py-2.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#6f8298]">
             Main GPU Hub / Hardware + Execution + Performance + Tools

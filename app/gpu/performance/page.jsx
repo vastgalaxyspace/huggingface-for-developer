@@ -4,7 +4,7 @@ import { ArrowRight, LineChart, TriangleAlert } from "lucide-react";
 export default function GpuPerformancePage() {
   return (
     <div className="min-h-[calc(100vh-78px)] bg-[#f2f6fb] py-8 md:py-12">
-      <div className="shell-container max-w-[1200px]">
+      <div className="shell-container">
         <section className="rounded-[20px] border border-[#d7dfe8] bg-white p-6 shadow-[0_12px_30px_rgba(31,45,61,0.08)] md:p-8">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#71859b]">Performance / Roofline</p>
           <h1 className="mt-3 text-4xl font-black leading-[0.95] tracking-[-0.02em] text-[#16202b] sm:text-5xl">Roofline Model Analyzer</h1>
