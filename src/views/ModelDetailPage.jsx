@@ -14,6 +14,7 @@ import CodeSnippetsSection from '../components/model/CodeSnippetsSection';
 import TCOSection from '../components/model/TCOSection';
 import DeploymentScoreSection from '../components/model/DeploymentScoreSection';
 import ParametersSection from '../components/model/ParametersSection';
+import SMDiagramSection from '../components/model/SMDiagramSection';
 
 const NAV_ITEMS = [
   { id: 'section-overview', label: 'Overview', icon: Database },
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { id: 'section-vram', label: 'VRAM & Memory', icon: Cpu },
   { id: 'section-license', label: 'License Analysis', icon: Shield },
   { id: 'section-hardware', label: 'Hardware & GPUs', icon: Server },
+  { id: 'section-sm', label: 'SM Architecture', icon: Cpu },
   { id: 'section-compatibility', label: 'Compatibility', icon: Puzzle },
   { id: 'section-code', label: 'Usage Examples', icon: Code },
   { id: 'section-tco', label: 'Cost of Ownership', icon: DollarSign },
@@ -313,6 +315,7 @@ const ModelDetailPage = ({
                 <VRAMSection vramEstimates={modelData?.vramEstimates} />
                 <LicenseSection licenseInfo={modelData?.licenseInfo} licenseDisplay={licenseDisplay} deploymentRec={deploymentRec} />
                 <HardwareSection gpuRecommendations={gpuRecommendations} cloudCosts={cloudCosts} multiGPU={multiGPU} vramEstimates={modelData?.vramEstimates} />
+                <SMDiagramSection />
                 <CompatibilitySection compatibility={compatibility} />
                 <CodeSnippetsSection codeSnippets={codeSnippets} frameworks={frameworks} modelId={modelData?.modelId} />
                 <TCOSection tco={tco} />

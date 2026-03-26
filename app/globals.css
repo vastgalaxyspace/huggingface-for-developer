@@ -76,4 +76,65 @@ body {
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
+  /* ── SM Diagram Styles ── */
+  .sm-block {
+    width: 100%;
+    display: block;
+    border: 1.5px solid var(--border-soft);
+    border-radius: 16px;
+    padding: 14px 16px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sm-block:hover {
+    border-color: var(--block-border);
+    background: var(--block-light) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+  }
+
+  .sm-block-active {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+
+  .sm-connector {
+    width: 1.5px;
+    height: 20px;
+    border-left: 1.5px dashed var(--border-soft);
+  }
+
+  .sm-detail-panel {
+    border: 1.5px solid var(--border-soft);
+    border-radius: 22px;
+    padding: 20px;
+    animation: sm-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    flex: 1;
+  }
+
+  .sm-core-dot {
+    animation: sm-dot-shimmer 2s ease-in-out infinite;
+  }
+}
+
+@keyframes sm-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.sm-pulse {
+  animation: sm-pulse 2s ease-in-out infinite;
+}
+
+@keyframes sm-slide-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes sm-dot-shimmer {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.9; }
 }

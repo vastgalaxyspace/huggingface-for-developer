@@ -226,6 +226,24 @@ export const PHYSICAL_HARDWARE_THEORY = [
         ]
       },
       {
+        "title": "Role and use case",
+        "sections": [
+          {
+            "type": "content",
+            "paragraphs": [
+              "CUDA cores are the standard worker units of the GPU. They handle general-purpose mathematical operations and execute FP32 and INT32 arithmetic."
+            ]
+          },
+          {
+            "type": "list",
+            "items": [
+              "Role: execute arithmetic and control-heavy operations for general GPU compute.",
+              "Use case: rendering, physics, indexing, activation functions, and many non-matrix kernels.",
+              "They are heavily used across almost every workload, not only AI."
+            ]
+          }
+        ]
+      },      {
         "title": "Types of CUDA cores",
         "sections": [
           {
@@ -368,6 +386,24 @@ export const PHYSICAL_HARDWARE_THEORY = [
         ]
       },
       {
+        "title": "Role and use case",
+        "sections": [
+          {
+            "type": "content",
+            "paragraphs": [
+              "Tensor cores are specialized units for deep learning and high-performance matrix math. They execute matrix operations much faster than scalar CUDA cores."
+            ]
+          },
+          {
+            "type": "list",
+            "items": [
+              "Role: perform matrix multiply-accumulate in fused operations (FMA/MMA style).",
+              "Use case: transformer training/inference, large GEMM workloads, and DLSS upscaling in gaming.",
+              "Reason AI is fast: tensor cores process matrix tiles in one cycle path instead of scalar-by-scalar execution."
+            ]
+          }
+        ]
+      },      {
         "title": "The core operation Tensor cores perform",
         "sections": [
           {
@@ -501,7 +537,7 @@ export const PHYSICAL_HARDWARE_THEORY = [
               },
               {
                 "key": "H100 FP16 (Tensor cores)",
-                "value": ""
+                "value": "989 TFLOP"
               }
             ]
           }
@@ -558,6 +594,24 @@ export const PHYSICAL_HARDWARE_THEORY = [
         ]
       },
       {
+        "title": "Role and efficiency",
+        "sections": [
+          {
+            "type": "content",
+            "paragraphs": [
+              "The warp scheduler is the traffic cop of the SM. Threads are managed in groups of 32 called warps, and the scheduler decides which ready warp executes next."
+            ]
+          },
+          {
+            "type": "list",
+            "items": [
+              "Role: issue instructions from ready warps to CUDA and Tensor execution units.",
+              "Efficiency behavior: if one warp waits on memory, scheduler quickly switches to another ready warp.",
+              "Goal: keep hardware busy and hide latency through rapid warp switching."
+            ]
+          }
+        ]
+      },      {
         "title": "Four warp states",
         "sections": [
           {
@@ -860,6 +914,24 @@ export const PHYSICAL_HARDWARE_THEORY = [
         ]
       },
       {
+        "title": "Role and capacity",
+        "sections": [
+          {
+            "type": "content",
+            "paragraphs": [
+              "The register file stores local variables and active thread data directly inside the SM. It is the fastest memory level on the GPU."
+            ]
+          },
+          {
+            "type": "list",
+            "items": [
+              "Role: hold per-thread working values and immediate execution state.",
+              "Capacity: very large because GPUs run thousands of threads concurrently.",
+              "Register pressure: high register use per thread reduces how many threads can run at once."
+            ]
+          }
+        ]
+      },      {
         "title": "What registers store",
         "sections": [
           {
@@ -956,6 +1028,24 @@ export const PHYSICAL_HARDWARE_THEORY = [
         ]
       },
       {
+        "title": "L1 cache and shared memory bridge",
+        "sections": [
+          {
+            "type": "content",
+            "paragraphs": [
+              "This block acts like a scratchpad bridge between compute units and the larger memory system."
+            ]
+          },
+          {
+            "type": "list",
+            "items": [
+              "L1 Cache role: automatically keeps frequently accessed data close to the cores.",
+              "Shared Memory role: software-managed high-speed space for thread collaboration inside a block.",
+              "Modern note: L1 cache and shared memory share one physical pool, and developers can tune the split."
+            ]
+          }
+        ]
+      },      {
         "title": "Key properties",
         "sections": [
           {
@@ -1253,3 +1343,4 @@ export const PHYSICAL_HARDWARE_THEORY = [
     ]
   }
 ];
+

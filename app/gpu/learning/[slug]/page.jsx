@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { PHYSICAL_HARDWARE_THEORY } from "../../../../src/data/physicalHardwareTheory";
+import PhysicalHardwareVisuals from "../../../../src/components/gpu/visuals/PhysicalHardwareVisuals";
 
 const TOPICS = {
   "physical-hardware": {
@@ -174,7 +175,6 @@ const TOPICS = {
 const TABS = [
   { key: "learning", label: "Learning" },
   { key: "visuals", label: "Visuals" },
-  { key: "tools", label: "Tool" },
 ];
 
 const TOPIC_THEME = {
@@ -201,6 +201,7 @@ export default function LearningTopicPage({ params }) {
 
   const items = useMemo(() => topic[activeTab], [topic, activeTab]);
   const isPhysicalLearning = slug === "physical-hardware" && activeTab === "learning";
+  const isPhysicalVisuals = slug === "physical-hardware" && activeTab === "visuals";
   const sidebarTopics = useMemo(
     () => (isPhysicalLearning ? PHYSICAL_HARDWARE_THEORY.map((item) => item.title) : items),
     [isPhysicalLearning, items]
@@ -278,6 +279,8 @@ export default function LearningTopicPage({ params }) {
             <div className="space-y-3">
               {isPhysicalLearning && selectedPhysicalTopic ? (
                 <PhysicalHardwareTopic topic={selectedPhysicalTopic} />
+              ) : isPhysicalVisuals ? (
+                <PhysicalHardwareVisuals selectedIndex={safeIndex} />
               ) : selectedListTopic ? (
                 <article className="rounded border border-[#dbe3ed] bg-[#fbfdff] px-4 py-3 text-sm leading-6 text-[#4f6882]">
                   <Sparkles className="mr-2 inline h-3.5 w-3.5 text-[#6f849b]" />
