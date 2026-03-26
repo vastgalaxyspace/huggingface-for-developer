@@ -325,7 +325,7 @@ const HomePage = ({ onSearch, loading }) => {
                                   setShowSuggestions(false);
                                   setSelectedIndex(-1);
                                 }}
-                                className={`group w-full border-b border-[var(--border-soft)] px-6 py-4 text-left transition-colors last:border-b-0 ${
+                                className={`group w-full cursor-pointer border-b border-[var(--border-soft)] px-6 py-4 text-left transition-colors last:border-b-0 ${
                                   isSelected
                                     ? 'border-l-4 border-l-[var(--accent)] bg-[var(--panel-muted)]'
                                     : 'border-l-4 border-l-transparent hover:bg-[rgba(243,247,252,0.8)]'
@@ -539,7 +539,7 @@ const HomePage = ({ onSearch, loading }) => {
                         <td className="px-8 py-6">
                           <button
                             onClick={() => onSearch(model.modelId)}
-                            className="block w-[300px] truncate text-left text-[17px] font-extrabold text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)]"
+                            className="block w-[300px] cursor-pointer truncate text-left text-[17px] font-extrabold text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)]"
                           >
                             {model.name}
                           </button>

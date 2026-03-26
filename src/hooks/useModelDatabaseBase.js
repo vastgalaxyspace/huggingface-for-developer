@@ -7,12 +7,18 @@ import { getLicenseInfo } from '../utils/licenseChecker';
 /**
  * Hook to maintain a database of popular models for recommender
  */
-export const useModelDatabase = () => {
+export const useModelDatabase = (enabled = true) => {
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      setProgress(0);
+      return;
+    }
+
     const loadModels = async () => {
       try {
         // Use a curated list of popular, well-documented models
@@ -75,7 +81,7 @@ export const useModelDatabase = () => {
     };
 
     loadModels();
-  }, []);
+  }, [enabled]);
 
   return { models, loading, progress };
 };
