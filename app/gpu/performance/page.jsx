@@ -57,7 +57,7 @@ export default function GpuPerformancePage() {
             Go to Execution
             <ArrowRight className="h-4 w-4" />
           </Link>
-          <Link href="/gpu/tools" className="flex items-center justify-between border border-[#d7dfe8] bg-white px-5 py-4 text-xs font-bold uppercase tracking-[0.14em] text-[#23425f] hover:bg-[#f7faff]">
+          <Link href="/gpu/tools/gpu-picker" className="flex items-center justify-between border border-[#d7dfe8] bg-white px-5 py-4 text-xs font-bold uppercase tracking-[0.14em] text-[#23425f] hover:bg-[#f7faff]">
             Go to Tools
             <ArrowRight className="h-4 w-4" />
           </Link>

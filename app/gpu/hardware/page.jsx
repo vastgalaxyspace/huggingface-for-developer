@@ -48,7 +48,7 @@ export default function GpuHardwarePage() {
               <div className="mt-4 space-y-2">
                 <NavLink href="/gpu/execution" label="Go to Execution" />
                 <NavLink href="/gpu/performance" label="Go to Performance" />
-                <NavLink href="/gpu/tools" label="Go to Tools" />
+                <NavLink href="/gpu/tools/gpu-picker" label="Go to Tools" />
               </div>
             </div>
           </div>

@@ -55,18 +55,21 @@ export default function GpuPage() {
       name: "VRAM Calculator",
       body: "Estimate memory footprint by parameters, precision, sequence length, and mode.",
       cta: "Open VRAM Tool",
+      href: "/gpu/tools/vram-calculator",
     },
     {
       icon: Gauge,
       name: "Kernel Occupancy Estimator",
       body: "Model active warps and identify register/shared-memory pressure quickly.",
       cta: "Open Occupancy Tool",
+      href: "/gpu/tools/kernel-occupancy-estimator",
     },
     {
       icon: Wrench,
       name: "GPU Picker",
       body: "Shortlist GPU options for training, fine-tune, and high-throughput inference.",
       cta: "Open GPU Picker",
+      href: "/gpu/tools/gpu-picker",
     },
   ];
 
@@ -102,7 +105,7 @@ export default function GpuPage() {
                 <Link href="/gpu/learning/physical-hardware" className="inline-flex items-center gap-2 bg-[#18324f] px-4 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#11253b]">
                   Start Learning <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
-                <Link href="/gpu/tools" className="border border-[#d2dae5] bg-white px-4 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-[#2a3b50] transition-colors hover:bg-[#f4f7fb]">
+                <Link href="/gpu/tools/gpu-picker" className="border border-[#d2dae5] bg-white px-4 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-[#2a3b50] transition-colors hover:bg-[#f4f7fb]">
                   Open GPU Tools
                 </Link>
               </div>
@@ -155,12 +158,14 @@ export default function GpuPage() {
         </section>
 
         <section className="mt-10 rounded-[20px] border border-[#d7dfe8] bg-white p-6 md:p-8">
-          <h2 className="mb-6 text-2xl font-extrabold tracking-[-0.01em] text-[#1b2737]">
-            PRECISION TOOLS
-          </h2>
+          <h2 className="mb-6 text-2xl font-extrabold tracking-[-0.01em] text-[#1b2737]">PRECISION TOOLS</h2>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {precisionTools.map((tool) => (
-              <article key={tool.name} className="border border-[#dde4ec] p-5">
+              <Link
+                key={tool.name}
+                href={tool.href}
+                className="group block border border-[#dde4ec] p-5 transition-colors hover:bg-[#f7faff]"
+              >
                 <div className="mb-6 flex items-center justify-between text-[#62768f]">
                   <tool.icon className="h-4 w-4" />
                   <span className="text-[10px] font-bold uppercase tracking-[0.18em]">Tool</span>
@@ -169,10 +174,10 @@ export default function GpuPage() {
                   {tool.name}
                 </h3>
                 <p className="mt-3 text-xs leading-5 text-[#687f95]">{tool.body}</p>
-                <Link href="/gpu/tools" className="mt-5 inline-block text-[10px] font-bold uppercase tracking-[0.16em] text-[#1f3a59]">
+                <span className="mt-5 inline-block text-[10px] font-bold uppercase tracking-[0.16em] text-[#1f3a59] group-hover:text-[#15395c]">
                   {tool.cta}
-                </Link>
-              </article>
+                </span>
+              </Link>
             ))}
           </div>
         </section>
@@ -215,7 +220,7 @@ export default function GpuPage() {
           <QuickLink icon={Layers} title="Hardware" href="/gpu/hardware" />
           <QuickLink icon={Gauge} title="Execution" href="/gpu/execution" />
           <QuickLink icon={Cpu} title="Performance" href="/gpu/performance" />
-          <QuickLink icon={Wrench} title="Tools" href="/gpu/tools" />
+          <QuickLink icon={Wrench} title="Tools" href="/gpu/tools/gpu-picker" />
         </section>
       </div>
     </div>

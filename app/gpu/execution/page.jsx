@@ -60,7 +60,7 @@ export default function GpuExecutionPage() {
         <section className="mt-8 grid gap-4 md:grid-cols-3">
           <NavCard href="/gpu/hardware" title="Hardware" icon={GitBranch} />
           <NavCard href="/gpu/performance" title="Performance" icon={BarChart3} />
-          <NavCard href="/gpu/tools" title="Tools" icon={ArrowRight} />
+          <NavCard href="/gpu/tools/gpu-picker" title="Tools" icon={ArrowRight} />
         </section>
       </div>
     </div>

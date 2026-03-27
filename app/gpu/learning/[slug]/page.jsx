@@ -11,6 +11,7 @@ import { CUDA_PROGRAMMING_THEORY } from "../../../../src/data/cudaProgrammingThe
 import { DRIVER_STACK_THEORY } from "../../../../src/data/driverStackTheory";
 import { LIBRARIES_FRAMEWORKS_THEORY } from "../../../../src/data/librariesFrameworksTheory";
 import PhysicalHardwareVisuals from "../../../../src/components/gpu/visuals/PhysicalHardwareVisuals";
+import { Card, CardContent, CardHeader, CardTitle } from "../../../../src/components/ui/card";
 
 const TOPICS = {
   "physical-hardware": {
@@ -193,15 +194,15 @@ const TABS = [
 ];
 
 const TOPIC_THEME = {
-  "h-sm": { header: "bg-[#eef6ff]", badge: "bg-[#1f4f7a]" },
-  "h-cuda": { header: "bg-[#f4f8ff]", badge: "bg-[#305f8a]" },
-  "h-tens": { header: "bg-[#edf4ff]", badge: "bg-[#2a507e]" },
-  "h-warp": { header: "bg-[#f2f7ff]", badge: "bg-[#3b638f]" },
-  "h-sfu": { header: "bg-[#eef8fb]", badge: "bg-[#2f6a83]" },
-  "h-tma": { header: "bg-[#f1f6ff]", badge: "bg-[#355784]" },
-  "h-reg": { header: "bg-[#f3f8f2]", badge: "bg-[#3f6b55]" },
-  "h-shmem": { header: "bg-[#f5f8fb]", badge: "bg-[#4d647a]" },
-  "h-vram": { header: "bg-[#eef3ff]", badge: "bg-[#324f86]" },
+  "h-sm": { header: "bg-[#e6f2ff]", badge: "bg-[#0f5ea8]" },
+  "h-cuda": { header: "bg-[#eaf8ff]", badge: "bg-[#0a7298]" },
+  "h-tens": { header: "bg-[#eef0ff]", badge: "bg-[#3149b8]" },
+  "h-warp": { header: "bg-[#fff2e8]", badge: "bg-[#b45309]" },
+  "h-sfu": { header: "bg-[#ecfbf8]", badge: "bg-[#0f766e]" },
+  "h-tma": { header: "bg-[#f3f5ff]", badge: "bg-[#4c1d95]" },
+  "h-reg": { header: "bg-[#edf9ef]", badge: "bg-[#166534]" },
+  "h-shmem": { header: "bg-[#edf8ff]", badge: "bg-[#0369a1]" },
+  "h-vram": { header: "bg-[#eaf2ff]", badge: "bg-[#1d4ed8]" },
 };
 
 export default function LearningTopicPage({ params }) {
@@ -274,7 +275,7 @@ export default function LearningTopicPage({ params }) {
   return (
     <div className="min-h-[calc(100vh-78px)] bg-[#f2f6fb] py-8 md:py-12">
       <div className="shell-container">
-        <section className="rounded-[20px] border border-[#d7dfe8] bg-white p-6 shadow-[0_12px_30px_rgba(31,45,61,0.08)] md:p-8">
+        <Card className="rounded-[20px] border-[#cddaea] bg-gradient-to-b from-white via-[#fbfdff] to-[#f7fbff] p-6 md:p-8">
           <Link href="/gpu" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#274867]">
             <ArrowLeft className="h-3.5 w-3.5" /> Back to GPU Hub
           </Link>
@@ -284,7 +285,7 @@ export default function LearningTopicPage({ params }) {
           <p className="mt-3 max-w-[760px] text-sm leading-7 text-[#5a728a]">{topic.subtitle}</p>
 
           <div className="mt-6 grid gap-4 lg:grid-cols-[250px_1fr]">
-            <aside className="rounded border border-[#dbe3ed] bg-[#f8fbff] p-3">
+            <Card className="rounded border-[#d7e5f4] bg-[#f6fbff] p-3">
               <p className="mb-2 px-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#7b90a6]">
                 Main Sections
               </p>
@@ -334,7 +335,7 @@ export default function LearningTopicPage({ params }) {
                   </div>
                 ))}
               </div>
-            </aside>
+            </Card>
 
             <div className="space-y-3">
               {isPhysicalLearning && selectedPhysicalTopic ? (
@@ -354,10 +355,10 @@ export default function LearningTopicPage({ params }) {
               ) : isPhysicalVisuals ? (
                 <PhysicalHardwareVisuals selectedIndex={safeIndex} />
               ) : selectedListTopic ? (
-                <article className="rounded border border-[#dbe3ed] bg-[#fbfdff] px-4 py-3 text-sm leading-6 text-[#4f6882]">
+                <Card className="rounded border-[#d7e5f4] bg-[#f8fcff] px-4 py-3 text-sm leading-6 text-[#4f6882]">
                   <Sparkles className="mr-2 inline h-3.5 w-3.5 text-[#6f849b]" />
                   {selectedListTopic}
-                </article>
+                </Card>
               ) : null}
 
               <SubTopicNavigator
@@ -367,7 +368,7 @@ export default function LearningTopicPage({ params }) {
               />
             </div>
           </div>
-        </section>
+        </Card>
       </div>
     </div>
   );
@@ -377,30 +378,30 @@ function PhysicalHardwareTopic({ topic }) {
   const theme = TOPIC_THEME[topic.toneClass] || TOPIC_THEME["h-sm"];
 
   return (
-    <article className="overflow-hidden rounded-xl border border-[#dbe3ed] bg-white">
-      <header className={`border-b border-[#dbe3ed] px-4 py-3 ${theme.header}`}>
+    <Card className="overflow-hidden rounded-xl border-[#d7e5f4] bg-white">
+      <CardHeader className={`border-b border-[#d7e5f4] px-4 py-3 ${theme.header}`}>
         <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#51687f]">Topic {topic.id}</p>
         <div className="mt-1 flex items-center gap-2">
           <span className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-white ${theme.badge}`}>
             {topic.id}
           </span>
-          <h3 className="text-lg font-black tracking-[-0.01em] text-[#1c344d]">{topic.title}</h3>
+          <CardTitle className="text-lg">{topic.title}</CardTitle>
         </div>
-      </header>
+      </CardHeader>
 
-      <div className="space-y-4 px-4 py-4">
+      <CardContent className="space-y-4 px-4 py-4">
         {topic.blocks.map((block, blockIndex) => (
-          <section key={`${topic.id}-${blockIndex}`} className="rounded border border-[#dbe3ed] bg-[#fbfdff] p-3">
+          <Card key={`${topic.id}-${blockIndex}`} className="rounded border-[#d7e5f4] bg-[#fbfdff] p-3">
             <h4 className="text-[11px] font-black uppercase tracking-[0.14em] text-[#5c7590]">{block.title}</h4>
             <div className="mt-3 space-y-3">
               {block.sections.map((section, sectionIndex) => (
                 <RenderSection key={`${topic.id}-${blockIndex}-${section.type}-${sectionIndex}`} section={section} />
               ))}
             </div>
-          </section>
+          </Card>
         ))}
-      </div>
-    </article>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -450,12 +451,12 @@ function RenderSection({ section }) {
 
   if (section.type === "formula") {
     return (
-      <div className="rounded border border-[#dbe3ed] bg-[#f8fbff] px-3 py-3">
+      <Card className="rounded border-[#d7e5f4] bg-[#f8fbff] px-3 py-3">
         <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-6 text-[#3f5b77]">{section.main}</pre>
         {section.sub ? (
           <p className="mt-2 whitespace-pre-wrap text-[11px] leading-6 text-[#647c95]">{section.sub}</p>
         ) : null}
-      </div>
+      </Card>
     );
   }
 
@@ -486,7 +487,7 @@ function RenderSection({ section }) {
 
   if (section.type === "table") {
     return (
-      <div className="overflow-x-auto rounded border border-[#dbe3ed] bg-white">
+      <Card className="overflow-x-auto rounded border-[#d7e5f4] bg-white">
         <table className="w-full min-w-[640px] text-left">
           <thead className="bg-[#f4f8fc]">
             <tr>
@@ -509,7 +510,7 @@ function RenderSection({ section }) {
             ))}
           </tbody>
         </table>
-      </div>
+      </Card>
     );
   }
 
@@ -521,7 +522,7 @@ function SubTopicNavigator({ total, currentIndex, onSelect }) {
   const hasNext = currentIndex < total - 1;
 
   return (
-    <div className="rounded border border-[#dbe3ed] bg-[#f8fbff] p-3">
+    <Card className="rounded border-[#d7e5f4] bg-[#f6fbff] p-3">
       <div className="grid gap-2 sm:grid-cols-2">
         <button
           type="button"
@@ -542,6 +543,6 @@ function SubTopicNavigator({ total, currentIndex, onSelect }) {
           <ArrowRight className="h-3.5 w-3.5" />
         </button>
       </div>
-    </div>
+    </Card>
   );
 }
