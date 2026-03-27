@@ -4,6 +4,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { PHYSICAL_HARDWARE_THEORY } from "../../../../src/data/physicalHardwareTheory";
+import { MEMORY_HIERARCHY_THEORY } from "../../../../src/data/memoryHierarchyTheory";
+import { EXECUTION_MODEL_THEORY } from "../../../../src/data/executionModelTheory";
+import { COMPILATION_PIPELINE_THEORY } from "../../../../src/data/compilationPipelineTheory";
+import { CUDA_PROGRAMMING_THEORY } from "../../../../src/data/cudaProgrammingTheory";
+import { DRIVER_STACK_THEORY } from "../../../../src/data/driverStackTheory";
+import { LIBRARIES_FRAMEWORKS_THEORY } from "../../../../src/data/librariesFrameworksTheory";
 import PhysicalHardwareVisuals from "../../../../src/components/gpu/visuals/PhysicalHardwareVisuals";
 
 const TOPICS = {
@@ -36,11 +42,14 @@ const TOPICS = {
     title: "Memory Hierarchy",
     subtitle: "Data movement from registers to VRAM and bottlenecks.",
     learning: [
-      "Register file and spilling behavior",
-      "Shared memory and L1 cache interplay",
-      "L2 cache role and sizing impact",
-      "HBM vs GDDR trade-offs",
-      "Coalescing and bank conflict fundamentals",
+      "Register file - fastest storage, 65536 per SM, and spill behavior",
+      "Shared memory / L1 cache - scratchpad model, programmer control, and H100 sizing",
+      "L2 cache - shared across SMs between L1 and VRAM",
+      "GPU RAM (VRAM / global memory) - HBM2e/HBM3 and model-state placement",
+      "HBM vs GDDR - bandwidth and data-center trade-offs",
+      "Memory banks and bank conflicts - 32-bank mapping and serialization",
+      "Memory coalescing - consecutive vs strided transaction behavior",
+      "Tensor memory (Blackwell) - dedicated memory path for Tensor cores",
     ],
     visuals: [
       "Latency animation: registers -> shared -> L2 -> VRAM",
@@ -60,11 +69,18 @@ const TOPICS = {
     title: "Execution Model",
     subtitle: "Threads, warps, occupancy, and scheduler behavior.",
     learning: [
-      "Thread, warp, block, and grid model",
-      "SIMT mechanics",
-      "Warp divergence and predication",
-      "Occupancy and limiting resources",
-      "Warp states and scoreboard stalls",
+      "Thread - smallest unit with private PC and registers",
+      "Warp - 32 threads and scheduler issue unit",
+      "Thread Block (CTA) - shared memory and synchronization",
+      "Grid - full kernel launch of independent blocks",
+      "SIMT - one instruction across many threads",
+      "Warp divergence - masking, predication, and cost",
+      "Latency hiding - switching warps to cover memory wait",
+      "Occupancy - active warps versus theoretical maximum",
+      "Warpgroup (Hopper+) - 4-warps wgmma execution",
+      "Thread Block Cluster (Hopper+) - inter-block cooperation",
+      "Warp execution states - active, eligible, selected, stalled",
+      "Scoreboard stalls - short versus long latency dependencies",
     ],
     visuals: [
       "Warp execution stepper",
@@ -84,11 +100,10 @@ const TOPICS = {
     title: "Compilation Pipeline",
     subtitle: "From CUDA source to PTX/SASS and architecture execution.",
     learning: [
-      "CUDA C++ -> PTX -> SASS -> binary pipeline",
+      "CUDA C++ -> PTX -> SASS -> Binary pipeline",
       "PTX portability and virtual ISA",
       "SASS architecture-specific instruction layer",
       "nvcc flow and compute capability mapping",
-      "NVRTC runtime compilation",
     ],
     visuals: [
       "Pipeline walkthrough side-by-side",
@@ -106,9 +121,9 @@ const TOPICS = {
     title: "CUDA Programming",
     subtitle: "Kernel design, memory access, and runtime optimization.",
     learning: [
-      "CUDA language keywords and memory qualifiers",
+      "CUDA keywords and memory qualifiers",
       "Kernel launch dimensions and mapping",
-      "cudaMalloc/cudaMemcpy/cudaFree fundamentals",
+      "cudaMalloc / cudaMemcpy / cudaFree fundamentals",
       "Shared memory tiling and synchronization",
       "Streams and CUDA graphs",
     ],
@@ -151,7 +166,7 @@ const TOPICS = {
     title: "Libraries & Frameworks",
     subtitle: "cuBLAS/cuDNN/Triton/PyTorch and profiling workflow.",
     learning: [
-      "cuBLAS GEMM and Tensor core usage",
+      "cuBLAS GEMM and Tensor Core usage",
       "cuDNN operator acceleration",
       "Triton custom kernel workflow",
       "PyTorch runtime integration",
@@ -201,15 +216,60 @@ export default function LearningTopicPage({ params }) {
 
   const items = useMemo(() => topic[activeTab], [topic, activeTab]);
   const isPhysicalLearning = slug === "physical-hardware" && activeTab === "learning";
+  const isMemoryLearning = slug === "memory-hierarchy" && activeTab === "learning";
+  const isExecutionLearning = slug === "execution-model" && activeTab === "learning";
+  const isCompilationLearning = slug === "compilation-pipeline" && activeTab === "learning";
+  const isCudaProgrammingLearning = slug === "cuda-programming" && activeTab === "learning";
+  const isDriverStackLearning = slug === "driver-stack" && activeTab === "learning";
+  const isLibrariesFrameworksLearning = slug === "libraries-frameworks" && activeTab === "learning";
   const isPhysicalVisuals = slug === "physical-hardware" && activeTab === "visuals";
   const sidebarTopics = useMemo(
-    () => (isPhysicalLearning ? PHYSICAL_HARDWARE_THEORY.map((item) => item.title) : items),
-    [isPhysicalLearning, items]
+    () =>
+      isPhysicalLearning
+        ? PHYSICAL_HARDWARE_THEORY.map((item) => item.title)
+        : isMemoryLearning
+          ? MEMORY_HIERARCHY_THEORY.map((item) => item.title)
+          : isExecutionLearning
+            ? EXECUTION_MODEL_THEORY.map((item) => item.title)
+            : isCompilationLearning
+              ? COMPILATION_PIPELINE_THEORY.map((item) => item.title)
+              : isCudaProgrammingLearning
+                ? CUDA_PROGRAMMING_THEORY.map((item) => item.title)
+                : isDriverStackLearning
+                  ? DRIVER_STACK_THEORY.map((item) => item.title)
+                  : isLibrariesFrameworksLearning
+                    ? LIBRARIES_FRAMEWORKS_THEORY.map((item) => item.title)
+          : items,
+    [
+      isPhysicalLearning,
+      isMemoryLearning,
+      isExecutionLearning,
+      isCompilationLearning,
+      isCudaProgrammingLearning,
+      isDriverStackLearning,
+      isLibrariesFrameworksLearning,
+      items
+    ]
   );
 
   const safeIndex = Math.min(selectedTopicIndex, Math.max(sidebarTopics.length - 1, 0));
   const selectedPhysicalTopic = isPhysicalLearning ? PHYSICAL_HARDWARE_THEORY[safeIndex] : null;
-  const selectedListTopic = !isPhysicalLearning ? items[safeIndex] : null;
+  const selectedMemoryTopic = isMemoryLearning ? MEMORY_HIERARCHY_THEORY[safeIndex] : null;
+  const selectedExecutionTopic = isExecutionLearning ? EXECUTION_MODEL_THEORY[safeIndex] : null;
+  const selectedCompilationTopic = isCompilationLearning ? COMPILATION_PIPELINE_THEORY[safeIndex] : null;
+  const selectedCudaProgrammingTopic = isCudaProgrammingLearning ? CUDA_PROGRAMMING_THEORY[safeIndex] : null;
+  const selectedDriverStackTopic = isDriverStackLearning ? DRIVER_STACK_THEORY[safeIndex] : null;
+  const selectedLibrariesFrameworksTopic = isLibrariesFrameworksLearning ? LIBRARIES_FRAMEWORKS_THEORY[safeIndex] : null;
+  const selectedListTopic =
+    !isPhysicalLearning &&
+    !isMemoryLearning &&
+    !isExecutionLearning &&
+    !isCompilationLearning &&
+    !isCudaProgrammingLearning &&
+    !isDriverStackLearning &&
+    !isLibrariesFrameworksLearning
+      ? items[safeIndex]
+      : null;
 
   return (
     <div className="min-h-[calc(100vh-78px)] bg-[#f2f6fb] py-8 md:py-12">
@@ -279,6 +339,18 @@ export default function LearningTopicPage({ params }) {
             <div className="space-y-3">
               {isPhysicalLearning && selectedPhysicalTopic ? (
                 <PhysicalHardwareTopic topic={selectedPhysicalTopic} />
+              ) : isMemoryLearning && selectedMemoryTopic ? (
+                <PhysicalHardwareTopic topic={selectedMemoryTopic} />
+              ) : isExecutionLearning && selectedExecutionTopic ? (
+                <PhysicalHardwareTopic topic={selectedExecutionTopic} />
+              ) : isCompilationLearning && selectedCompilationTopic ? (
+                <PhysicalHardwareTopic topic={selectedCompilationTopic} />
+              ) : isCudaProgrammingLearning && selectedCudaProgrammingTopic ? (
+                <PhysicalHardwareTopic topic={selectedCudaProgrammingTopic} />
+              ) : isDriverStackLearning && selectedDriverStackTopic ? (
+                <PhysicalHardwareTopic topic={selectedDriverStackTopic} />
+              ) : isLibrariesFrameworksLearning && selectedLibrariesFrameworksTopic ? (
+                <PhysicalHardwareTopic topic={selectedLibrariesFrameworksTopic} />
               ) : isPhysicalVisuals ? (
                 <PhysicalHardwareVisuals selectedIndex={safeIndex} />
               ) : selectedListTopic ? (
