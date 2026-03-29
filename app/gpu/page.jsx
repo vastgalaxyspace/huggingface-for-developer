@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Cpu, Gauge, Layers, MemoryStick, Wrench } from "lucide-react";
+import { ArrowRight, Cpu, GitBranch, Gauge, Layers, MemoryStick, Wrench } from "lucide-react";
 
 export default function GpuPage() {
   const learningPath = [
@@ -70,6 +70,13 @@ export default function GpuPage() {
       body: "Shortlist GPU options for training, fine-tune, and high-throughput inference.",
       cta: "Open GPU Picker",
       href: "/gpu/tools/gpu-picker",
+    },
+    {
+      icon: GitBranch,
+      name: "Warp Divergence Visualizer",
+      body: "See how branch conditions split a warp into active and waiting execution passes.",
+      cta: "Open Divergence Tool",
+      href: "/gpu/tools/warp-divergence",
     },
   ];
 
@@ -159,7 +166,7 @@ export default function GpuPage() {
 
         <section className="mt-10 rounded-[20px] border border-[#d7dfe8] bg-white p-6 md:p-8">
           <h2 className="mb-6 text-2xl font-extrabold tracking-[-0.01em] text-[#1b2737]">PRECISION TOOLS</h2>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {precisionTools.map((tool) => (
               <Link
                 key={tool.name}
