@@ -95,17 +95,42 @@ export default function Step4Results({
           </p>
         </div>
 
-        <select
-          value={sortKey}
-          onChange={(event) => setSortKey(event.target.value)}
-          className="rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-700 outline-none focus:border-gray-400"
-        >
-          {SORT_OPTIONS.map((option) => (
-            <option key={option.id} value={option.id}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <div className="w-full max-w-[220px] self-start lg:self-auto">
+          <label
+            htmlFor="smart-wizard-sort"
+            className="mb-2 block text-[11px] font-bold uppercase tracking-[0.18em] text-gray-400"
+          >
+            Sort Results
+          </label>
+          <div className="relative">
+            <select
+              id="smart-wizard-sort"
+              value={sortKey}
+              onChange={(event) => setSortKey(event.target.value)}
+              className="w-full appearance-none rounded-2xl border border-[var(--border-strong)] bg-white px-4 py-3.5 pr-11 text-sm font-semibold text-[var(--text-strong)] shadow-[0_8px_20px_rgba(59,83,114,0.08)] outline-none transition-all focus:border-[var(--accent)] focus:ring-4 focus:ring-[rgba(54,87,132,0.14)]"
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <svg
+              className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]"
+              viewBox="0 0 20 20"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M5 7.5L10 12.5L15 7.5"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

@@ -18,7 +18,7 @@ const Header = () => {
         <div className="flex h-full items-center gap-8 lg:gap-12">
           <Link href="/" className="flex items-center">
             <span className="text-[1.15rem] font-extrabold tracking-tight text-[var(--text-strong)]">
-              Model Explorer
+              InnoAI AI Explorer
             </span>
           </Link>
 
@@ -97,3 +97,4 @@ const Header = () => {
 };
 
 export default Header;
+

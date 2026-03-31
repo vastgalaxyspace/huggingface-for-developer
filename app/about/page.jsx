@@ -25,7 +25,7 @@ export default function AboutPage() {
               Our Vision
             </h2>
             <p className="text-[var(--text-muted)] leading-relaxed">
-              As the artificial intelligence landscape expands at an unprecedented rate, keeping track of new models, their capabilities, and their ideal use cases has become increasingly complex. We built Model Explorer to serve as a comprehensive, unbiased hub for discovering and comparing Large Language Models.
+              As the artificial intelligence landscape expands at an unprecedented rate, keeping track of new models, their capabilities, and their ideal use cases has become increasingly complex. We built InnoAI AI Explorer to serve as a comprehensive, unbiased hub for discovering and comparing Large Language Models.
             </p>
           </section>
 
@@ -53,3 +53,4 @@ export default function AboutPage() {
     </div>
   );
 }
+

@@ -111,6 +111,11 @@ export default function Step2Compute({ state, updateCompute, updateMetrics }) {
               <span className="text-sm font-semibold text-gray-700">VRAM Budget</span>
               <span className="text-sm font-bold text-gray-900">{state.compute.vram_gb} GB</span>
             </div>
+            <div className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">
+              <span>0 GB</span>
+              <span>Drag slider</span>
+              <span>80 GB</span>
+            </div>
             <input
               type="range"
               min="0"
@@ -118,14 +123,37 @@ export default function Step2Compute({ state, updateCompute, updateMetrics }) {
               step="1"
               value={state.compute.vram_gb}
               onChange={(event) => updateCompute({ vram_gb: Number(event.target.value) })}
-              className="smart-slider w-full appearance-none bg-transparent"
+              aria-label="VRAM budget"
+              className="sr-only"
             />
+            <div className="relative h-8">
+              <div className="absolute left-0 right-0 top-1/2 h-[6px] -translate-y-1/2 rounded-full bg-slate-200" />
+              <div
+                className="absolute left-0 top-1/2 h-[6px] -translate-y-1/2 rounded-full bg-[var(--accent)]"
+                style={{ width: `${(state.compute.vram_gb / 80) * 100}%` }}
+              />
+              <input
+                type="range"
+                min="0"
+                max="80"
+                step="1"
+                value={state.compute.vram_gb}
+                onChange={(event) => updateCompute({ vram_gb: Number(event.target.value) })}
+                aria-label="VRAM budget"
+                className="smart-slider absolute inset-0 h-8 w-full appearance-none bg-transparent"
+              />
+            </div>
           </div>
 
           <div className="rounded-2xl border border-gray-200 p-4">
             <div className="mb-3 flex items-center justify-between">
               <span className="text-sm font-semibold text-gray-700">RAM Budget</span>
               <span className="text-sm font-bold text-gray-900">{state.compute.ram_gb} GB</span>
+            </div>
+            <div className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">
+              <span>0 GB</span>
+              <span>Drag slider</span>
+              <span>512 GB</span>
             </div>
             <input
               type="range"
@@ -134,8 +162,26 @@ export default function Step2Compute({ state, updateCompute, updateMetrics }) {
               step="1"
               value={state.compute.ram_gb}
               onChange={(event) => updateCompute({ ram_gb: Number(event.target.value) })}
-              className="smart-slider w-full appearance-none bg-transparent"
+              aria-label="RAM budget"
+              className="sr-only"
             />
+            <div className="relative h-8">
+              <div className="absolute left-0 right-0 top-1/2 h-[6px] -translate-y-1/2 rounded-full bg-slate-200" />
+              <div
+                className="absolute left-0 top-1/2 h-[6px] -translate-y-1/2 rounded-full bg-[var(--accent)]"
+                style={{ width: `${(state.compute.ram_gb / 512) * 100}%` }}
+              />
+              <input
+                type="range"
+                min="0"
+                max="512"
+                step="1"
+                value={state.compute.ram_gb}
+                onChange={(event) => updateCompute({ ram_gb: Number(event.target.value) })}
+                aria-label="RAM budget"
+                className="smart-slider absolute inset-0 h-8 w-full appearance-none bg-transparent"
+              />
+            </div>
           </div>
 
           <div className="rounded-2xl border border-gray-200 p-4">

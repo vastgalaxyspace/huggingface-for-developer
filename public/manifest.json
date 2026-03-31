@@ -1,5 +1,5 @@
 {
-  "name": "InnoAI Model Explorer",
+  "name": "InnoAI AI Explorer",
   "short_name": "InnoAI",
   "description": "Analyze Hugging Face models, estimate VRAM, compare architectures, and pick the right AI stack with practical developer tools.",
   "start_url": "/",
@@ -17,3 +17,4 @@
     }
   ]
 }
+

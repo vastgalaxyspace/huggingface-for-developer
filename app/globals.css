@@ -168,6 +168,13 @@ body {
   cursor: pointer;
 }
 
+.smart-slider::-webkit-slider-runnable-track {
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #d9e5f3 0%, #edf3f9 100%);
+  border: 1px solid rgba(96, 121, 154, 0.18);
+}
+
 .smart-slider::-moz-range-thumb {
   width: 1.25rem;
   height: 1.25rem;
@@ -176,4 +183,27 @@ body {
   border: 2px solid #111827;
   box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
   cursor: pointer;
+}
+
+.smart-slider::-moz-range-track {
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #d9e5f3 0%, #edf3f9 100%);
+  border: 1px solid rgba(96, 121, 154, 0.18);
+}
+
+.smart-slider {
+  cursor: pointer;
+}
+
+.smart-slider:focus {
+  outline: none;
+}
+
+.smart-slider:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 5px rgba(54, 87, 132, 0.16), 0 4px 10px rgba(15, 23, 42, 0.18);
+}
+
+.smart-slider:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 5px rgba(54, 87, 132, 0.16), 0 4px 10px rgba(15, 23, 42, 0.18);
 }

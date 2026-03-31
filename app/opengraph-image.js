@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-export const alt = 'InnoAI Model Explorer';
+export const alt = 'InnoAI AI Explorer';
 export const size = {
   width: 1200,
   height: 630,
@@ -42,7 +42,7 @@ export default function OpenGraphImage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: '28px', fontWeight: 700 }}>InnoAI</div>
-            <div style={{ fontSize: '18px', color: '#cbd5e1' }}>Model Explorer for Hugging Face</div>
+            <div style={{ fontSize: '18px', color: '#cbd5e1' }}>AI Explorer for Hugging Face</div>
           </div>
         </div>
 
@@ -57,10 +57,11 @@ export default function OpenGraphImage() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '22px' }}>
           <div style={{ color: '#e2e8f0' }}>innoai.space</div>
-          <div style={{ color: '#7dd3fc' }}>Compare • Recommend • Optimize</div>
+          <div style={{ color: '#7dd3fc' }}>Compare | Recommend | Optimize</div>
         </div>
       </div>
     ),
     size
   );
 }
+

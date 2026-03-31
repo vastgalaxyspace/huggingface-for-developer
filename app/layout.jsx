@@ -28,7 +28,7 @@ const siteKeywords = [
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'InnoAI Model Explorer: Analyze Hugging Face Models Fast',
+    default: 'InnoAI AI Explorer: Analyze Hugging Face Models Fast',
     template: '%s | InnoAI',
   },
   description: DEFAULT_DESCRIPTION,
@@ -56,7 +56,7 @@ export const metadata = {
     type: 'website',
     locale: 'en_US',
     url: SITE_URL,
-    title: 'InnoAI Model Explorer: Analyze Hugging Face Models Fast',
+    title: 'InnoAI AI Explorer: Analyze Hugging Face Models Fast',
     description: DEFAULT_DESCRIPTION,
     siteName: SITE_NAME,
     images: [
@@ -70,7 +70,7 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'InnoAI Model Explorer',
+    title: 'InnoAI AI Explorer',
     description: DEFAULT_DESCRIPTION,
     images: [absoluteUrl(DEFAULT_OG_IMAGE)],
   },
@@ -130,3 +130,4 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+

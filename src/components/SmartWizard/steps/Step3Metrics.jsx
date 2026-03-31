@@ -128,14 +128,36 @@ export default function Step3Metrics({ state, updateMetrics }) {
             <p className="mt-2 text-sm text-gray-500">
               Only show models with quality score above {state.metrics.min_quality}%
             </p>
+            <div className="mt-4 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">
+              <span>0%</span>
+              <span>Drag to adjust</span>
+              <span>100%</span>
+            </div>
             <input
               type="range"
               min="0"
               max="100"
               value={state.metrics.min_quality}
               onChange={(event) => updateMetrics({ min_quality: Number(event.target.value) })}
-              className="smart-slider mt-4 w-full appearance-none bg-transparent"
+              aria-label="Minimum quality threshold"
+              className="sr-only"
             />
+            <div className="relative mt-2 h-8">
+              <div className="absolute left-0 right-0 top-1/2 h-[6px] -translate-y-1/2 rounded-full bg-slate-200" />
+              <div
+                className="absolute left-0 top-1/2 h-[6px] -translate-y-1/2 rounded-full bg-[var(--accent)]"
+                style={{ width: `${state.metrics.min_quality}%` }}
+              />
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={state.metrics.min_quality}
+                onChange={(event) => updateMetrics({ min_quality: Number(event.target.value) })}
+                aria-label="Minimum quality threshold"
+                className="smart-slider absolute inset-0 h-8 w-full appearance-none bg-transparent"
+              />
+            </div>
           </div>
 
           <ToggleBlock

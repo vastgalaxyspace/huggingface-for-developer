@@ -1,6 +1,6 @@
 export const SITE_URL = 'https://innoai.space';
 export const SITE_NAME = 'InnoAI';
-export const PRODUCT_NAME = 'InnoAI Model Explorer';
+export const PRODUCT_NAME = 'InnoAI AI Explorer';
 export const DEFAULT_DESCRIPTION =
   'Analyze Hugging Face models, estimate VRAM, compare architectures, and choose the right AI stack with practical tools for developers and researchers.';
 export const DEFAULT_OG_IMAGE = '/opengraph-image';
@@ -49,3 +49,4 @@ export function pageMetadata({
     },
   };
 }
+
