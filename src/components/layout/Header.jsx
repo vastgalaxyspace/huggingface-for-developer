@@ -63,6 +63,26 @@ const Header = () => {
             >
               GPU Hub
             </Link>
+            <Link
+              href="/ai-updates"
+              className={`flex h-full items-center border-b-[3px] pt-[3px] transition-colors ${
+                isActive('/ai-updates')
+                  ? 'border-[var(--text-strong)] text-[var(--text-strong)]'
+                  : 'border-transparent hover:text-[var(--text-strong)]'
+              }`}
+            >
+              AI Updates
+            </Link>
+            <Link
+              href="/about"
+              className={`flex h-full items-center border-b-[3px] pt-[3px] transition-colors ${
+                isActive('/about')
+                  ? 'border-[var(--text-strong)] text-[var(--text-strong)]'
+                  : 'border-transparent hover:text-[var(--text-strong)]'
+              }`}
+            >
+              About Us
+            </Link>
           </nav>
         </div>
 
