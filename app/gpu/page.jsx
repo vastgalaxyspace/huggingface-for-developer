@@ -154,16 +154,17 @@ export default function GpuPage() {
               <Link
                 key={item.id}
                 href={item.href}
-                className="min-h-[132px] border border-[#d9e1ea] bg-white p-5"
+                className="group relative min-h-[220px] overflow-hidden rounded-[22px] border border-[#d9e1ea] bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] p-6 shadow-[0_10px_24px_rgba(45,67,92,0.06)] transition-all duration-200 hover:-translate-y-1 hover:border-[#bfd0e2] hover:shadow-[0_18px_36px_rgba(31,45,61,0.1)]"
               >
-                <p className="text-[36px] font-black leading-none text-[var(--panel-muted)]">
+                <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-[radial-gradient(circle,#e8f1fb_0%,rgba(232,241,251,0)_72%)]" />
+                <div className="inline-flex rounded-full border border-[#d7e6f5] bg-[#eef5fc] px-3 py-1 text-sm font-black tracking-tight text-[#365784]">
                   {item.id}
-                </p>
-                <h3 className="mt-4 text-xs font-black uppercase tracking-[0.13em] text-[var(--text-strong)]">
+                </div>
+                <h3 className="mt-5 text-lg font-black leading-snug tracking-[-0.02em] text-[var(--text-strong)]">
                   {item.title}
                 </h3>
-                <p className="mt-2 text-xs leading-5 text-[#698096]">{item.subtitle}</p>
-                <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.16em] text-[#143458]">
+                <p className="mt-3 text-[15px] leading-7 text-[#698096]">{item.subtitle}</p>
+                <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-[#143458] transition-transform group-hover:translate-x-0.5">
                   Explore <ArrowRight className="h-3 w-3" />
                 </span>
               </Link>
@@ -178,18 +179,23 @@ export default function GpuPage() {
               <Link
                 key={tool.name}
                 href={tool.href}
-                className="group block border border-[#dde4ec] p-5 transition-colors hover:bg-[#f7faff]"
+                className="group block rounded-[22px] border border-[#dde4ec] bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] p-6 shadow-[0_10px_24px_rgba(45,67,92,0.05)] transition-all duration-200 hover:-translate-y-1 hover:border-[#bfd0e2] hover:bg-[#f7faff] hover:shadow-[0_18px_36px_rgba(31,45,61,0.08)]"
               >
                 <div className="mb-6 flex items-center justify-between text-[#62768f]">
-                  <tool.icon className="h-4 w-4" />
-                  <span className="text-[10px] font-bold uppercase tracking-[0.18em]">Tool</span>
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#edf4fb] text-[#365784]">
+                    <tool.icon className="h-5 w-5" />
+                  </div>
+                  <span className="rounded-full bg-[#f3f7fb] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#6c8197]">
+                    Tool
+                  </span>
                 </div>
-                <h3 className="text-xs font-black uppercase tracking-[0.13em] text-[var(--text-strong)]">
+                <h3 className="text-lg font-black leading-snug tracking-[-0.02em] text-[var(--text-strong)]">
                   {tool.name}
                 </h3>
-                <p className="mt-3 text-xs leading-5 text-[#687f95]">{tool.body}</p>
-                <span className="mt-5 inline-block text-[10px] font-bold uppercase tracking-[0.16em] text-[#1f3a59] group-hover:text-[#15395c]">
+                <p className="mt-3 text-[15px] leading-7 text-[#687f95]">{tool.body}</p>
+                <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-[#1f3a59] transition-transform group-hover:translate-x-0.5 group-hover:text-[#15395c]">
                   {tool.cta}
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </span>
               </Link>
             ))}
