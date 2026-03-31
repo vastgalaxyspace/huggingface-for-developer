@@ -1,15 +1,19 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, Terminal, CheckCircle, Cloud, BarChart3, ChevronDown, AlignLeft, SlidersHorizontal, MessageSquare, Image as ImageIcon, Cpu, TrendingUp, Heart, X, Mic, Scan } from 'lucide-react';
 import { getTrendingModels, searchModels } from '../services/huggingface';
 import { parseModelSize, formatNumber, enrichModelData } from '../utils/modelUtils';
 
-const FeatureItem = ({ icon: Icon, text }) => (
-  <div className="group flex cursor-pointer items-center justify-center gap-3 py-6 text-xs font-bold uppercase tracking-[0.24em] text-[var(--text-muted)] transition-colors">
-    <Icon className="h-4 w-4 text-[var(--text-faint)] group-hover:text-[var(--accent)]" />
-    <span>{text}</span>
-  </div>
-);
+const FeatureItem = ({ icon, text }) => {
+  const Icon = icon;
+
+  return (
+    <div className="group flex cursor-pointer items-center justify-center gap-3 px-3 py-5 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] transition-colors sm:py-6 sm:text-xs sm:tracking-[0.24em]">
+      <Icon className="h-4 w-4 shrink-0 text-[var(--text-faint)] group-hover:text-[var(--accent)]" />
+      <span>{text}</span>
+    </div>
+  );
+};
 
 const HomePage = ({ onSearch, loading }) => {
   const [popularModels, setPopularModels] = useState([]);
@@ -54,7 +58,7 @@ const HomePage = ({ onSearch, loading }) => {
       }
     };
     fetchModels();
-  }, [enrichModelData]);
+  }, []);
 
   // Debounce search effect
   useEffect(() => {
@@ -259,26 +263,26 @@ const HomePage = ({ onSearch, loading }) => {
 
   return (
     <div className="min-h-screen">
-      <section className="shell-container pt-20 pb-10 text-center">
-        <div className="editorial-panel soft-grid rounded-[36px] px-6 py-16 sm:px-10 lg:px-16 lg:py-24">
+      <section className="shell-container pb-8 pt-8 text-center sm:pt-12 lg:pt-20">
+        <div className="editorial-panel soft-grid rounded-[28px] px-4 py-10 sm:rounded-[36px] sm:px-8 sm:py-14 lg:px-16 lg:py-24">
           <div className="mx-auto max-w-5xl">
-            <h1 className="mx-auto max-w-4xl text-5xl font-black tracking-tight text-[var(--text-strong)] sm:text-6xl lg:text-[4.9rem] lg:leading-[1]">
+            <h1 className="mx-auto max-w-4xl text-3xl font-black tracking-tight text-[var(--text-strong)] sm:text-5xl lg:text-[4.9rem] lg:leading-[1]">
               The Architect&apos;s Workspace for LLMs
             </h1>
-            <p className="mx-auto mt-6 max-w-3xl text-lg font-medium leading-relaxed text-[var(--text-muted)] sm:text-[2rem] sm:leading-[1.35]">
+            <p className="mx-auto mt-4 max-w-3xl text-base font-medium leading-relaxed text-[var(--text-muted)] sm:mt-6 sm:text-xl lg:text-[2rem] lg:leading-[1.35]">
               Search across 500,000+ open-source models with high-precision technical metadata.
             </p>
 
-            <div className="mx-auto mt-12 max-w-4xl" ref={searchContainerRef}>
+            <div className="mx-auto mt-8 max-w-4xl sm:mt-12" ref={searchContainerRef}>
               <div className="group relative">
-                <Search className="absolute left-6 top-1/2 h-5 w-5 -translate-y-1/2 text-[var(--text-faint)] transition-colors group-focus-within:text-[var(--accent)]" />
+                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-faint)] transition-colors group-focus-within:text-[var(--accent)] sm:left-6 sm:h-5 sm:w-5" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                   onKeyDown={handleKeyDown}
-                  className="w-full rounded-[22px] border border-[var(--border-soft)] bg-white px-16 py-5 text-lg font-medium text-[var(--text-main)] shadow-[0_16px_40px_rgba(48,67,95,0.08)] outline-none transition-all placeholder:text-[var(--text-faint)] focus:border-[var(--border-strong)] focus:ring-4 focus:ring-[rgba(53,87,132,0.08)]"
+                  className="w-full rounded-[20px] border border-[var(--border-soft)] bg-white px-12 py-4 text-base font-medium text-[var(--text-main)] shadow-[0_16px_40px_rgba(48,67,95,0.08)] outline-none transition-all placeholder:text-[var(--text-faint)] focus:border-[var(--border-strong)] focus:ring-4 focus:ring-[rgba(53,87,132,0.08)] sm:rounded-[22px] sm:px-16 sm:py-5 sm:text-lg"
                   placeholder="Search models by name, task, or architecture..."
                   disabled={loading}
                 />
@@ -287,15 +291,15 @@ const HomePage = ({ onSearch, loading }) => {
                   <button
                     type="button"
                     onClick={clearQuery}
-                    className="absolute right-16 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors hover:bg-[var(--panel-muted)]"
+                    className="absolute right-12 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors hover:bg-[var(--panel-muted)] sm:right-16"
                   >
-                    <X className="h-5 w-5 text-[var(--text-faint)] hover:text-[var(--text-main)]" />
+                    <X className="h-4 w-4 text-[var(--text-faint)] hover:text-[var(--text-main)] sm:h-5 sm:w-5" />
                   </button>
                 )}
 
                 {(loading || searchLoading) && (
-                  <div className="absolute right-6 top-1/2 -translate-y-1/2">
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent"></div>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 sm:right-6">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent sm:h-5 sm:w-5"></div>
                   </div>
                 )}
 
@@ -304,12 +308,12 @@ const HomePage = ({ onSearch, loading }) => {
                   <div className="absolute top-[calc(100%+12px)] z-[60] w-full overflow-hidden rounded-[22px] border border-[var(--border-soft)] bg-white shadow-[0_24px_60px_rgba(48,67,95,0.12)]">
                     {suggestions.length > 0 ? (
                       <>
-                        <div className="flex items-center justify-between border-b border-[var(--border-soft)] bg-[var(--panel-muted)] px-6 py-3">
+                        <div className="flex flex-col gap-1 border-b border-[var(--border-soft)] bg-[var(--panel-muted)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                           <span className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">
                             {suggestions.length} models found
                           </span>
-                          <span className="text-xs text-[var(--text-faint)]">
-                            ↑↓ to navigate • Enter to select
+                          <span className="text-[11px] text-[var(--text-faint)] sm:text-xs">
+                            Use arrows to navigate and Enter to select
                           </span>
                         </div>
                         <div ref={listRef} className="max-h-[400px] overflow-y-auto">
@@ -325,7 +329,7 @@ const HomePage = ({ onSearch, loading }) => {
                                   setShowSuggestions(false);
                                   setSelectedIndex(-1);
                                 }}
-                                className={`group w-full cursor-pointer border-b border-[var(--border-soft)] px-6 py-4 text-left transition-colors last:border-b-0 ${
+                                className={`group w-full cursor-pointer border-b border-[var(--border-soft)] px-4 py-4 text-left transition-colors last:border-b-0 sm:px-6 ${
                                   isSelected
                                     ? 'border-l-4 border-l-[var(--accent)] bg-[var(--panel-muted)]'
                                     : 'border-l-4 border-l-transparent hover:bg-[rgba(243,247,252,0.8)]'
@@ -333,7 +337,7 @@ const HomePage = ({ onSearch, loading }) => {
                               >
                                 <div className="flex items-start justify-between gap-4">
                                   <div className="min-w-0 flex-1">
-                                    <div className="mb-2 truncate text-[15px] font-bold text-[var(--text-strong)] transition-colors group-hover:text-[var(--accent)]">
+                                    <div className="mb-2 truncate text-sm font-bold text-[var(--text-strong)] transition-colors group-hover:text-[var(--accent)] sm:text-[15px]">
                                       {highlightMatch(model.id, searchQuery)}
                                     </div>
                                     <div className="flex flex-wrap items-center gap-2.5">
@@ -361,7 +365,7 @@ const HomePage = ({ onSearch, loading }) => {
                                     </div>
                                   </div>
                                   <div
-                                    className={`self-center text-[var(--accent)] transition-opacity ${
+                                    className={`hidden self-center text-[var(--accent)] transition-opacity sm:block ${
                                       isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                                     }`}
                                   >
@@ -395,7 +399,7 @@ const HomePage = ({ onSearch, loading }) => {
         </div>
       </section>
 
-      <div className="mt-6 border-y border-[var(--border-soft)] bg-[rgba(255,255,255,0.6)]">
+      <div className="mt-4 border-y border-[var(--border-soft)] bg-[rgba(255,255,255,0.6)] sm:mt-6">
         <div className="shell-container grid grid-cols-2 divide-y divide-[var(--border-soft)] md:grid-cols-4 md:divide-x md:divide-y-0">
           <FeatureItem icon={Terminal} text="CLI ACCESS" />
           <FeatureItem icon={CheckCircle} text="VERIFIED MODELS" />
@@ -404,9 +408,9 @@ const HomePage = ({ onSearch, loading }) => {
         </div>
       </div>
 
-      <section className="shell-container py-12">
+      <section className="shell-container py-8 sm:py-12">
         <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between" ref={filterRef}>
-          <div className="hide-scrollbar relative flex w-full items-center gap-3 overflow-visible pb-2 md:w-auto md:pb-0">
+          <div className="hide-scrollbar relative -mx-4 flex w-[calc(100%+2rem)] items-center gap-3 overflow-x-auto overflow-y-visible px-4 pb-2 md:mx-0 md:w-auto md:px-0 md:pb-0">
             {['architecture', 'parameters', 'license', 'pipeline'].map((type) => {
               const labelMap = { architecture: 'Architecture', parameters: 'Parameters', license: 'License', pipeline: 'Pipeline Tag'};
               const label = labelMap[type];
@@ -419,7 +423,7 @@ const HomePage = ({ onSearch, loading }) => {
               else if (selectedValues.length > 1) displayText = `${label}: ${selectedValues.length} selected`;
 
               return (
-                <div key={type} className="relative">
+                <div key={type} className="relative shrink-0">
                   <div className={`flex whitespace-nowrap items-center gap-1 rounded-xl border px-1 py-1 text-sm font-semibold shadow-[0_8px_18px_rgba(52,75,104,0.04)] transition-colors ${
                       isActive || isOpen 
                         ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]' 
@@ -437,17 +441,17 @@ const HomePage = ({ onSearch, loading }) => {
                   </div>
 
                   {isOpen && (
-                    <div className="absolute left-0 top-[calc(100%+8px)] z-[60] min-w-[200px] whitespace-nowrap rounded-xl border border-[var(--border-soft)] bg-white py-2 shadow-xl">
+                    <div className="absolute left-0 top-[calc(100%+8px)] z-[60] min-w-[220px] max-w-[min(18rem,calc(100vw-2rem))] rounded-xl border border-[var(--border-soft)] bg-white py-2 shadow-xl">
                       {filterOptions[type].map(opt => {
                         const isSelected = selectedValues.includes(opt);
                         return (
                           <button
                             key={opt}
                             onClick={() => handleFilterToggle(type, opt)}
-                            className="w-full flex items-center justify-between px-4 py-2 text-left text-sm font-medium transition-colors hover:bg-[var(--panel-muted)] text-[var(--text-main)]"
+                            className="flex w-full items-center justify-between gap-4 px-4 py-2 text-left text-sm font-medium text-[var(--text-main)] transition-colors hover:bg-[var(--panel-muted)]"
                           >
-                            <span>{opt}</span>
-                            <div className={`flex h-4 w-4 items-center justify-center rounded border transition-colors ${isSelected ? 'border-[var(--accent)] bg-[var(--accent)]' : 'border-[var(--border-strong)] bg-white text-transparent'}`}>
+                            <span className="break-words">{opt}</span>
+                            <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${isSelected ? 'border-[var(--accent)] bg-[var(--accent)]' : 'border-[var(--border-strong)] bg-white text-transparent'}`}>
                               {isSelected && <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                             </div>
                           </button>
@@ -460,17 +464,17 @@ const HomePage = ({ onSearch, loading }) => {
             })}
           </div>
 
-          <div className="flex w-full items-center justify-end gap-6 md:w-auto relative">
+          <div className="relative flex w-full flex-wrap items-center justify-between gap-4 md:w-auto md:flex-nowrap md:justify-end md:gap-6">
             <div className="relative">
               <button 
                 onClick={(e) => { e.stopPropagation(); toggleFilter('sort'); }}
-                className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)]"
+                className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)] sm:text-xs sm:tracking-[0.2em]"
               >
                 <AlignLeft className="h-[14px] w-[14px]" /> SORT: {currentSortLabel}
               </button>
               
               {activeFilter === 'sort' && (
-                <div className="absolute right-0 top-[calc(100%+12px)] z-[60] w-56 rounded-xl border border-[var(--border-soft)] bg-white py-2 shadow-xl">
+                <div className="absolute left-0 top-[calc(100%+12px)] z-[60] w-56 rounded-xl border border-[var(--border-soft)] bg-white py-2 shadow-xl md:left-auto md:right-0">
                   {filterOptions.sort.map(opt => (
                     <button
                       key={opt.id}
@@ -486,14 +490,14 @@ const HomePage = ({ onSearch, loading }) => {
               )}
             </div>
             
-            <button className="flex items-center gap-2 border-l border-[var(--border-soft)] pl-6 text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]">
+            <button className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)] sm:border-l sm:border-[var(--border-soft)] sm:pl-6 sm:text-xs sm:tracking-[0.2em]">
               <SlidersHorizontal className="h-[14px] w-[14px]" /> ADVANCED
             </button>
           </div>
         </div>
 
         <div className="editorial-panel overflow-hidden rounded-[28px]">
-          <div className="overflow-x-auto">
+          <div className="hidden overflow-x-auto lg:block">
             <table className="w-full whitespace-nowrap text-left text-[15px]">
               <thead className="bg-[var(--panel-muted)] text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--text-muted)]">
                 <tr>
@@ -570,9 +574,69 @@ const HomePage = ({ onSearch, loading }) => {
             </table>
           </div>
 
-          <div className="flex flex-col items-center justify-between gap-4 border-t border-[var(--border-soft)] bg-[rgba(245,248,251,0.92)] px-6 py-5 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)] sm:flex-row">
-            <div>Showing {filteredModels.length > 0 ? `${startIndex + 1}-${endIndex}` : 0} of {filteredModels.length} {filteredModels.length !== popularModels.length ? '(filtered) ' : ''}models</div>
-            <div className="flex items-center gap-2">
+          <div className="grid gap-0 lg:hidden">
+            {modelsLoading ? (
+              <div className="px-6 py-16 text-center text-[var(--text-muted)]">
+                <div className="mb-3 inline-block h-6 w-6 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
+                <div>Loading models...</div>
+              </div>
+            ) : displayModels.length === 0 ? (
+              <div className="px-6 py-16 text-center text-[var(--text-muted)]">
+                No models found.
+              </div>
+            ) : (
+              displayModels.map((model, i) => {
+                const times = ['2h ago', '1d ago', '5h ago', '12h ago', '3d ago'];
+                const time = times[i % times.length];
+                const pText = model.pipelineText || 'Other';
+
+                return (
+                  <article key={model.modelId} className="border-b border-[var(--border-soft)] bg-white p-5 last:border-b-0 sm:p-6">
+                    <button
+                      onClick={() => onSearch(model.modelId)}
+                      className="block w-full text-left text-base font-extrabold text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)] sm:text-lg"
+                    >
+                      <span className="line-clamp-2 break-words">{model.name}</span>
+                    </button>
+                    <div className="mt-2 text-[12px] font-medium text-[var(--text-faint)]">Updated {time}</div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+                      <div className="rounded-2xl bg-[var(--panel-muted)] px-3 py-2">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">Parameters</div>
+                        <div className="mt-1 font-semibold text-[var(--text-main)]">{model.rawParams}</div>
+                      </div>
+                      <div className="rounded-2xl bg-[var(--panel-muted)] px-3 py-2">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">Downloads</div>
+                        <div className="mt-1 font-semibold text-[var(--text-main)]">{formatNumber(model.downloads)}</div>
+                      </div>
+                      <div className="rounded-2xl bg-[var(--panel-muted)] px-3 py-2">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">VRAM</div>
+                        <div className="mt-1 font-semibold text-[var(--text-main)]">{model.vramEstimates?.fp16} GB</div>
+                      </div>
+                      <div className="rounded-2xl bg-[var(--panel-muted)] px-3 py-2">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">Context</div>
+                        <div className="mt-1 font-semibold text-[var(--text-main)]">
+                          {model.config?.max_position_embeddings > 0 ? `${model.config.max_position_embeddings / 1000}k` : 'N/A'}
+                        </div>
+                      </div>
+                      <div className="col-span-2 rounded-2xl bg-[var(--panel-muted)] px-3 py-2 sm:col-span-1">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">License</div>
+                        <div className="mt-1 break-words font-semibold text-[var(--text-main)]">{model.licenseInfo.name}</div>
+                      </div>
+                      <div className="col-span-2 rounded-2xl bg-[var(--panel-muted)] px-3 py-2 sm:col-span-3">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">Pipeline</div>
+                        <div className="mt-1 break-words font-semibold text-[var(--text-main)]">{pText}</div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })
+            )}
+          </div>
+
+          <div className="flex flex-col items-stretch justify-between gap-4 border-t border-[var(--border-soft)] bg-[rgba(245,248,251,0.92)] px-4 py-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-muted)] sm:px-6 sm:text-xs sm:tracking-[0.18em] md:flex-row md:items-center">
+            <div className="text-center md:text-left">Showing {filteredModels.length > 0 ? `${startIndex + 1}-${endIndex}` : 0} of {filteredModels.length} {filteredModels.length !== popularModels.length ? '(filtered) ' : ''}models</div>
+            <div className="flex flex-wrap items-center justify-center gap-2 md:justify-end">
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
@@ -581,7 +645,7 @@ const HomePage = ({ onSearch, loading }) => {
                 PREVIOUS
               </button>
               
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              {Array.from({ length: totalPages }, (_, i) => i + 1).slice(0, 8).map(page => (
                 <button 
                   key={page}
                   onClick={() => setCurrentPage(page)}
