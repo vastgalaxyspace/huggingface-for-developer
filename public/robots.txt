@@ -1,6 +1,0 @@
-# HuggingFace Model Explorer - robots.txt
-User-agent: *
-Allow: /
-
-# Sitemap
-Sitemap: https://your-domain.com/sitemap.xml

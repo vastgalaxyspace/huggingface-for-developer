@@ -1,11 +1,11 @@
 {
-  "name": "HuggingFace Model Explorer",
-  "short_name": "HF Explorer",
-  "description": "Analyze any HuggingFace model instantly. Get VRAM requirements, license info, parameter explanations, and deployment recommendations for AI/ML models.",
+  "name": "InnoAI Model Explorer",
+  "short_name": "InnoAI",
+  "description": "Analyze Hugging Face models, estimate VRAM, compare architectures, and pick the right AI stack with practical developer tools.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#9333ea",
+  "background_color": "#07111f",
+  "theme_color": "#123b61",
   "orientation": "portrait-primary",
   "categories": ["developer tools", "utilities", "productivity"],
   "icons": [

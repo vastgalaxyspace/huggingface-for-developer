@@ -1,7 +1,12 @@
-export const metadata = {
-  title: 'About Us | Model Explorer',
-  description: 'Learn more about Model Explorer and our mission to make AI accessible.',
-};
+import { pageMetadata } from '../../src/lib/seo';
+
+export const metadata = pageMetadata({
+  title: 'About InnoAI',
+  description:
+    'Learn how InnoAI helps developers and researchers analyze Hugging Face models, compare options, and make better deployment decisions.',
+  path: '/about',
+  keywords: ['about InnoAI', 'AI model explorer', 'Hugging Face tools'],
+});
 
 export default function AboutPage() {
   return (
@@ -13,7 +18,7 @@ export default function AboutPage() {
         <p className="text-lg text-[var(--text-muted)] mb-12">
           Our mission is to empower developers and researchers by organizing the world's most capable AI models into an accessible, comparative platform.
         </p>
-        
+
         <div className="space-y-12">
           <section>
             <h2 className="text-2xl font-bold text-[var(--text-strong)] mb-4">

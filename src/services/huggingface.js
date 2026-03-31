@@ -4,6 +4,13 @@ const HF_API_BASE = 'https://huggingface.co';
 const HF_API_MODELS = 'https://huggingface.co/api/models';
 const HF_TOKEN = process.env.NEXT_PUBLIC_HF_TOKEN;
 
+const OPTIONAL_ASSET_ERROR_TEXT = [
+  'failed to fetch',
+  'load failed',
+  'networkerror',
+  'network request failed'
+];
+
 /**
  * Get headers for authenticated requests
  */
@@ -13,6 +20,42 @@ const getHeaders = () => {
     headers['Authorization'] = `Bearer ${HF_TOKEN}`;
   }
   return headers;
+};
+
+const isRestrictedStatus = (status) => status === 401 || status === 403;
+
+const isLikelyNetworkFetchError = (error) => {
+  if (!error) return false;
+  const message = String(error.message || '').toLowerCase();
+  return OPTIONAL_ASSET_ERROR_TEXT.some((text) => message.includes(text));
+};
+
+const fetchOptionalRepoFile = async (modelId, filePath, responseType = 'json') => {
+  const paths = ['raw', 'resolve'];
+
+  try {
+    for (const pathType of paths) {
+      const response = await fetch(
+        `${HF_API_BASE}/${modelId}/${pathType}/main/${filePath}`,
+        { headers: getHeaders() }
+      );
+
+      if (response.ok) {
+        return responseType === 'text' ? response.text() : response.json();
+      }
+
+      if (isRestrictedStatus(response.status) || response.status === 404) {
+        return null;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    if (!isLikelyNetworkFetchError(error)) {
+      console.warn(`Optional Hugging Face asset unavailable for ${modelId}/${filePath}:`, error);
+    }
+    return null;
+  }
 };
 
 /**
@@ -46,73 +89,21 @@ export const fetchModelMetadata = async (modelId) => {
  * Fetch model config.json
  */
 export const fetchModelConfig = async (modelId) => {
-  try {
-    // Try primary raw path
-    const response = await fetch(
-      `${HF_API_BASE}/${modelId}/raw/main/config.json`,
-      { headers: getHeaders() }
-    );
-    
-    if (!response.ok) {
-      // If unauthorized, it's likely a gated model or requires a token
-      if (response.status === 401 || response.status === 403) {
-        console.warn(`Access restricted for ${modelId} config. It may be a gated model.`);
-        return null;
-      }
-
-      // Try alternative path (resolve)
-      const altResponse = await fetch(
-        `${HF_API_BASE}/${modelId}/resolve/main/config.json`,
-        { headers: getHeaders() }
-      );
-      
-      if (!altResponse.ok) {
-        return null; // Return null gracefully instead of throwing to prevent app crash
-      }
-      
-      return await altResponse.json();
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching model config:', error);
-    return null; // Return null gracefully
-  }
+  return fetchOptionalRepoFile(modelId, 'config.json');
 };
 
 /**
  * Fetch model README
  */
 export const fetchModelReadme = async (modelId) => {
-  try {
-    const response = await fetch(
-      `${HF_API_BASE}/${modelId}/raw/main/README.md`
-    );
-    
-    if (!response.ok) return null;
-    return await response.text();
-  } catch (error) {
-    console.error('Error fetching README:', error);
-    return null;
-  }
+  return fetchOptionalRepoFile(modelId, 'README.md', 'text');
 };
 
 /**
  * Fetch tokenizer config
  */
 export const fetchTokenizerConfig = async (modelId) => {
-  try {
-    const response = await fetch(
-      `${HF_API_BASE}/${modelId}/raw/main/tokenizer_config.json`,
-      { headers: getHeaders() }
-    );
-    
-    if (!response.ok) return null;
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching tokenizer config:', error);
-    return null;
-  }
+  return fetchOptionalRepoFile(modelId, 'tokenizer_config.json');
 };
 
 /**
@@ -129,6 +120,18 @@ export const fetchCompleteModelData = async (modelId) => {
     
     if (!metadata) {
       throw new Error('Could not fetch model metadata');
+    }
+
+    const isGatedModel = metadata.gated === true || metadata.private === true;
+
+    if (isGatedModel) {
+      return {
+        metadata,
+        config: null,
+        readme: null,
+        tokenizerConfig: null,
+        fetchedAt: new Date().toISOString()
+      };
     }
 
     // Parallel fetch for remaining assets

@@ -1,11 +1,20 @@
-import Link from "next/link";
-import { ArrowRight, Cpu, Layers, MemoryStick } from "lucide-react";
+import Link from 'next/link';
+import { ArrowRight, Cpu, Layers, MemoryStick } from 'lucide-react';
+import { pageMetadata } from '../../../src/lib/seo';
+
+export const metadata = pageMetadata({
+  title: 'GPU Hardware Fundamentals',
+  description:
+    'Learn the GPU hardware blocks that matter for AI workloads, including SMs, Tensor Cores, and memory hierarchy.',
+  path: '/gpu/hardware',
+  keywords: ['GPU hardware', 'Streaming Multiprocessor', 'Tensor Cores'],
+});
 
 export default function GpuHardwarePage() {
   const blocks = [
-    { title: "Streaming Multiprocessor", body: "Core execution block where warps are scheduled and tensor pipelines execute." },
-    { title: "Tensor Cores", body: "Specialized matrix units for BF16/FP16/FP8 workloads and high-throughput AI kernels." },
-    { title: "Memory Hierarchy", body: "Registers, shared memory, L2, and HBM/GDDR bandwidth shape achievable performance." },
+    { title: 'Streaming Multiprocessor', body: 'Core execution block where warps are scheduled and tensor pipelines execute.' },
+    { title: 'Tensor Cores', body: 'Specialized matrix units for BF16/FP16/FP8 workloads and high-throughput AI kernels.' },
+    { title: 'Memory Hierarchy', body: 'Registers, shared memory, L2, and HBM/GDDR bandwidth shape achievable performance.' },
   ];
 
   return (

@@ -1,6 +1,15 @@
-﻿import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import VramCalculatorClient from "../../../../src/components/vram/VramCalculatorClient";
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+import VramCalculatorClient from '../../../../src/components/vram/VramCalculatorClient';
+import { pageMetadata } from '../../../../src/lib/seo';
+
+export const metadata = pageMetadata({
+  title: 'VRAM Calculator',
+  description:
+    'Estimate GPU memory needs from model size, precision, sequence length, and batch configuration before deployment.',
+  path: '/gpu/tools/vram-calculator',
+  keywords: ['VRAM calculator', 'GPU memory estimator', 'LLM memory requirements'],
+});
 
 export default function VramCalculatorPage() {
   return (
@@ -21,4 +30,3 @@ export default function VramCalculatorPage() {
     </div>
   );
 }
-

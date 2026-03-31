@@ -1,10 +1,14 @@
-export const metadata = {
-  title: 'AI Updates & Technology | Model Explorer',
-  description: 'Stay up-to-date with the latest AI updates and new technology in the ecosystem.',
-};
+import { Zap } from 'lucide-react';
+import AIUpdatesList from '../../src/components/ai-updates/AIUpdatesList';
+import { pageMetadata } from '../../src/lib/seo';
 
-import AIUpdatesList from "../../src/components/ai-updates/AIUpdatesList";
-import { Zap } from "lucide-react";
+export const metadata = pageMetadata({
+  title: 'AI Updates & Technology News',
+  description:
+    'Track AI updates, model launches, and ecosystem changes relevant to developers building with modern open-source AI tools.',
+  path: '/ai-updates',
+  keywords: ['AI updates', 'model news', 'open-source AI', 'Hugging Face updates'],
+});
 
 export default function AIUpdatesPage() {
   return (
@@ -19,7 +23,7 @@ export default function AIUpdatesPage() {
             Stay informed about the latest breakthroughs in artificial intelligence.
           </p>
         </div>
-        
+
         <AIUpdatesList />
       </div>
     </div>

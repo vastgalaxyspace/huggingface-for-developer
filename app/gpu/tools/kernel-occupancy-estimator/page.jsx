@@ -1,6 +1,15 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import KernelOccupancyEstimatorClient from "../../../../src/components/kernel_KernelOccupancyEstimatorClient";
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+import KernelOccupancyEstimatorClient from '../../../../src/components/kernel_KernelOccupancyEstimatorClient';
+import { pageMetadata } from '../../../../src/lib/seo';
+
+export const metadata = pageMetadata({
+  title: 'Kernel Occupancy Estimator',
+  description:
+    'Estimate theoretical kernel occupancy for CUDA, ROCm, and Triton and identify the resource bottlenecks that limit residency.',
+  path: '/gpu/tools/kernel-occupancy-estimator',
+  keywords: ['kernel occupancy estimator', 'CUDA occupancy', 'Triton occupancy'],
+});
 
 export default function KernelOccupancyEstimatorPage() {
   return (
