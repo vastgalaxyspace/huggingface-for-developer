@@ -1,21 +1,37 @@
 import Link from 'next/link';
 
 const Footer = () => {
+  const footerLinks = [
+    { href: '/about', label: 'About' },
+    { href: '/compare', label: 'Compare Models' },
+    { href: '/recommender', label: 'Recommender' },
+    { href: '/gpu', label: 'GPU Tools' },
+    { href: '/ai-updates', label: 'AI Updates' },
+    { href: '/privacy', label: 'Privacy' },
+    { href: '/contact', label: 'Contact' },
+  ];
+
   return (
     <footer className="mt-16 border-t border-[var(--border-soft)] bg-[rgba(251,253,255,0.9)]">
-      <div className="shell-container py-8">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-2 text-sm text-[var(--text-muted)] md:flex-row md:items-center">
-            <span className="font-extrabold uppercase tracking-[0.28em] text-[var(--text-faint)]">InnoAI AI Explorer</span>
-            <span className="hidden text-[var(--border-strong)] md:inline">|</span>
-            <span>&copy; 2024 InnoAI AI Explorer. All rights reserved.</span>
+      <div className="shell-container py-10">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-xl">
+            <div className="flex flex-col gap-2 text-sm text-[var(--text-muted)] md:flex-row md:items-center">
+              <span className="font-extrabold uppercase tracking-[0.28em] text-[var(--text-faint)]">InnoAI AI Explorer</span>
+              <span className="hidden text-[var(--border-strong)] md:inline">|</span>
+              <span>&copy; 2024 InnoAI AI Explorer. All rights reserved.</span>
+            </div>
+            <p className="mt-4 text-sm leading-7 text-[var(--text-muted)]">
+              Research open-source AI models, compare LLMs, estimate VRAM, and plan GPU infrastructure with tools built for developers, researchers, and ML teams.
+            </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-faint)]">
-            <Link href="#" className="transition-colors hover:text-[var(--text-main)]">Documentation</Link>
-            <Link href="#" className="transition-colors hover:text-[var(--text-main)]">Community</Link>
-            <Link href="#" className="transition-colors hover:text-[var(--text-main)]">License</Link>
-            <Link href="#" className="transition-colors hover:text-[var(--text-main)]">API Status</Link>
+          <div className="grid gap-3 text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-faint)] sm:grid-cols-2 lg:min-w-[420px]">
+            {footerLinks.map((link) => (
+              <Link key={link.href} href={link.href} className="transition-colors hover:text-[var(--text-main)]">
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

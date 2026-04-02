@@ -1,11 +1,21 @@
 import { absoluteUrl } from '../src/lib/seo';
 
+const learningTopicRoutes = [
+  '/gpu/learning/physical-hardware',
+  '/gpu/learning/memory-hierarchy',
+  '/gpu/learning/execution-model',
+  '/gpu/learning/compilation-pipeline',
+  '/gpu/learning/cuda-programming',
+  '/gpu/learning/driver-stack',
+  '/gpu/learning/libraries-frameworks',
+];
+
 const routes = [
   { path: '/', priority: 1.0, changeFrequency: 'daily' },
   { path: '/about', priority: 0.7, changeFrequency: 'monthly' },
   { path: '/ai-updates', priority: 0.7, changeFrequency: 'weekly' },
   { path: '/compare', priority: 0.8, changeFrequency: 'weekly' },
-  { path: '/favorites', priority: 0.5, changeFrequency: 'weekly' },
+  { path: '/contact', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/gpu', priority: 0.9, changeFrequency: 'weekly' },
   { path: '/gpu/hardware', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/gpu/execution', priority: 0.8, changeFrequency: 'monthly' },
@@ -15,13 +25,12 @@ const routes = [
   { path: '/gpu/tools/roofline-model-analyzer', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/gpu/tools/kernel-occupancy-estimator', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/gpu/tools/warp-divergence', priority: 0.75, changeFrequency: 'monthly' },
-  { path: '/gpu/learning/physical-hardware', priority: 0.8, changeFrequency: 'monthly' },
-  { path: '/gpu/learning/memory-hierarchy', priority: 0.8, changeFrequency: 'monthly' },
-  { path: '/gpu/learning/execution-model', priority: 0.8, changeFrequency: 'monthly' },
-  { path: '/gpu/learning/compilation-pipeline', priority: 0.75, changeFrequency: 'monthly' },
-  { path: '/gpu/learning/cuda-programming', priority: 0.8, changeFrequency: 'monthly' },
-  { path: '/gpu/learning/driver-stack', priority: 0.7, changeFrequency: 'monthly' },
-  { path: '/gpu/learning/libraries-frameworks', priority: 0.7, changeFrequency: 'monthly' },
+  ...learningTopicRoutes.map((path) => ({
+    path,
+    priority: path === '/gpu/learning/compilation-pipeline' ? 0.75 : 0.8,
+    changeFrequency: 'monthly',
+  })),
+  { path: '/privacy', priority: 0.45, changeFrequency: 'yearly' },
   { path: '/recommender', priority: 0.85, changeFrequency: 'weekly' },
 ];
 

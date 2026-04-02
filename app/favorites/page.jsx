@@ -1,37 +1,5 @@
-"use client";
-import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import { useFavorites } from '../../src/hooks/useFavorites';
-import FavoritesPanel from '../../src/components/favorites/FavoritesPanel';
+import FavoritesPageClient from "../../src/components/routes/FavoritesPageClient";
 
 export default function FavoritesPage() {
-  const router = useRouter();
-  const {
-    favorites,
-    toggleFavorite,
-    clearFavorites,
-    exportFavorites,
-    importFavorites
-  } = useFavorites();
-
-  return (
-    <div className="max-w-7xl mx-auto px-6 py-10 min-h-[calc(100vh-64px)]">
-      <button
-        onClick={() => router.push('/')}
-        className="flex items-center gap-2 text-slate-500 hover:text-slate-800 mb-8 transition-colors group"
-      >
-        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-        <span className="text-[13px] font-bold">Back to Search</span>
-      </button>
-
-      <FavoritesPanel
-        favorites={favorites}
-        onSelectModel={(id) => router.push(`/model/${id}`)}
-        onRemove={(modelId) => toggleFavorite({ modelId })}
-        onClear={clearFavorites}
-        onExport={exportFavorites}
-        onImport={importFavorites}
-      />
-    </div>
-  );
+  return <FavoritesPageClient />;
 }

@@ -95,6 +95,26 @@ const ComparisonPage = () => {
     return 'High ($1.00+ / 1M tokens)';
   };
 
+  const comparisonRows = [
+    { section: 'ARCHITECTURE & SIZE', label: 'Parameters', bgClass: 'bg-white', getValue: (m) => m.data?.rawParams || m.data?.vramEstimates?.totalParams || 'Unknown', tooltip: 'Total parameters. Higher typically means better reasoning but requires more hardware.' },
+    { label: 'Context Window', bgClass: 'bg-[rgba(251,253,255,0.85)]', getValue: (m) => m.config?.max_position_embeddings ? (m.config.max_position_embeddings / 1000) + 'k' : 'N/A', tooltip: 'Maximum number of tokens the model can process in one prompt. Essential for RAG and document summarization.' },
+    { label: 'Architecture', bgClass: 'bg-white', getValue: (m) => m.config?.model_type ? m.config.model_type.toUpperCase() : (m.data?.pipelineText || 'Unknown') },
+    { label: 'License', bgClass: 'bg-[rgba(251,253,255,0.85)]', getValue: (m) => m.data?.licenseInfo?.name || 'Unknown', tooltip: 'Ensure the license aligns with your target use-case, especially for commercial deployment.' },
+    { section: 'MODEL DETAILS & TENSORS', label: 'Vocabulary Size', bgClass: 'bg-white', getValue: (m) => m.config?.vocab_size ? m.config.vocab_size.toLocaleString() : 'N/A', tooltip: 'Larger vocabularies can be more efficient for multilingual tasks and coding.' },
+    { label: 'Hidden Layers', bgClass: 'bg-[rgba(251,253,255,0.85)]', getValue: (m) => m.config?.num_hidden_layers || 'N/A' },
+    { label: 'Attention Heads', bgClass: 'bg-white', getValue: (m) => m.config?.num_attention_heads || 'N/A' },
+    { label: 'Default Precision', bgClass: 'bg-[rgba(251,253,255,0.85)]', getValue: (m) => m.config?.torch_dtype || 'N/A' },
+    { section: 'DEPLOYMENT & DEVELOPER PERSPECTIVES', label: 'Hardware Perspective', bgClass: 'bg-white', getValue: (m) => getHardwareReq(m.data?.vramEstimates?.fp16), tooltip: 'Estimated GPU requirements depending on FP16 VRAM sizing.' },
+    { label: 'Software / Ecosystem', bgClass: 'bg-[rgba(251,253,255,0.85)]', getValue: (m) => getSoftwareEco(m.id), tooltip: 'Popular architectures have highly optimized inference engines available out-of-the-box.' },
+    { label: 'Cloud Deployment', bgClass: 'bg-white', getValue: (m) => getCloudReq(m.data?.vramEstimates?.fp16), tooltip: 'Target instances when deploying the model onto cloud VM environments.' },
+    { label: 'Inference Cost (API)', bgClass: 'bg-[rgba(251,253,255,0.85)]', getValue: (m) => getCostEstimate(m.data?.vramEstimates?.totalParams), tooltip: 'Relative token cost if accessing this model via managed endpoints.' },
+    { section: 'COMMUNITY & USAGE', label: 'Downloads', bgClass: 'bg-white', getValue: (m) => m.data?.downloads ? m.data.downloads.toLocaleString() : '0', isNumericMaxHighlight: true, tooltip: 'High downloads indicate a robust and heavily-tested model with good community support.' },
+    { label: 'Likes', bgClass: 'bg-[rgba(251,253,255,0.85)]', getValue: (m) => m.data?.likes ? m.data.likes.toLocaleString() : '0', isNumericMaxHighlight: true, tooltip: 'A direct metric of quality and developer appreciation.' },
+    { section: 'HEURISTIC BENCHMARKS (ESTIMATED)', label: 'MMLU Bench', bgClass: 'bg-white', getValue: (m) => getMockScore(m.id, 'mmlu'), isNumericMaxHighlight: true, suffix: '%', tooltip: 'Estimates multi-task knowledge reasoning capabilities.' },
+    { label: 'HumanEval', bgClass: 'bg-[rgba(251,253,255,0.85)]', getValue: (m) => getMockScore(m.id, 'humaneval'), isNumericMaxHighlight: true, suffix: '%', tooltip: 'Estimates code generation accuracy.' },
+    { label: 'GSM8K (Math)', bgClass: 'bg-white border-b', getValue: (m) => getMockScore(m.id, 'gsm8k'), isNumericMaxHighlight: true, suffix: '%', tooltip: 'Estimates mathematical reasoning capabilities.' },
+  ];
+
   const renderModelHeaders = () => {
     const columns = [];
     for (let i = 0; i < 3; i++) {
@@ -203,23 +223,23 @@ const ComparisonPage = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-78px)] py-12">
+    <div className="min-h-[calc(100vh-78px)] py-8 sm:py-12">
       <div className="shell-container relative">
-        <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-start z-10 relative">
+        <div className="relative z-10 mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-start">
           <div className="max-w-3xl">
             <p className="section-kicker mb-4">Benchmark Workspace</p>
-            <h1 className="mb-3 text-[2.65rem] font-black tracking-tight text-[var(--text-strong)]">
+            <h1 className="mb-3 text-3xl font-black tracking-tight text-[var(--text-strong)] sm:text-[2.65rem]">
               Model Comparison
             </h1>
-            <p className="max-w-2xl text-lg font-medium leading-relaxed text-[var(--text-muted)]">
+            <p className="max-w-2xl text-base font-medium leading-relaxed text-[var(--text-muted)] sm:text-lg">
               Deep analytical side-by-side benchmarking of primary Large Language Models across reasoning, throughput, and coherence metrics.
             </p>
           </div>
 
-          <div className="flex items-center rounded-2xl border border-[var(--border-soft)] bg-[rgba(237,243,249,0.92)] p-1.5">
+          <div className="flex w-full items-center rounded-2xl border border-[var(--border-soft)] bg-[rgba(237,243,249,0.92)] p-1.5 md:w-auto">
             <button
               onClick={() => setViewMode('table')}
-              className={`flex items-center gap-2 rounded-xl px-5 py-3 text-[13px] font-bold transition-colors ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-[13px] font-bold transition-colors md:flex-none md:px-5 ${
                 viewMode === 'table' ? 'bg-white text-[var(--accent)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-strong)]'
               }`}
             >
@@ -227,7 +247,7 @@ const ComparisonPage = () => {
             </button>
             <button
               onClick={() => setViewMode('visual')}
-              className={`flex items-center gap-2 rounded-xl px-5 py-3 text-[13px] font-bold transition-colors ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-[13px] font-bold transition-colors md:flex-none md:px-5 ${
                 viewMode === 'visual' ? 'bg-white text-[var(--accent)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-strong)]'
               }`}
             >
@@ -238,47 +258,96 @@ const ComparisonPage = () => {
 
         {viewMode === 'table' && (
           <div className="editorial-panel mb-12 overflow-hidden rounded-[28px] text-[14px]">
-            <div className={`grid grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,1fr))] border-b border-[var(--border-soft)] bg-[var(--panel-muted)] text-[11px] font-bold tracking-[0.24em] text-[var(--text-muted)]`}>
+            <div className={`hidden grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,1fr))] border-b border-[var(--border-soft)] bg-[var(--panel-muted)] text-[11px] font-bold tracking-[0.24em] text-[var(--text-muted)] md:grid`}>
               <div className="flex flex-col justify-end px-7 py-6 uppercase">Specifications</div>
               {renderModelHeaders()}
             </div>
-
-            <div className="bg-[rgba(245,248,251,0.9)] px-7 py-3 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--text-faint)]">
-              ARCHITECTURE & SIZE
+            <div className="hidden md:block">
+              {comparisonRows.map((row) => (
+                <div key={row.label}>
+                  {row.section ? (
+                    <div className="bg-[rgba(245,248,251,0.9)] px-7 py-3 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--text-faint)]">
+                      {row.section}
+                    </div>
+                  ) : null}
+                  {renderRow(row.label, row.bgClass, row.getValue, row.isNumericMaxHighlight, row.suffix || '', row.tooltip || null)}
+                </div>
+              ))}
             </div>
-            {renderRow("Parameters", "bg-white", (m) => m.data?.rawParams || m.data?.vramEstimates?.totalParams || "Unknown", false, '', "Total parameters. Higher typically means better reasoning but requires more hardware.")}
-            {renderRow("Context Window", "bg-[rgba(251,253,255,0.85)]", (m) => m.config?.max_position_embeddings ? (m.config.max_position_embeddings / 1000) + "k" : "N/A", false, '', "Maximum number of tokens the model can process in one prompt. Essential for RAG and document summarization.")}
-            {renderRow("Architecture", "bg-white", (m) => m.config?.model_type ? m.config.model_type.toUpperCase() : (m.data?.pipelineText || "Unknown"))}
-            {renderRow("License", "bg-[rgba(251,253,255,0.85)]", (m) => m.data?.licenseInfo?.name || "Unknown", false, '', "Ensure the license aligns with your target use-case, especially for commercial deployment.")}
 
-            <div className="bg-[rgba(245,248,251,0.9)] px-7 py-3 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--text-faint)]">
-              MODEL DETAILS & TENSORS
-            </div>
-            {renderRow("Vocabulary Size", "bg-white", (m) => m.config?.vocab_size ? m.config.vocab_size.toLocaleString() : "N/A", false, '', "Larger vocabularies can be more efficient for multilingual tasks and coding.")}
-            {renderRow("Hidden Layers", "bg-[rgba(251,253,255,0.85)]", (m) => m.config?.num_hidden_layers || "N/A")}
-            {renderRow("Attention Heads", "bg-white", (m) => m.config?.num_attention_heads || "N/A")}
-            {renderRow("Default Precision", "bg-[rgba(251,253,255,0.85)]", (m) => m.config?.torch_dtype || "N/A")}
+            <div className="space-y-4 p-4 md:hidden">
+              {selectedModels.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-[var(--border-soft)] bg-white px-5 py-10 text-center text-sm text-[var(--text-faint)]">
+                  Add models to start comparing on mobile.
+                </div>
+              ) : (
+                selectedModels.map((m, index) => (
+                  <div key={m.id} className="rounded-[24px] border border-[var(--border-soft)] bg-white p-5 shadow-[0_10px_24px_rgba(48,67,95,0.06)]">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--accent)]">Model {index + 1}</div>
+                        {m.isLoading ? (
+                          <div className="mt-3 flex items-center text-sm text-[var(--text-muted)]">
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin text-[var(--accent)]" />
+                            Loading...
+                          </div>
+                        ) : m.error ? (
+                          <div className="mt-3 text-sm font-medium text-red-500">Error loading data</div>
+                        ) : (
+                          <>
+                            <div className="mt-2 break-words text-lg font-black tracking-tight text-[var(--text-strong)]">
+                              {(m.data?.name || m.id).split('/').pop()}
+                            </div>
+                            <div className="mt-1 break-all text-[11px] text-[var(--text-faint)]">{m.id}</div>
+                          </>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => removeModel(m.id)}
+                        className="rounded-lg bg-[rgba(255,0,0,0.05)] p-1.5 text-[rgba(255,0,0,0.55)]"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
 
-            <div className="bg-[rgba(245,248,251,0.9)] px-7 py-3 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--text-faint)]">
-              DEPLOYMENT & DEVELOPER PERSPECTIVES
-            </div>
-            {renderRow("Hardware Perspective", "bg-white", (m) => getHardwareReq(m.data?.vramEstimates?.fp16), false, '', "Estimated GPU requirements depending on FP16 VRAM sizing.")}
-            {renderRow("Software / Ecosystem", "bg-[rgba(251,253,255,0.85)]", (m) => getSoftwareEco(m.id), false, '', "Popular architectures have highly optimized inference engines (like vLLM) available out-of-the-box.")}
-            {renderRow("Cloud Deployment", "bg-white", (m) => getCloudReq(m.data?.vramEstimates?.fp16), false, '', "Target instances when deploying the model onto cloud VM environments.")}
-            {renderRow("Inference Cost (API)", "bg-[rgba(251,253,255,0.85)]", (m) => getCostEstimate(m.data?.vramEstimates?.totalParams), false, '', "Relative token cost if accessing this model via managed serverless endpoints like Together AI or Anyscale.")}
+                    {!m.isLoading && !m.error ? (
+                      <div className="mt-5 space-y-5">
+                        {comparisonRows.map((row) => (
+                          <div key={`${m.id}-${row.label}`}>
+                            {row.section ? (
+                              <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--text-faint)]">
+                                {row.section}
+                              </div>
+                            ) : null}
+                            <div className="rounded-2xl border border-[var(--border-soft)] bg-[rgba(245,248,251,0.45)] px-4 py-3">
+                              <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--text-faint)]">{row.label}</div>
+                              <div className="mt-1 text-sm font-semibold text-[var(--text-main)]">{`${row.getValue(m)}${row.suffix || ''}`}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ))
+              )}
 
-            <div className="bg-[rgba(245,248,251,0.9)] px-7 py-3 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--text-faint)]">
-              COMMUNITY & USAGE
+              {selectedModels.length < 3 ? (
+                <div className="rounded-[24px] border border-dashed border-[var(--border-strong)] bg-white p-5">
+                  {isAddingMode ? (
+                    <div className="relative z-50">
+                      <ModelSelector onSelect={handleSelectModel} onCancel={() => setIsAddingMode(false)} />
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setIsAddingMode(true)}
+                      className="flex w-full items-center justify-center rounded-xl border-2 border-dashed border-[var(--border-strong)] px-4 py-4 font-bold text-[var(--text-muted)]"
+                    >
+                      <Plus className="mr-2 h-5 w-5" /> Add Model
+                    </button>
+                  )}
+                </div>
+              ) : null}
             </div>
-            {renderRow("Downloads", "bg-white", (m) => m.data?.downloads ? m.data.downloads.toLocaleString() : "0", true, '', "High downloads indicate a robust and heavily-tested model with good general community support.")}
-            {renderRow("Likes", "bg-[rgba(251,253,255,0.85)]", (m) => m.data?.likes ? m.data.likes.toLocaleString() : "0", true, '', "A direct metric of quality and developer appreciation. Useful for cutting through 'hype' models.")}
-
-            <div className="bg-[rgba(245,248,251,0.9)] px-7 py-3 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--text-faint)]">
-              HEURISTIC BENCHMARKS (ESTIMATED)
-            </div>
-            {renderRow("MMLU Bench", "bg-white", (m) => getMockScore(m.id, 'mmlu'), true, "%", "Estimates multi-task knowledge reasoning capabilties.")}
-            {renderRow("HumanEval", "bg-[rgba(251,253,255,0.85)]", (m) => getMockScore(m.id, 'humaneval'), true, "%", "Estimates code generation accuracy.")}
-            {renderRow("GSM8K (Math)", "bg-white border-b", (m) => getMockScore(m.id, 'gsm8k'), true, "%", "Estimates mathematical reasoning capabilities.")}
           </div>
         )}
 
@@ -292,18 +361,18 @@ const ComparisonPage = () => {
                 Add models in Table view to see chart visualizations.
               </div>
             ) : (
-              <div className="editorial-panel flex h-[320px] items-end justify-center gap-12 rounded-[24px] p-10 pb-16">
+              <div className="editorial-panel flex h-[320px] items-end justify-center gap-4 overflow-x-auto rounded-[24px] p-6 pb-10 sm:gap-8 sm:p-10 sm:pb-16">
                 {selectedModels.map((m) => {
                   if (m.isLoading || m.error) return null;
                   const score = parseFloat(getMockScore(m.id, 'mmlu'));
                   // Scale height: 100% = 240px
                   const height = (score / 100) * 240;
                   return (
-                    <div key={m.id} className="flex flex-col items-center gap-4 group">
-                      <div className="relative w-[100px] rounded-t-lg bg-[var(--accent-soft)] transition-all duration-500 group-hover:bg-[var(--accent)] overflow-hidden" style={{ height: `${height}px` }}>
+                    <div key={m.id} className="group flex min-w-[88px] flex-col items-center gap-4 sm:min-w-[100px]">
+                      <div className="relative w-[88px] overflow-hidden rounded-t-lg bg-[var(--accent-soft)] transition-all duration-500 group-hover:bg-[var(--accent)] sm:w-[100px]" style={{ height: `${height}px` }}>
                         <div className="absolute top-2 w-full text-center text-[11px] font-bold text-[var(--accent)] group-hover:text-white transition-colors">{score}%</div>
                       </div>
-                      <span className="text-[11px] font-bold tracking-[0.12em] text-[var(--text-strong)] truncate max-w-[120px]" title={m.id}>
+                      <span className="max-w-[88px] truncate text-center text-[11px] font-bold tracking-[0.12em] text-[var(--text-strong)] sm:max-w-[120px]" title={m.id}>
                         {m.data?.name?.split('/').pop().substring(0, 12)}
                       </span>
                     </div>

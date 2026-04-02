@@ -1,4 +1,3 @@
-"use client";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, ChartNoAxesCombined, Cpu, GitBranch, Gauge, Layers, MemoryStick, Wrench } from "lucide-react";
@@ -95,17 +94,17 @@ export default function GpuPage() {
   ];
 
   return (
-    <div className="min-h-[calc(100vh-78px)] bg-[#f2f6fb] py-8 md:py-12">
+    <div className="min-h-[calc(100vh-78px)] bg-[#f2f6fb] py-6 md:py-12">
       <div className="shell-container">
         <section className="overflow-hidden rounded-[22px] border border-[#d7e0ea] bg-white shadow-[0_12px_30px_rgba(31,45,61,0.08)]">
-          <div className="border-b border-[#d7e0ea] bg-[#f8fbff] px-6 py-2.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#6f8298]">
+          <div className="border-b border-[#d7e0ea] bg-[#f8fbff] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f8298] sm:px-6 sm:text-[11px] sm:tracking-[0.22em]">
             Main GPU Hub / Hardware + Execution + Performance + Tools
           </div>
 
-          <div className="gpu-grid-light grid gap-10 px-6 py-8 md:grid-cols-[1.12fr_0.88fr] md:px-10 md:py-10">
+          <div className="gpu-grid-light grid gap-8 px-4 py-6 md:grid-cols-[1.12fr_0.88fr] md:px-10 md:py-10">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#4e647b]">For AI Developers</p>
-              <h1 className="mt-3 max-w-[680px] text-4xl font-black leading-[0.95] tracking-[-0.02em] text-[#132336] sm:text-5xl lg:text-[62px]">
+              <h1 className="mt-3 max-w-[680px] text-3xl font-black leading-[0.95] tracking-[-0.02em] text-[#132336] sm:text-5xl lg:text-[62px]">
                 GPU HUB
                 <br />
                 START HERE
@@ -136,7 +135,7 @@ export default function GpuPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 divide-x divide-[#d7dfe8] border-t border-[#d7dfe8] bg-white">
+          <div className="grid grid-cols-1 divide-y divide-[#d7dfe8] border-t border-[#d7dfe8] bg-white sm:grid-cols-3 sm:divide-x sm:divide-y-0">
             <Metric label="Learning Tracks" value="7 sections" />
             <Metric label="Interactive Tools" value="15+ tools" />
             <Metric label="Supported GPUs" value="50+ GPUs" />
@@ -203,10 +202,10 @@ export default function GpuPage() {
         </section>
 
         <section className="editorial-panel overflow-hidden rounded-[20px]">
-          <h2 className="border-b border-[var(--border-soft)] px-6 py-5 text-3xl font-black tracking-tight text-[var(--text-strong)] md:px-8">
+          <h2 className="border-b border-[var(--border-soft)] px-5 py-4 text-2xl font-black tracking-tight text-[var(--text-strong)] sm:px-6 sm:py-5 sm:text-3xl md:px-8">
             HARDWARE INDEX
           </h2>
-          <div className="overflow-x-auto">
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[980px] text-left">
               <thead className="bg-[var(--panel-muted)] text-[10px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
                 <tr>
@@ -228,11 +227,28 @@ export default function GpuPage() {
                     <td className="px-4 py-4">{row.fp16}</td>
                     <td className="px-4 py-4">{row.memBW}</td>
                     <td className="px-4 py-4">{row.compute}</td>
-                    <td className="px-4 py-4 text-[var(--text-muted)]">{row.bestFor}</td>
+                    <td className="px-4 py-4 text-[var(--text-muted)]">{row.useFor}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <div className="space-y-4 p-4 md:hidden">
+            {gpuIndex.map((row) => (
+              <div key={row.gpu} className="rounded-[20px] border border-[#d7dfe8] bg-white p-4">
+                <h3 className="text-base font-black tracking-tight text-[#132336]">{row.gpu}</h3>
+                <p className="mt-1 text-sm text-[#5a6d83]">{row.useFor}</p>
+                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <InfoItem label="Arch" value={row.arch} />
+                  <InfoItem label="VRAM" value={row.vram} />
+                  <InfoItem label="FP16" value={row.fp16} />
+                  <InfoItem label="Mem BW" value={row.memBW} />
+                  <InfoItem label="Compute" value={row.compute} />
+                  <InfoItem label="Best For" value={row.useFor} />
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -254,6 +270,15 @@ function Metric({ label, value }) {
         {label}
       </p>
       <p className="mt-1 text-[28px] font-black tracking-tight text-[var(--accent)]">{value}</p>
+    </div>
+  );
+}
+
+function InfoItem({ label, value }) {
+  return (
+    <div>
+      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#7b90a6]">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-[#20364f]">{value}</p>
     </div>
   );
 }

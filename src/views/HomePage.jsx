@@ -1,6 +1,12 @@
 "use client";
+<<<<<<< HEAD
 import { useState, useEffect, useRef } from 'react';
 import { Search, Terminal, CheckCircle, Cloud, BarChart3, ChevronDown, AlignLeft, SlidersHorizontal, MessageSquare, Image as ImageIcon, Cpu, TrendingUp, Heart, X, Mic, Scan } from 'lucide-react';
+=======
+import Link from 'next/link';
+import { useState, useEffect, useRef } from 'react';
+import { Search, Terminal, CheckCircle, Cloud, BarChart3, ChevronDown, AlignLeft, SlidersHorizontal, MessageSquare, Image as ImageIcon, Cpu, TrendingUp, Heart, X, Mic, Scan, ArrowRight, Sparkles, Workflow, Building2, FlaskConical, Briefcase, Code2 } from 'lucide-react';
+>>>>>>> bac7edc (added the seo info)
 import { getTrendingModels, searchModels } from '../services/huggingface';
 import { parseModelSize, formatNumber, enrichModelData } from '../utils/modelUtils';
 
@@ -8,12 +14,223 @@ const FeatureItem = ({ icon, text }) => {
   const Icon = icon;
 
   return (
+<<<<<<< HEAD
     <div className="group flex cursor-pointer items-center justify-center gap-3 px-3 py-5 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] transition-colors sm:py-6 sm:text-xs sm:tracking-[0.24em]">
       <Icon className="h-4 w-4 shrink-0 text-[var(--text-faint)] group-hover:text-[var(--accent)]" />
+=======
+    <div className="group flex cursor-pointer items-center justify-center gap-2 px-2 py-5 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--text-muted)] transition-colors sm:gap-3 sm:text-xs sm:tracking-[0.24em]">
+      <Icon className="h-4 w-4 text-[var(--text-faint)] group-hover:text-[var(--accent)]" />
+>>>>>>> bac7edc (added the seo info)
       <span>{text}</span>
     </div>
   );
 };
+<<<<<<< HEAD
+=======
+
+const SectionHeading = ({ kicker, title, body }) => (
+  <div className="mx-auto max-w-3xl text-center">
+    <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]">{kicker}</p>
+    <h2 className="mt-3 text-3xl font-black tracking-tight text-[var(--text-strong)] sm:text-4xl">{title}</h2>
+    <p className="mt-4 text-base leading-7 text-[var(--text-muted)] sm:text-lg">{body}</p>
+  </div>
+);
+>>>>>>> bac7edc (added the seo info)
+
+const CardLink = ({ href, icon, title, body, cta }) => {
+  const Icon = icon;
+
+  return (
+    <Link
+      href={href}
+      className="group rounded-[24px] border border-[var(--border-soft)] bg-white p-6 shadow-[0_12px_32px_rgba(48,67,95,0.06)] transition-all hover:-translate-y-1 hover:border-[var(--border-strong)] hover:shadow-[0_18px_38px_rgba(48,67,95,0.1)]"
+    >
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]">
+        <Icon className="h-5 w-5" />
+      </div>
+      <h3 className="mt-5 text-xl font-black tracking-tight text-[var(--text-strong)]">{title}</h3>
+      <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">{body}</p>
+      <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-[var(--accent)]">
+        {cta}
+        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+      </span>
+    </Link>
+  );
+};
+
+const AudienceCard = ({ icon, title, body }) => {
+  const Icon = icon;
+
+  return (
+    <div className="rounded-[24px] border border-[var(--border-soft)] bg-[rgba(255,255,255,0.86)] p-6">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--panel-muted)] text-[var(--accent)]">
+        <Icon className="h-5 w-5" />
+      </div>
+      <h3 className="mt-5 text-xl font-black tracking-tight text-[var(--text-strong)]">{title}</h3>
+      <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">{body}</p>
+    </div>
+  );
+};
+
+const StepCard = ({ number, title, body }) => (
+  <div className="rounded-[24px] border border-[var(--border-soft)] bg-white p-6 shadow-[0_12px_28px_rgba(48,67,95,0.06)]">
+    <div className="inline-flex rounded-full bg-[var(--accent-soft)] px-3 py-1 text-sm font-black text-[var(--accent)]">
+      {number}
+    </div>
+    <h3 className="mt-5 text-xl font-black tracking-tight text-[var(--text-strong)]">{title}</h3>
+    <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">{body}</p>
+  </div>
+);
+
+const FaqCard = ({ question, answer }) => (
+  <div className="rounded-[24px] border border-[var(--border-soft)] bg-white p-6">
+    <h3 className="text-lg font-black tracking-tight text-[var(--text-strong)]">{question}</h3>
+    <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">{answer}</p>
+  </div>
+);
+
+const MobileModelCard = ({ model, time, onSearch }) => {
+  let PipelineIcon = MessageSquare;
+  const pText = model.pipelineText || 'Other';
+
+  if (pText.includes('Generation') || pText.includes('Text')) PipelineIcon = Terminal;
+  if (pText.includes('Image') || pText.includes('Vision') || pText.includes('Detection')) PipelineIcon = ImageIcon;
+  if (pText.includes('Speech') || pText.includes('Audio')) PipelineIcon = Mic;
+  if (pText.includes('Conversational')) PipelineIcon = MessageSquare;
+  if (pText.includes('Classification')) PipelineIcon = Scan;
+
+  return (
+    <div className="rounded-[22px] border border-[var(--border-soft)] bg-white p-5 shadow-[0_12px_24px_rgba(48,67,95,0.06)]">
+      <button
+        onClick={() => onSearch(model.modelId)}
+        className="block w-full break-words whitespace-normal text-left text-base font-extrabold leading-snug text-[var(--accent)]"
+      >
+        {model.name}
+      </button>
+      <div className="mt-2 text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--text-faint)]">
+        Updated {time}
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--text-faint)]">Parameters</div>
+          <div className="mt-1 font-semibold text-[var(--text-main)]">{model.rawParams || 'N/A'}</div>
+        </div>
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--text-faint)]">Downloads</div>
+          <div className="mt-1 font-semibold text-[var(--text-main)]">{formatNumber(model.downloads)}</div>
+        </div>
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--text-faint)]">VRAM</div>
+          <div className="mt-1 font-semibold text-[var(--text-main)]">{model.vramEstimates?.fp16 ? `${model.vramEstimates.fp16} GB` : 'N/A'}</div>
+        </div>
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--text-faint)]">Context</div>
+          <div className="mt-1 font-semibold text-[var(--text-main)]">
+            {model.config?.max_position_embeddings > 0 ? `${model.config.max_position_embeddings / 1000}k` : 'N/A'}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <span className="inline-block rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-bold tracking-[0.12em] text-[var(--accent)]">
+          {model.licenseInfo?.name || 'Unknown'}
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--panel-muted)] px-3 py-1 text-[11px] font-semibold text-[var(--text-main)]">
+          <PipelineIcon className="h-3.5 w-3.5" />
+          {pText}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+const coreTools = [
+  {
+    href: '/compare',
+    icon: BarChart3,
+    title: 'LLM Comparison',
+    body: 'Compare architecture, VRAM, context window, downloads, licenses, and practical deployment signals side by side.',
+    cta: 'Compare Models',
+  },
+  {
+    href: '/recommender',
+    icon: Sparkles,
+    title: 'AI Model Recommender',
+    body: 'Match open-source models to your use case, hardware limits, budget, and deployment preferences.',
+    cta: 'Open Recommender',
+  },
+  {
+    href: '/gpu/tools/vram-calculator',
+    icon: Cpu,
+    title: 'VRAM Calculator',
+    body: 'Estimate memory requirements for 7B, 13B, 70B, quantized, and longer-context workloads before deployment.',
+    cta: 'Estimate VRAM',
+  },
+  {
+    href: '/gpu/tools/gpu-picker',
+    icon: Cloud,
+    title: 'GPU Sizing Tool',
+    body: 'Choose the right GPU for inference, fine-tuning, or production serving with practical hardware guidance.',
+    cta: 'Pick a GPU',
+  },
+  {
+    href: '/gpu',
+    icon: Workflow,
+    title: 'GPU Learning Hub',
+    body: 'Learn how GPU architecture, execution, memory, and performance affect real AI deployment decisions.',
+    cta: 'Explore GPU Hub',
+  },
+  {
+    href: '/ai-updates',
+    icon: TrendingUp,
+    title: 'AI Updates',
+    body: 'Follow the latest AI model updates, releases, and ecosystem changes from one place.',
+    cta: 'Read Updates',
+  },
+];
+
+const audienceGroups = [
+  {
+    icon: Code2,
+    title: 'Developers',
+    body: 'Use this Hugging Face model explorer to search models quickly, inspect technical details, and shortlist candidates for apps or APIs.',
+  },
+  {
+    icon: FlaskConical,
+    title: 'Researchers',
+    body: 'Review model families, capabilities, context windows, and licensing to support evaluation, benchmarking, and experimentation.',
+  },
+  {
+    icon: Building2,
+    title: 'Startups',
+    body: 'Compare models by cost, VRAM calculator estimates, and deployment fit before choosing infrastructure or vendors.',
+  },
+  {
+    icon: Briefcase,
+    title: 'ML Engineers',
+    body: 'Handle GPU sizing, LLM comparison, and production planning with tools built for practical inference and deployment decisions.',
+  },
+];
+
+const faqItems = [
+  {
+    question: 'How much VRAM do I need for a 7B model?',
+    answer: 'That depends on precision, quantization, batch size, and context length. A VRAM calculator helps estimate whether a 7B model fits on consumer GPUs, workstation cards, or server hardware.',
+  },
+  {
+    question: 'What is the best way to compare Hugging Face models?',
+    answer: 'Start with task fit, parameter size, context window, license, and deployment cost. Then use LLM comparison and GPU sizing tools to validate whether the model fits your hardware and product constraints.',
+  },
+  {
+    question: 'Can I use this site as an AI model recommender?',
+    answer: 'Yes. The recommender helps narrow down open-source models based on use case, constraints, and infrastructure so you can move from browsing to a practical shortlist faster.',
+  },
+  {
+    question: 'Why does GPU sizing matter before deployment?',
+    answer: 'GPU sizing directly affects latency, throughput, hosting cost, and whether a model can run at all in production. Estimating VRAM and hardware fit early prevents expensive deployment mistakes.',
+  },
+];
 
 const HomePage = ({ onSearch, loading }) => {
   const [popularModels, setPopularModels] = useState([]);
@@ -263,6 +480,7 @@ const HomePage = ({ onSearch, loading }) => {
 
   return (
     <div className="min-h-screen">
+<<<<<<< HEAD
       <section className="shell-container pb-8 pt-8 text-center sm:pt-12 lg:pt-20">
         <div className="editorial-panel soft-grid rounded-[28px] px-4 py-10 sm:rounded-[36px] sm:px-8 sm:py-14 lg:px-16 lg:py-24">
           <div className="mx-auto max-w-5xl">
@@ -270,10 +488,30 @@ const HomePage = ({ onSearch, loading }) => {
               The Architect&apos;s Workspace for LLMs
             </h1>
             <p className="mx-auto mt-4 max-w-3xl text-base font-medium leading-relaxed text-[var(--text-muted)] sm:mt-6 sm:text-xl lg:text-[2rem] lg:leading-[1.35]">
+=======
+      <section className="shell-container pt-8 pb-8 text-center sm:pt-12 lg:pt-20 lg:pb-10">
+        <div className="editorial-panel soft-grid rounded-[28px] px-4 py-10 sm:rounded-[36px] sm:px-10 sm:py-16 lg:px-16 lg:py-24">
+          <div className="mx-auto max-w-5xl">
+            <h1 className="mx-auto max-w-4xl text-3xl font-black tracking-tight text-[var(--text-strong)] sm:text-5xl lg:text-[4.9rem] lg:leading-[1]">
+              Hugging Face Model Explorer for LLM Comparison and GPU Sizing
+            </h1>
+            <p className="mx-auto mt-4 max-w-3xl text-base font-medium leading-relaxed text-[var(--text-muted)] sm:mt-6 sm:text-[2rem] sm:leading-[1.35]">
+>>>>>>> bac7edc (added the seo info)
               Search across 500,000+ open-source models with high-precision technical metadata.
             </p>
+            <p className="mx-auto mt-4 max-w-4xl text-sm leading-7 text-[var(--text-muted)] sm:mt-5 sm:text-lg sm:leading-8">
+              InnoAI is a <strong className="text-[var(--text-strong)]">Hugging Face model explorer</strong> built for faster
+              <strong className="text-[var(--text-strong)]"> LLM comparison</strong>, accurate
+              <strong className="text-[var(--text-strong)]"> VRAM calculator</strong> planning, smarter
+              <strong className="text-[var(--text-strong)]"> AI model recommender</strong> workflows, and practical
+              <strong className="text-[var(--text-strong)]"> GPU sizing</strong> for deployment.
+            </p>
 
+<<<<<<< HEAD
             <div className="mx-auto mt-8 max-w-4xl sm:mt-12" ref={searchContainerRef}>
+=======
+            <div id="search" className="mx-auto mt-8 max-w-4xl sm:mt-12" ref={searchContainerRef}>
+>>>>>>> bac7edc (added the seo info)
               <div className="group relative">
                 <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-faint)] transition-colors group-focus-within:text-[var(--accent)] sm:left-6 sm:h-5 sm:w-5" />
                 <input
@@ -282,7 +520,11 @@ const HomePage = ({ onSearch, loading }) => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                   onKeyDown={handleKeyDown}
+<<<<<<< HEAD
                   className="w-full rounded-[20px] border border-[var(--border-soft)] bg-white px-12 py-4 text-base font-medium text-[var(--text-main)] shadow-[0_16px_40px_rgba(48,67,95,0.08)] outline-none transition-all placeholder:text-[var(--text-faint)] focus:border-[var(--border-strong)] focus:ring-4 focus:ring-[rgba(53,87,132,0.08)] sm:rounded-[22px] sm:px-16 sm:py-5 sm:text-lg"
+=======
+                  className="w-full rounded-[18px] border border-[var(--border-soft)] bg-white px-12 py-4 text-sm font-medium text-[var(--text-main)] shadow-[0_16px_40px_rgba(48,67,95,0.08)] outline-none transition-all placeholder:text-[var(--text-faint)] focus:border-[var(--border-strong)] focus:ring-4 focus:ring-[rgba(53,87,132,0.08)] sm:rounded-[22px] sm:px-16 sm:py-5 sm:text-lg"
+>>>>>>> bac7edc (added the seo info)
                   placeholder="Search models by name, task, or architecture..."
                   disabled={loading}
                 />
@@ -308,12 +550,21 @@ const HomePage = ({ onSearch, loading }) => {
                   <div className="absolute top-[calc(100%+12px)] z-[60] w-full overflow-hidden rounded-[22px] border border-[var(--border-soft)] bg-white shadow-[0_24px_60px_rgba(48,67,95,0.12)]">
                     {suggestions.length > 0 ? (
                       <>
+<<<<<<< HEAD
                         <div className="flex flex-col gap-1 border-b border-[var(--border-soft)] bg-[var(--panel-muted)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                           <span className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">
                             {suggestions.length} models found
                           </span>
                           <span className="text-[11px] text-[var(--text-faint)] sm:text-xs">
                             Use arrows to navigate and Enter to select
+=======
+                        <div className="flex items-center justify-between border-b border-[var(--border-soft)] bg-[var(--panel-muted)] px-4 py-3 sm:px-6">
+                          <span className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">
+                            {suggestions.length} models found
+                          </span>
+                          <span className="hidden text-xs text-[var(--text-faint)] sm:inline">
+                            ↑↓ to navigate • Enter to select
+>>>>>>> bac7edc (added the seo info)
                           </span>
                         </div>
                         <div ref={listRef} className="max-h-[400px] overflow-y-auto">
@@ -380,7 +631,7 @@ const HomePage = ({ onSearch, loading }) => {
                     ) : (
                       !searchLoading &&
                       searchQuery.length >= 2 && (
-                        <div className="px-6 py-12 text-center">
+                        <div className="px-4 py-10 text-center sm:px-6 sm:py-12">
                           <Search className="mx-auto mb-4 h-8 w-8 text-[var(--text-faint)]" />
                           <p className="mb-1 text-[15px] font-bold text-[var(--text-main)]">
                             No models found for "{searchQuery}"
@@ -408,9 +659,69 @@ const HomePage = ({ onSearch, loading }) => {
         </div>
       </div>
 
+<<<<<<< HEAD
       <section className="shell-container py-8 sm:py-12">
         <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between" ref={filterRef}>
           <div className="hide-scrollbar relative -mx-4 flex w-[calc(100%+2rem)] items-center gap-3 overflow-x-auto overflow-y-visible px-4 pb-2 md:mx-0 md:w-auto md:px-0 md:pb-0">
+=======
+      <section className="shell-container py-12 sm:py-16">
+        <SectionHeading
+          kicker="Platform Overview"
+          title="A complete open-source AI model research and deployment workspace"
+          body="Use the homepage as a starting point for search, internal linking, and decision-making. Browse popular tools, jump into core workflows, and discover which models and GPUs fit your real production needs."
+        />
+
+        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {coreTools.map((tool) => (
+            <CardLink key={tool.title} {...tool} />
+          ))}
+        </div>
+      </section>
+
+      <section className="shell-container pb-12 sm:pb-16">
+        <SectionHeading
+          kicker="Who It Helps"
+          title="Built for teams making real AI model decisions"
+          body="Whether you are evaluating open-source models for experiments, shipping products, or production inference, the site is designed to shorten research time and reduce deployment guesswork."
+        />
+
+        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {audienceGroups.map((group) => (
+            <AudienceCard key={group.title} {...group} />
+          ))}
+        </div>
+      </section>
+
+      <section className="shell-container pb-8 sm:pb-10">
+        <SectionHeading
+          kicker="How It Works"
+          title="Go from model discovery to deployment planning in 3 steps"
+          body="The homepage is organized around the workflow most teams actually follow when choosing open-source AI models."
+        />
+
+        <div className="mt-10 grid gap-5 md:grid-cols-3">
+          <StepCard
+            number="01"
+            title="Search the model"
+            body="Search Hugging Face models by model name, task, architecture, downloads, or trending activity to build a strong candidate list."
+          />
+          <StepCard
+            number="02"
+            title="Compare the specs"
+            body="Use LLM comparison tools to review parameters, licenses, context length, popularity, and other technical details side by side."
+          />
+          <StepCard
+            number="03"
+            title="Estimate deployment needs"
+            body="Use the VRAM calculator and GPU sizing tools to understand hardware fit, memory requirements, and deployment tradeoffs before shipping."
+          />
+        </div>
+      </section>
+
+      <section className="shell-container py-10 sm:py-12">
+        <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between" ref={filterRef}>
+          <div className="hide-scrollbar relative flex w-full items-center gap-2 overflow-x-auto overflow-y-visible pb-2 md:w-auto md:gap-3 md:pb-0">
+>>>>>>> bac7edc (added the seo info)
             {['architecture', 'parameters', 'license', 'pipeline'].map((type) => {
               const labelMap = { architecture: 'Architecture', parameters: 'Parameters', license: 'License', pipeline: 'Pipeline Tag'};
               const label = labelMap[type];
@@ -423,14 +734,19 @@ const HomePage = ({ onSearch, loading }) => {
               else if (selectedValues.length > 1) displayText = `${label}: ${selectedValues.length} selected`;
 
               return (
+<<<<<<< HEAD
                 <div key={type} className="relative shrink-0">
                   <div className={`flex whitespace-nowrap items-center gap-1 rounded-xl border px-1 py-1 text-sm font-semibold shadow-[0_8px_18px_rgba(52,75,104,0.04)] transition-colors ${
+=======
+                <div key={type} className="relative">
+                  <div className={`flex whitespace-nowrap items-center gap-1 rounded-xl border px-1 py-1 text-xs font-semibold shadow-[0_8px_18px_rgba(52,75,104,0.04)] transition-colors sm:text-sm ${
+>>>>>>> bac7edc (added the seo info)
                       isActive || isOpen 
                         ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]' 
                         : 'border-[var(--border-soft)] bg-white text-[var(--text-main)] hover:bg-[var(--panel-muted)]'
                     }`}
                   >
-                    <button onClick={() => toggleFilter(type)} className="flex items-center gap-1.5 px-3 py-1.5">
+                    <button onClick={() => toggleFilter(type)} className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3">
                       {displayText} <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''} ${isActive ? 'text-[var(--accent)]' : 'text-[var(--text-faint)]'}`} />
                     </button>
                     {isActive && (
@@ -464,11 +780,19 @@ const HomePage = ({ onSearch, loading }) => {
             })}
           </div>
 
+<<<<<<< HEAD
           <div className="relative flex w-full flex-wrap items-center justify-between gap-4 md:w-auto md:flex-nowrap md:justify-end md:gap-6">
             <div className="relative">
               <button 
                 onClick={(e) => { e.stopPropagation(); toggleFilter('sort'); }}
                 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)] sm:text-xs sm:tracking-[0.2em]"
+=======
+          <div className="relative flex w-full flex-wrap items-center justify-between gap-3 md:w-auto md:flex-nowrap md:justify-end md:gap-6">
+            <div className="relative">
+              <button 
+                onClick={(e) => { e.stopPropagation(); toggleFilter('sort'); }}
+                className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)] sm:text-xs sm:tracking-[0.2em]"
+>>>>>>> bac7edc (added the seo info)
               >
                 <AlignLeft className="h-[14px] w-[14px]" /> SORT: {currentSortLabel}
               </button>
@@ -490,14 +814,23 @@ const HomePage = ({ onSearch, loading }) => {
               )}
             </div>
             
+<<<<<<< HEAD
             <button className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)] sm:border-l sm:border-[var(--border-soft)] sm:pl-6 sm:text-xs sm:tracking-[0.2em]">
+=======
+            <button className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)] sm:border-l sm:border-[var(--border-soft)] sm:pl-6 sm:text-xs sm:tracking-[0.2em]">
+>>>>>>> bac7edc (added the seo info)
               <SlidersHorizontal className="h-[14px] w-[14px]" /> ADVANCED
             </button>
           </div>
         </div>
 
+<<<<<<< HEAD
         <div className="editorial-panel overflow-hidden rounded-[28px]">
           <div className="hidden overflow-x-auto lg:block">
+=======
+        <div className="editorial-panel overflow-hidden rounded-[22px] sm:rounded-[28px]">
+          <div className="hidden overflow-x-auto md:block">
+>>>>>>> bac7edc (added the seo info)
             <table className="w-full whitespace-nowrap text-left text-[15px]">
               <thead className="bg-[var(--panel-muted)] text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--text-muted)]">
                 <tr>
@@ -574,13 +907,20 @@ const HomePage = ({ onSearch, loading }) => {
             </table>
           </div>
 
+<<<<<<< HEAD
           <div className="grid gap-0 lg:hidden">
             {modelsLoading ? (
               <div className="px-6 py-16 text-center text-[var(--text-muted)]">
+=======
+          <div className="md:hidden">
+            {modelsLoading ? (
+              <div className="px-5 py-14 text-center text-[var(--text-muted)]">
+>>>>>>> bac7edc (added the seo info)
                 <div className="mb-3 inline-block h-6 w-6 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
                 <div>Loading models...</div>
               </div>
             ) : displayModels.length === 0 ? (
+<<<<<<< HEAD
               <div className="px-6 py-16 text-center text-[var(--text-muted)]">
                 No models found.
               </div>
@@ -637,6 +977,24 @@ const HomePage = ({ onSearch, loading }) => {
           <div className="flex flex-col items-stretch justify-between gap-4 border-t border-[var(--border-soft)] bg-[rgba(245,248,251,0.92)] px-4 py-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-muted)] sm:px-6 sm:text-xs sm:tracking-[0.18em] md:flex-row md:items-center">
             <div className="text-center md:text-left">Showing {filteredModels.length > 0 ? `${startIndex + 1}-${endIndex}` : 0} of {filteredModels.length} {filteredModels.length !== popularModels.length ? '(filtered) ' : ''}models</div>
             <div className="flex flex-wrap items-center justify-center gap-2 md:justify-end">
+=======
+              <div className="px-5 py-14 text-center text-[var(--text-muted)]">No models found.</div>
+            ) : (
+              <div className="space-y-4 p-4">
+                {displayModels.map((model, i) => {
+                  const times = ['2h ago', '1d ago', '5h ago', '12h ago', '3d ago'];
+                  const time = times[i % times.length];
+
+                  return <MobileModelCard key={model.modelId} model={model} time={time} onSearch={onSearch} />;
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col items-center justify-between gap-4 border-t border-[var(--border-soft)] bg-[rgba(245,248,251,0.92)] px-4 py-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)] sm:px-6 sm:py-5 sm:text-xs sm:tracking-[0.18em] md:flex-row">
+            <div className="text-center md:text-left">Showing {filteredModels.length > 0 ? `${startIndex + 1}-${endIndex}` : 0} of {filteredModels.length} {filteredModels.length !== popularModels.length ? '(filtered) ' : ''}models</div>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+>>>>>>> bac7edc (added the seo info)
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
@@ -645,7 +1003,11 @@ const HomePage = ({ onSearch, loading }) => {
                 PREVIOUS
               </button>
               
+<<<<<<< HEAD
               {Array.from({ length: totalPages }, (_, i) => i + 1).slice(0, 8).map(page => (
+=======
+              {Array.from({ length: Math.min(totalPages, 6) }, (_, i) => i + 1).map(page => (
+>>>>>>> bac7edc (added the seo info)
                 <button 
                   key={page}
                   onClick={() => setCurrentPage(page)}
@@ -668,6 +1030,20 @@ const HomePage = ({ onSearch, loading }) => {
               </button>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="shell-container pb-12 sm:pb-16">
+        <SectionHeading
+          kicker="FAQ"
+          title="Common questions about model selection and deployment"
+          body="These answers cover the most common long-tail questions users ask before selecting a model, estimating VRAM, or planning GPU infrastructure."
+        />
+
+        <div className="mt-10 grid gap-5 md:grid-cols-2">
+          {faqItems.map((item) => (
+            <FaqCard key={item.question} {...item} />
+          ))}
         </div>
       </section>
     </div>
