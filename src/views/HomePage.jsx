@@ -1,12 +1,31 @@
 "use client";
-<<<<<<< HEAD
-import { useState, useEffect, useRef } from 'react';
-import { Search, Terminal, CheckCircle, Cloud, BarChart3, ChevronDown, AlignLeft, SlidersHorizontal, MessageSquare, Image as ImageIcon, Cpu, TrendingUp, Heart, X, Mic, Scan } from 'lucide-react';
-=======
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
-import { Search, Terminal, CheckCircle, Cloud, BarChart3, ChevronDown, AlignLeft, SlidersHorizontal, MessageSquare, Image as ImageIcon, Cpu, TrendingUp, Heart, X, Mic, Scan, ArrowRight, Sparkles, Workflow, Building2, FlaskConical, Briefcase, Code2 } from 'lucide-react';
->>>>>>> bac7edc (added the seo info)
+import {
+  AlignLeft,
+  ArrowRight,
+  BarChart3,
+  Briefcase,
+  Building2,
+  CheckCircle,
+  ChevronDown,
+  Cloud,
+  Code2,
+  Cpu,
+  FlaskConical,
+  Heart,
+  Image as ImageIcon,
+  MessageSquare,
+  Mic,
+  Scan,
+  Search,
+  SlidersHorizontal,
+  Sparkles,
+  Terminal,
+  TrendingUp,
+  Workflow,
+  X,
+} from 'lucide-react';
 import { getTrendingModels, searchModels } from '../services/huggingface';
 import { parseModelSize, formatNumber, enrichModelData } from '../utils/modelUtils';
 
@@ -14,19 +33,12 @@ const FeatureItem = ({ icon, text }) => {
   const Icon = icon;
 
   return (
-<<<<<<< HEAD
     <div className="group flex cursor-pointer items-center justify-center gap-3 px-3 py-5 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] transition-colors sm:py-6 sm:text-xs sm:tracking-[0.24em]">
       <Icon className="h-4 w-4 shrink-0 text-[var(--text-faint)] group-hover:text-[var(--accent)]" />
-=======
-    <div className="group flex cursor-pointer items-center justify-center gap-2 px-2 py-5 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--text-muted)] transition-colors sm:gap-3 sm:text-xs sm:tracking-[0.24em]">
-      <Icon className="h-4 w-4 text-[var(--text-faint)] group-hover:text-[var(--accent)]" />
->>>>>>> bac7edc (added the seo info)
       <span>{text}</span>
     </div>
   );
 };
-<<<<<<< HEAD
-=======
 
 const SectionHeading = ({ kicker, title, body }) => (
   <div className="mx-auto max-w-3xl text-center">
@@ -35,7 +47,6 @@ const SectionHeading = ({ kicker, title, body }) => (
     <p className="mt-4 text-base leading-7 text-[var(--text-muted)] sm:text-lg">{body}</p>
   </div>
 );
->>>>>>> bac7edc (added the seo info)
 
 const CardLink = ({ href, icon, title, body, cta }) => {
   const Icon = icon;
@@ -480,7 +491,6 @@ const HomePage = ({ onSearch, loading }) => {
 
   return (
     <div className="min-h-screen">
-<<<<<<< HEAD
       <section className="shell-container pb-8 pt-8 text-center sm:pt-12 lg:pt-20">
         <div className="editorial-panel soft-grid rounded-[28px] px-4 py-10 sm:rounded-[36px] sm:px-8 sm:py-14 lg:px-16 lg:py-24">
           <div className="mx-auto max-w-5xl">
@@ -488,15 +498,6 @@ const HomePage = ({ onSearch, loading }) => {
               The Architect&apos;s Workspace for LLMs
             </h1>
             <p className="mx-auto mt-4 max-w-3xl text-base font-medium leading-relaxed text-[var(--text-muted)] sm:mt-6 sm:text-xl lg:text-[2rem] lg:leading-[1.35]">
-=======
-      <section className="shell-container pt-8 pb-8 text-center sm:pt-12 lg:pt-20 lg:pb-10">
-        <div className="editorial-panel soft-grid rounded-[28px] px-4 py-10 sm:rounded-[36px] sm:px-10 sm:py-16 lg:px-16 lg:py-24">
-          <div className="mx-auto max-w-5xl">
-            <h1 className="mx-auto max-w-4xl text-3xl font-black tracking-tight text-[var(--text-strong)] sm:text-5xl lg:text-[4.9rem] lg:leading-[1]">
-              Hugging Face Model Explorer for LLM Comparison and GPU Sizing
-            </h1>
-            <p className="mx-auto mt-4 max-w-3xl text-base font-medium leading-relaxed text-[var(--text-muted)] sm:mt-6 sm:text-[2rem] sm:leading-[1.35]">
->>>>>>> bac7edc (added the seo info)
               Search across 500,000+ open-source models with high-precision technical metadata.
             </p>
             <p className="mx-auto mt-4 max-w-4xl text-sm leading-7 text-[var(--text-muted)] sm:mt-5 sm:text-lg sm:leading-8">
@@ -507,11 +508,7 @@ const HomePage = ({ onSearch, loading }) => {
               <strong className="text-[var(--text-strong)]"> GPU sizing</strong> for deployment.
             </p>
 
-<<<<<<< HEAD
             <div className="mx-auto mt-8 max-w-4xl sm:mt-12" ref={searchContainerRef}>
-=======
-            <div id="search" className="mx-auto mt-8 max-w-4xl sm:mt-12" ref={searchContainerRef}>
->>>>>>> bac7edc (added the seo info)
               <div className="group relative">
                 <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-faint)] transition-colors group-focus-within:text-[var(--accent)] sm:left-6 sm:h-5 sm:w-5" />
                 <input
@@ -520,11 +517,7 @@ const HomePage = ({ onSearch, loading }) => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                   onKeyDown={handleKeyDown}
-<<<<<<< HEAD
                   className="w-full rounded-[20px] border border-[var(--border-soft)] bg-white px-12 py-4 text-base font-medium text-[var(--text-main)] shadow-[0_16px_40px_rgba(48,67,95,0.08)] outline-none transition-all placeholder:text-[var(--text-faint)] focus:border-[var(--border-strong)] focus:ring-4 focus:ring-[rgba(53,87,132,0.08)] sm:rounded-[22px] sm:px-16 sm:py-5 sm:text-lg"
-=======
-                  className="w-full rounded-[18px] border border-[var(--border-soft)] bg-white px-12 py-4 text-sm font-medium text-[var(--text-main)] shadow-[0_16px_40px_rgba(48,67,95,0.08)] outline-none transition-all placeholder:text-[var(--text-faint)] focus:border-[var(--border-strong)] focus:ring-4 focus:ring-[rgba(53,87,132,0.08)] sm:rounded-[22px] sm:px-16 sm:py-5 sm:text-lg"
->>>>>>> bac7edc (added the seo info)
                   placeholder="Search models by name, task, or architecture..."
                   disabled={loading}
                 />
@@ -550,21 +543,12 @@ const HomePage = ({ onSearch, loading }) => {
                   <div className="absolute top-[calc(100%+12px)] z-[60] w-full overflow-hidden rounded-[22px] border border-[var(--border-soft)] bg-white shadow-[0_24px_60px_rgba(48,67,95,0.12)]">
                     {suggestions.length > 0 ? (
                       <>
-<<<<<<< HEAD
                         <div className="flex flex-col gap-1 border-b border-[var(--border-soft)] bg-[var(--panel-muted)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                           <span className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">
                             {suggestions.length} models found
                           </span>
                           <span className="text-[11px] text-[var(--text-faint)] sm:text-xs">
                             Use arrows to navigate and Enter to select
-=======
-                        <div className="flex items-center justify-between border-b border-[var(--border-soft)] bg-[var(--panel-muted)] px-4 py-3 sm:px-6">
-                          <span className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">
-                            {suggestions.length} models found
-                          </span>
-                          <span className="hidden text-xs text-[var(--text-faint)] sm:inline">
-                            ↑↓ to navigate • Enter to select
->>>>>>> bac7edc (added the seo info)
                           </span>
                         </div>
                         <div ref={listRef} className="max-h-[400px] overflow-y-auto">
@@ -659,11 +643,6 @@ const HomePage = ({ onSearch, loading }) => {
         </div>
       </div>
 
-<<<<<<< HEAD
-      <section className="shell-container py-8 sm:py-12">
-        <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between" ref={filterRef}>
-          <div className="hide-scrollbar relative -mx-4 flex w-[calc(100%+2rem)] items-center gap-3 overflow-x-auto overflow-y-visible px-4 pb-2 md:mx-0 md:w-auto md:px-0 md:pb-0">
-=======
       <section className="shell-container py-12 sm:py-16">
         <SectionHeading
           kicker="Platform Overview"
@@ -718,10 +697,9 @@ const HomePage = ({ onSearch, loading }) => {
         </div>
       </section>
 
-      <section className="shell-container py-10 sm:py-12">
+      <section className="shell-container py-8 sm:py-12">
         <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between" ref={filterRef}>
-          <div className="hide-scrollbar relative flex w-full items-center gap-2 overflow-x-auto overflow-y-visible pb-2 md:w-auto md:gap-3 md:pb-0">
->>>>>>> bac7edc (added the seo info)
+          <div className="hide-scrollbar relative -mx-4 flex w-[calc(100%+2rem)] items-center gap-3 overflow-x-auto overflow-y-visible px-4 pb-2 md:mx-0 md:w-auto md:px-0 md:pb-0">
             {['architecture', 'parameters', 'license', 'pipeline'].map((type) => {
               const labelMap = { architecture: 'Architecture', parameters: 'Parameters', license: 'License', pipeline: 'Pipeline Tag'};
               const label = labelMap[type];
@@ -734,13 +712,8 @@ const HomePage = ({ onSearch, loading }) => {
               else if (selectedValues.length > 1) displayText = `${label}: ${selectedValues.length} selected`;
 
               return (
-<<<<<<< HEAD
                 <div key={type} className="relative shrink-0">
                   <div className={`flex whitespace-nowrap items-center gap-1 rounded-xl border px-1 py-1 text-sm font-semibold shadow-[0_8px_18px_rgba(52,75,104,0.04)] transition-colors ${
-=======
-                <div key={type} className="relative">
-                  <div className={`flex whitespace-nowrap items-center gap-1 rounded-xl border px-1 py-1 text-xs font-semibold shadow-[0_8px_18px_rgba(52,75,104,0.04)] transition-colors sm:text-sm ${
->>>>>>> bac7edc (added the seo info)
                       isActive || isOpen 
                         ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]' 
                         : 'border-[var(--border-soft)] bg-white text-[var(--text-main)] hover:bg-[var(--panel-muted)]'
@@ -780,19 +753,11 @@ const HomePage = ({ onSearch, loading }) => {
             })}
           </div>
 
-<<<<<<< HEAD
           <div className="relative flex w-full flex-wrap items-center justify-between gap-4 md:w-auto md:flex-nowrap md:justify-end md:gap-6">
             <div className="relative">
               <button 
                 onClick={(e) => { e.stopPropagation(); toggleFilter('sort'); }}
                 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)] sm:text-xs sm:tracking-[0.2em]"
-=======
-          <div className="relative flex w-full flex-wrap items-center justify-between gap-3 md:w-auto md:flex-nowrap md:justify-end md:gap-6">
-            <div className="relative">
-              <button 
-                onClick={(e) => { e.stopPropagation(); toggleFilter('sort'); }}
-                className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)] sm:text-xs sm:tracking-[0.2em]"
->>>>>>> bac7edc (added the seo info)
               >
                 <AlignLeft className="h-[14px] w-[14px]" /> SORT: {currentSortLabel}
               </button>
@@ -814,23 +779,14 @@ const HomePage = ({ onSearch, loading }) => {
               )}
             </div>
             
-<<<<<<< HEAD
             <button className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)] sm:border-l sm:border-[var(--border-soft)] sm:pl-6 sm:text-xs sm:tracking-[0.2em]">
-=======
-            <button className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)] sm:border-l sm:border-[var(--border-soft)] sm:pl-6 sm:text-xs sm:tracking-[0.2em]">
->>>>>>> bac7edc (added the seo info)
               <SlidersHorizontal className="h-[14px] w-[14px]" /> ADVANCED
             </button>
           </div>
         </div>
 
-<<<<<<< HEAD
         <div className="editorial-panel overflow-hidden rounded-[28px]">
           <div className="hidden overflow-x-auto lg:block">
-=======
-        <div className="editorial-panel overflow-hidden rounded-[22px] sm:rounded-[28px]">
-          <div className="hidden overflow-x-auto md:block">
->>>>>>> bac7edc (added the seo info)
             <table className="w-full whitespace-nowrap text-left text-[15px]">
               <thead className="bg-[var(--panel-muted)] text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--text-muted)]">
                 <tr>
@@ -907,20 +863,13 @@ const HomePage = ({ onSearch, loading }) => {
             </table>
           </div>
 
-<<<<<<< HEAD
           <div className="grid gap-0 lg:hidden">
             {modelsLoading ? (
               <div className="px-6 py-16 text-center text-[var(--text-muted)]">
-=======
-          <div className="md:hidden">
-            {modelsLoading ? (
-              <div className="px-5 py-14 text-center text-[var(--text-muted)]">
->>>>>>> bac7edc (added the seo info)
                 <div className="mb-3 inline-block h-6 w-6 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
                 <div>Loading models...</div>
               </div>
             ) : displayModels.length === 0 ? (
-<<<<<<< HEAD
               <div className="px-6 py-16 text-center text-[var(--text-muted)]">
                 No models found.
               </div>
@@ -977,24 +926,6 @@ const HomePage = ({ onSearch, loading }) => {
           <div className="flex flex-col items-stretch justify-between gap-4 border-t border-[var(--border-soft)] bg-[rgba(245,248,251,0.92)] px-4 py-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-muted)] sm:px-6 sm:text-xs sm:tracking-[0.18em] md:flex-row md:items-center">
             <div className="text-center md:text-left">Showing {filteredModels.length > 0 ? `${startIndex + 1}-${endIndex}` : 0} of {filteredModels.length} {filteredModels.length !== popularModels.length ? '(filtered) ' : ''}models</div>
             <div className="flex flex-wrap items-center justify-center gap-2 md:justify-end">
-=======
-              <div className="px-5 py-14 text-center text-[var(--text-muted)]">No models found.</div>
-            ) : (
-              <div className="space-y-4 p-4">
-                {displayModels.map((model, i) => {
-                  const times = ['2h ago', '1d ago', '5h ago', '12h ago', '3d ago'];
-                  const time = times[i % times.length];
-
-                  return <MobileModelCard key={model.modelId} model={model} time={time} onSearch={onSearch} />;
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-col items-center justify-between gap-4 border-t border-[var(--border-soft)] bg-[rgba(245,248,251,0.92)] px-4 py-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)] sm:px-6 sm:py-5 sm:text-xs sm:tracking-[0.18em] md:flex-row">
-            <div className="text-center md:text-left">Showing {filteredModels.length > 0 ? `${startIndex + 1}-${endIndex}` : 0} of {filteredModels.length} {filteredModels.length !== popularModels.length ? '(filtered) ' : ''}models</div>
-            <div className="flex flex-wrap items-center justify-center gap-2">
->>>>>>> bac7edc (added the seo info)
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
@@ -1003,11 +934,7 @@ const HomePage = ({ onSearch, loading }) => {
                 PREVIOUS
               </button>
               
-<<<<<<< HEAD
               {Array.from({ length: totalPages }, (_, i) => i + 1).slice(0, 8).map(page => (
-=======
-              {Array.from({ length: Math.min(totalPages, 6) }, (_, i) => i + 1).map(page => (
->>>>>>> bac7edc (added the seo info)
                 <button 
                   key={page}
                   onClick={() => setCurrentPage(page)}
