@@ -1,6 +1,6 @@
 "use client";
 import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   AlignLeft,
   ArrowRight,
@@ -28,6 +28,57 @@ import {
 } from 'lucide-react';
 import { getTrendingModels, searchModels } from '../services/huggingface';
 import { parseModelSize, formatNumber, enrichModelData } from '../utils/modelUtils';
+
+const FILTER_LABELS = {
+  architecture: 'Architecture',
+  parameters: 'Parameters',
+  license: 'License',
+  pipeline: 'Pipeline Tag',
+};
+
+const FILTER_DESCRIPTIONS = {
+  architecture: 'Filter by model family or backbone style.',
+  parameters: 'Narrow the shortlist by model size range.',
+  license: 'Focus on models with the licensing posture you need.',
+  pipeline: 'Match the model to the task category you are exploring.',
+};
+
+const FILTER_EMPTY_STATES = {
+  architecture: 'No architecture options available right now.',
+  parameters: 'No parameter range options available right now.',
+  license: 'No license options available right now.',
+  pipeline: 'No pipeline tag options available right now.',
+};
+
+const PARAMETER_RANGES = {
+  '< 3B': (params) => params < 3,
+  '3B - 10B': (params) => params >= 3 && params <= 10,
+  '10B - 30B': (params) => params > 10 && params <= 30,
+  '> 30B': (params) => params > 30,
+};
+
+const PARAMETER_RANGE_HELPERS = {
+  '< 3B': 'Lightweight models for smaller GPUs and quicker iteration.',
+  '3B - 10B': 'Balanced options for local inference and general experimentation.',
+  '10B - 30B': 'Mid-to-large models with stronger reasoning potential.',
+  '> 30B': 'Large-scale models that usually need serious hardware.',
+};
+
+const CONTEXT_OPTIONS = [
+  { value: '', label: 'Any context length' },
+  { value: '4096', label: '4K tokens+' },
+  { value: '8192', label: '8K tokens+' },
+  { value: '16384', label: '16K tokens+' },
+  { value: '32768', label: '32K tokens+' },
+  { value: '65536', label: '64K tokens+' },
+  { value: '131072', label: '128K tokens+' },
+];
+
+const DEFAULT_FILTER_OPTIONS = {
+  architecture: ['Transformer', 'Mistral', 'Llama', 'Phi', 'Gemma', 'Qwen'],
+  license: ['Apache-2.0', 'MIT', 'Llama-3', 'CreativeML', 'Gemma', 'Other'],
+  pipeline: ['Text Generation', 'Text-to-Image', 'Image-to-Text', 'Text-to-Speech', 'Speech Recognition', 'Image Classification', 'Object Detection', 'Conversational', 'Code Generation', 'Other'],
+};
 
 const FeatureItem = ({ icon, text }) => {
   const Icon = icon;
@@ -262,6 +313,11 @@ const HomePage = ({ onSearch, loading }) => {
     license: [],
     pipeline: [],
   });
+  const [advancedFilters, setAdvancedFilters] = useState({
+    maxVram: '',
+    minContext: '',
+    commercialOnly: false,
+  });
   const [sortBy, setSortBy] = useState('latest');
   const [currentPage, setCurrentPage] = useState(1);
   const modelsPerPage = 15;
@@ -269,7 +325,7 @@ const HomePage = ({ onSearch, loading }) => {
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters, sortBy]);
+  }, [filters, advancedFilters, sortBy]);
 
 
 
@@ -396,58 +452,71 @@ const HomePage = ({ onSearch, loading }) => {
     setSelectedIndex(-1);
   };
 
-  const filterOptions = {
-    architecture: ['Transformer', 'Mistral', 'Llama', 'Phi', 'Gemma', 'Qwen'],
-    parameters: ['< 3B', '3B - 10B', '10B - 30B', '> 30B'],
-    license: ['Apache-2.0', 'MIT', 'Llama-3', 'CreativeML', 'Other'],
-    pipeline: ['Text Generation', 'Text-to-Image', 'Image-to-Text', 'Text-to-Speech', 'Speech Recognition', 'Image Classification', 'Object Detection', 'Conversational', 'Code Generation', 'Other'],
-    sort: [
-      { id: 'latest', label: 'Latest Trending' },
-      { id: 'downloads', label: 'Most Downloads' },
-      { id: 'likes', label: 'Most Likes' },
-      { id: 'parameters', label: 'Parameters Size' }
-    ]
-  };
+  const filterOptions = useMemo(() => {
+    const uniqueValues = (items, fallback) => {
+      const values = Array.from(new Set(items.filter(Boolean)));
+      return values.length > 0 ? values.sort((a, b) => a.localeCompare(b)) : fallback;
+    };
+
+    return {
+      architecture: uniqueValues(popularModels.map((model) => model.architectureLabel), DEFAULT_FILTER_OPTIONS.architecture),
+      parameters: ['< 3B', '3B - 10B', '10B - 30B', '> 30B'],
+      license: uniqueValues(popularModels.map((model) => model.licenseInfo?.name || 'Other'), DEFAULT_FILTER_OPTIONS.license),
+      pipeline: uniqueValues(popularModels.map((model) => model.pipelineText || 'Other'), DEFAULT_FILTER_OPTIONS.pipeline),
+      sort: [
+        { id: 'latest', label: 'Latest Trending' },
+        { id: 'downloads', label: 'Most Downloads' },
+        { id: 'likes', label: 'Most Likes' },
+        { id: 'parameters', label: 'Parameters Size' }
+      ]
+    };
+  }, [popularModels]);
 
   const getFilteredModels = () => {
     let result = [...popularModels];
 
     if (filters.architecture.length > 0) {
-      result = result.filter(m => filters.architecture.some(a => m.name.toLowerCase().includes(a.toLowerCase())));
+      result = result.filter((m) => filters.architecture.includes(m.architectureLabel || 'Transformer'));
     }
     
     if (filters.parameters.length > 0) {
-      result = result.filter(m => {
+      result = result.filter((m) => {
         if (!m.vramEstimates?.totalParams) return false;
         const p = m.vramEstimates.totalParams;
-        return filters.parameters.some(param => {
-          if (param === '< 3B') return p < 3;
-          if (param === '3B - 10B') return p >= 3 && p <= 10;
-          if (param === '10B - 30B') return p > 10 && p <= 30;
-          if (param === '> 30B') return p > 30;
-          return false;
-        });
+        return filters.parameters.some((param) => PARAMETER_RANGES[param]?.(p));
       });
     }
 
     if (filters.license.length > 0) {
-      result = result.filter(m => {
-        const lic = m.licenseInfo?.name;
-        return filters.license.some(l => {
-          if (l === 'Other') return !['Apache-2.0', 'MIT', 'Llama-3', 'CreativeML'].includes(lic);
+      result = result.filter((m) => {
+        const lic = m.licenseInfo?.name || 'Other';
+        return filters.license.some((l) => {
+          if (l === 'Other') return !['Apache-2.0', 'MIT', 'Llama-3', 'CreativeML', 'Gemma'].includes(lic);
           return lic === l;
         });
       });
     }
 
     if (filters.pipeline.length > 0) {
-      result = result.filter(m => {
+      result = result.filter((m) => {
         const pText = m.pipelineText || 'Other';
         if (filters.pipeline.includes(pText)) return true;
         // If "Other" is selected, match anything not in the standard list
         if (filters.pipeline.includes('Other') && !filterOptions.pipeline.includes(pText)) return true;
         return false;
       });
+    }
+
+    if (advancedFilters.maxVram) {
+      result = result.filter((m) => (m.vramEstimates?.fp16 || 0) <= Number(advancedFilters.maxVram));
+    }
+
+    if (advancedFilters.minContext) {
+      result = result.filter((m) => (m.config?.max_position_embeddings || 0) >= Number(advancedFilters.minContext));
+    }
+
+    if (advancedFilters.commercialOnly) {
+      result = result.filter((m) => m.licenseInfo?.commercial);
     }
 
     if (sortBy === 'downloads') {
@@ -471,6 +540,24 @@ const HomePage = ({ onSearch, loading }) => {
     setActiveFilter(activeFilter === filterName ? null : filterName);
   };
 
+  const getOptionCount = (filterType, option) => {
+    return getFilteredModels().filter((model) => {
+      if (filterType === 'architecture') return (model.architectureLabel || 'Transformer') === option;
+      if (filterType === 'parameters') return PARAMETER_RANGES[option]?.(model.vramEstimates?.totalParams || 0);
+      if (filterType === 'license') {
+        const lic = model.licenseInfo?.name || 'Other';
+        if (option === 'Other') return !filterOptions.license.filter((value) => value !== 'Other').includes(lic);
+        return lic === option;
+      }
+      if (filterType === 'pipeline') {
+        const pText = model.pipelineText || 'Other';
+        if (option === 'Other') return !filterOptions.pipeline.filter((value) => value !== 'Other').includes(pText);
+        return pText === option;
+      }
+      return false;
+    }).length;
+  };
+
   const handleFilterToggle = (type, value) => {
     setFilters(prev => {
       const current = prev[type];
@@ -482,12 +569,54 @@ const HomePage = ({ onSearch, loading }) => {
     });
   };
 
+  const getSortedFilterOptions = (type) => {
+    return filterOptions[type]
+      .map((option) => ({
+        option,
+        count: getOptionCount(type, option),
+      }))
+      .filter(({ count }) => count > 0)
+      .sort((a, b) => {
+        if (filters[type].includes(a.option) && !filters[type].includes(b.option)) return -1;
+        if (!filters[type].includes(a.option) && filters[type].includes(b.option)) return 1;
+        if (b.count !== a.count) return b.count - a.count;
+        return a.option.localeCompare(b.option);
+      });
+  };
+
   const clearFilter = (type, e) => {
     e.stopPropagation();
     setFilters(prev => ({ ...prev, [type]: [] }));
   };
 
+  const clearAllFilters = () => {
+    setFilters({
+      architecture: [],
+      parameters: [],
+      license: [],
+      pipeline: [],
+    });
+    setAdvancedFilters({
+      maxVram: '',
+      minContext: '',
+      commercialOnly: false,
+    });
+    setSortBy('latest');
+    setActiveFilter(null);
+  };
+
+  const updateAdvancedFilter = (key, value) => {
+    setAdvancedFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
   const currentSortLabel = filterOptions.sort.find(s => s.id === sortBy)?.label.toUpperCase();
+  const activeBasicFilterCount = Object.values(filters).reduce((count, values) => count + values.length, 0);
+  const activeAdvancedFilterCount = [
+    advancedFilters.maxVram,
+    advancedFilters.minContext,
+    advancedFilters.commercialOnly,
+  ].filter(Boolean).length;
+  const totalActiveFilterCount = activeBasicFilterCount + activeAdvancedFilterCount;
 
   return (
     <div className="min-h-screen">
@@ -698,59 +827,90 @@ const HomePage = ({ onSearch, loading }) => {
       </section>
 
       <section className="shell-container py-8 sm:py-12">
-        <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between" ref={filterRef}>
-          <div className="hide-scrollbar relative -mx-4 flex w-[calc(100%+2rem)] items-center gap-3 overflow-x-auto overflow-y-visible px-4 pb-2 md:mx-0 md:w-auto md:px-0 md:pb-0">
-            {['architecture', 'parameters', 'license', 'pipeline'].map((type) => {
-              const labelMap = { architecture: 'Architecture', parameters: 'Parameters', license: 'License', pipeline: 'Pipeline Tag'};
-              const label = labelMap[type];
-              const selectedValues = filters[type];
-              const isActive = selectedValues.length > 0;
-              const isOpen = activeFilter === type;
-              
-              let displayText = label;
-              if (selectedValues.length === 1) displayText = `${label}: ${selectedValues[0]}`;
-              else if (selectedValues.length > 1) displayText = `${label}: ${selectedValues.length} selected`;
+        <div className="relative z-[120] mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between" ref={filterRef}>
+          <div className="relative overflow-visible">
+            <div className="flex flex-wrap items-center gap-3 pb-2 md:pb-0">
+              {['architecture', 'parameters', 'license', 'pipeline'].map((type) => {
+                const label = FILTER_LABELS[type];
+                const selectedValues = filters[type];
+                const isActive = selectedValues.length > 0;
+                const isOpen = activeFilter === type;
+                
+                let displayText = label;
+                if (selectedValues.length === 1) displayText = `${label}: ${selectedValues[0]}`;
+                else if (selectedValues.length > 1) displayText = `${label}: ${selectedValues.length} selected`;
 
-              return (
-                <div key={type} className="relative shrink-0">
-                  <div className={`flex whitespace-nowrap items-center gap-1 rounded-xl border px-1 py-1 text-sm font-semibold shadow-[0_8px_18px_rgba(52,75,104,0.04)] transition-colors ${
-                      isActive || isOpen 
-                        ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]' 
-                        : 'border-[var(--border-soft)] bg-white text-[var(--text-main)] hover:bg-[var(--panel-muted)]'
-                    }`}
-                  >
-                    <button onClick={() => toggleFilter(type)} className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3">
-                      {displayText} <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''} ${isActive ? 'text-[var(--accent)]' : 'text-[var(--text-faint)]'}`} />
+                return (
+                  <div key={type} className="relative shrink-0 overflow-visible">
+                    <button
+                      onClick={() => toggleFilter(type)} 
+                      className={`flex whitespace-nowrap items-center gap-2 rounded-2xl border px-4 py-2.5 text-[15px] font-semibold transition-colors ${
+                        isActive || isOpen 
+                          ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]' 
+                          : 'border-[var(--border-soft)] bg-white text-[var(--text-main)] hover:bg-[var(--panel-muted)]'
+                      }`}
+                    >
+                      {displayText} <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''} ${isActive ? 'text-[var(--accent)]' : 'text-[var(--text-faint)]'}`} />
                     </button>
                     {isActive && (
-                      <button onClick={(e) => clearFilter(type, e)} className="pr-3 pl-1 py-1.5 text-[var(--accent)] hover:text-[var(--accent-strong)] transition-colors">
-                        <X className="h-3.5 w-3.5" />
+                      <button onClick={(e) => clearFilter(type, e)} className="absolute -right-1.5 -top-1.5 flex h-[20px] w-[20px] items-center justify-center rounded-full bg-[var(--accent)] text-white shadow-sm hover:bg-[var(--accent-strong)] transition-colors">
+                        <X className="h-3 w-3" />
                       </button>
                     )}
-                  </div>
 
-                  {isOpen && (
-                    <div className="absolute left-0 top-[calc(100%+8px)] z-[60] min-w-[220px] max-w-[min(18rem,calc(100vw-2rem))] rounded-xl border border-[var(--border-soft)] bg-white py-2 shadow-xl">
-                      {filterOptions[type].map(opt => {
-                        const isSelected = selectedValues.includes(opt);
-                        return (
-                          <button
-                            key={opt}
-                            onClick={() => handleFilterToggle(type, opt)}
-                            className="flex w-full items-center justify-between gap-4 px-4 py-2 text-left text-sm font-medium text-[var(--text-main)] transition-colors hover:bg-[var(--panel-muted)]"
-                          >
-                            <span className="break-words">{opt}</span>
-                            <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${isSelected ? 'border-[var(--accent)] bg-[var(--accent)]' : 'border-[var(--border-strong)] bg-white text-transparent'}`}>
-                              {isSelected && <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                    {isOpen && (
+                      <div className="absolute left-0 top-[calc(100%+12px)] z-[80] w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-[var(--border-soft)] bg-white p-3 shadow-[0_18px_40px_rgba(48,67,95,0.12)]">
+                        <div className="mb-3 px-2">
+                          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
+                            {label}
+                          </div>
+                          <p className="mt-1 text-sm text-[var(--text-muted)]">{FILTER_DESCRIPTIONS[type]}</p>
+                        </div>
+
+                        <div className="grid max-h-[320px] gap-1 overflow-y-auto">
+                          {getSortedFilterOptions(type).length === 0 && (
+                            <div className="rounded-xl border border-dashed border-[var(--border-soft)] px-4 py-6 text-center text-sm text-[var(--text-muted)]">
+                              {FILTER_EMPTY_STATES[type]}
                             </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                          )}
+
+                          {getSortedFilterOptions(type).map(({ option: opt, count: optionCount }) => {
+                            const isSelected = filters[type].includes(opt);
+
+                            return (
+                              <button
+                                key={opt}
+                                onClick={() => handleFilterToggle(type, opt)}
+                                className={`flex items-center justify-between gap-4 rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${
+                                  isSelected
+                                    ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
+                                    : 'bg-white text-[var(--text-main)] hover:bg-[var(--panel-muted)]'
+                                }`}
+                              >
+                                <div className="min-w-0">
+                                  <span className="block break-words">{opt}</span>
+                                  {type === 'parameters' && (
+                                    <span className="mt-1 block text-xs leading-5 text-[var(--text-muted)]">
+                                      {PARAMETER_RANGE_HELPERS[opt]}
+                                    </span>
+                                  )}
+                                  <span className="mt-0.5 block text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-faint)]">
+                                    {optionCount} matches
+                                  </span>
+                                </div>
+                                <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${isSelected ? 'border-[var(--accent)] bg-[var(--accent)] text-white' : 'border-[var(--border-strong)] bg-white text-transparent'}`}>
+                                  {isSelected && <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <div className="relative flex w-full flex-wrap items-center justify-between gap-4 md:w-auto md:flex-nowrap md:justify-end md:gap-6">
@@ -778,12 +938,134 @@ const HomePage = ({ onSearch, loading }) => {
                 </div>
               )}
             </div>
-            
-            <button className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)] sm:border-l sm:border-[var(--border-soft)] sm:pl-6 sm:text-xs sm:tracking-[0.2em]">
-              <SlidersHorizontal className="h-[14px] w-[14px]" /> ADVANCED
-            </button>
+
+            <div className="relative">
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleFilter('advanced'); }}
+                className={`flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] transition-colors sm:border-l sm:pl-6 sm:text-xs sm:tracking-[0.2em] ${
+                  activeFilter === 'advanced' || activeAdvancedFilterCount > 0
+                    ? 'border-[var(--accent)] text-[var(--accent)]'
+                    : 'border-[var(--border-soft)] text-[var(--text-muted)] hover:text-[var(--text-strong)]'
+                }`}
+              >
+                <SlidersHorizontal className="h-[14px] w-[14px]" />
+                ADVANCED{activeAdvancedFilterCount > 0 ? ` (${activeAdvancedFilterCount})` : ''}
+              </button>
+
+              {activeFilter === 'advanced' && (
+                <div className="absolute right-0 top-[calc(100%+12px)] z-[60] w-[min(26rem,calc(100vw-2rem))] rounded-2xl border border-[var(--border-soft)] bg-white p-5 shadow-xl">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--accent)]">Advanced Filters</div>
+                      <p className="mt-1 text-sm text-[var(--text-muted)]">Refine by VRAM, context, and commercial use readiness.</p>
+                    </div>
+                    {totalActiveFilterCount > 0 && (
+                      <button
+                        onClick={clearAllFilters}
+                        className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)]"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="mt-5 grid gap-4">
+                    <label className="grid gap-2">
+                      <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Max VRAM</span>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={advancedFilters.maxVram}
+                        onChange={(e) => updateAdvancedFilter('maxVram', e.target.value)}
+                        placeholder="Example: 24"
+                        className="rounded-xl border border-[var(--border-soft)] bg-white px-4 py-3 text-sm text-[var(--text-main)] outline-none transition-colors placeholder:text-[var(--text-faint)] focus:border-[var(--accent)]"
+                      />
+                    </label>
+
+                    <label className="grid gap-2">
+                      <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-muted)]">Minimum Context</span>
+                      <select
+                        value={advancedFilters.minContext}
+                        onChange={(e) => updateAdvancedFilter('minContext', e.target.value)}
+                        className="rounded-xl border border-[var(--border-soft)] bg-white px-4 py-3 text-sm text-[var(--text-main)] outline-none transition-colors focus:border-[var(--accent)]"
+                      >
+                        {CONTEXT_OPTIONS.map((option) => (
+                          <option key={option.label} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="flex items-center justify-between gap-4 rounded-xl border border-[var(--border-soft)] bg-[var(--panel-muted)] px-4 py-3">
+                      <div>
+                        <div className="text-sm font-semibold text-[var(--text-main)]">Commercial-friendly only</div>
+                        <div className="mt-1 text-xs text-[var(--text-muted)]">Hide models that look restricted for commercial deployment.</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={advancedFilters.commercialOnly}
+                        onChange={(e) => updateAdvancedFilter('commercialOnly', e.target.checked)}
+                        className="h-4 w-4 rounded border-[var(--border-strong)] text-[var(--accent)] focus:ring-[var(--accent)]"
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
+
+        {totalActiveFilterCount > 0 && (
+          <div className="mb-5 flex flex-wrap items-center gap-2">
+            {Object.entries(filters).flatMap(([type, values]) =>
+              values.map((value) => (
+                <button
+                  key={`${type}-${value}`}
+                  onClick={() => handleFilterToggle(type, value)}
+                  className="inline-flex items-center gap-2 rounded-full bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-bold text-[var(--accent)]"
+                >
+                  {FILTER_LABELS[type]}: {value}
+                  <X className="h-3 w-3" />
+                </button>
+              ))
+            )}
+            {advancedFilters.maxVram && (
+              <button
+                onClick={() => updateAdvancedFilter('maxVram', '')}
+                className="inline-flex items-center gap-2 rounded-full bg-[var(--panel-muted)] px-3 py-1.5 text-xs font-bold text-[var(--text-main)]"
+              >
+                Max VRAM: {advancedFilters.maxVram} GB
+                <X className="h-3 w-3" />
+              </button>
+            )}
+            {advancedFilters.minContext && (
+              <button
+                onClick={() => updateAdvancedFilter('minContext', '')}
+                className="inline-flex items-center gap-2 rounded-full bg-[var(--panel-muted)] px-3 py-1.5 text-xs font-bold text-[var(--text-main)]"
+              >
+                Context: {CONTEXT_OPTIONS.find((option) => option.value === advancedFilters.minContext)?.label}
+                <X className="h-3 w-3" />
+              </button>
+            )}
+            {advancedFilters.commercialOnly && (
+              <button
+                onClick={() => updateAdvancedFilter('commercialOnly', false)}
+                className="inline-flex items-center gap-2 rounded-full bg-[var(--panel-muted)] px-3 py-1.5 text-xs font-bold text-[var(--text-main)]"
+              >
+                Commercial-friendly
+                <X className="h-3 w-3" />
+              </button>
+            )}
+            <button
+              onClick={clearAllFilters}
+              className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)]"
+            >
+              Reset Filters
+            </button>
+          </div>
+        )}
 
         <div className="editorial-panel overflow-hidden rounded-[28px]">
           <div className="hidden overflow-x-auto lg:block">

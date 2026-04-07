@@ -29,6 +29,39 @@ export const formatNumber = (num) => {
   return n.toString();
 };
 
+const detectArchitecture = (model) => {
+  const haystack = [
+    model.id,
+    ...(model.tags || []),
+    model.library_name,
+    model.transformersInfo?.auto_model,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  if (haystack.includes('qwen')) return 'Qwen';
+  if (haystack.includes('mistral') || haystack.includes('mixtral')) return 'Mistral';
+  if (haystack.includes('llama')) return 'Llama';
+  if (haystack.includes('phi')) return 'Phi';
+  if (haystack.includes('gemma')) return 'Gemma';
+  if (haystack.includes('transformer')) return 'Transformer';
+  return 'Transformer';
+};
+
+const detectLicense = (model) => {
+  const rawLicense = String(model.license || '').toLowerCase();
+  const tagText = (model.tags || []).join(' ').toLowerCase();
+  const haystack = `${rawLicense} ${tagText} ${String(model.id || '').toLowerCase()}`;
+
+  if (haystack.includes('apache')) return 'Apache-2.0';
+  if (haystack.includes('mit')) return 'MIT';
+  if (haystack.includes('llama')) return 'Llama-3';
+  if (haystack.includes('creativeml') || haystack.includes('openrail') || haystack.includes('stable-diffusion')) return 'CreativeML';
+  if (haystack.includes('gemma')) return 'Gemma';
+  return model.license || 'Other';
+};
+
 export const enrichModelData = (model) => {
   if (!model || !model.id) return model;
   let paramsInB = null;
@@ -65,11 +98,8 @@ export const enrichModelData = (model) => {
   else if (model.id.includes('16k') || model.id.includes('16K')) estimatedContext = 16000;
   else if (model.id.includes('8k') || model.id.includes('8K')) estimatedContext = 8000;
 
-  let licenseDisp = 'Apache-2.0';
-  if (model.id.toLowerCase().includes('llama-3')) licenseDisp = 'Llama-3';
-  else if (model.id.toLowerCase().includes('gemma')) licenseDisp = 'Gemma';
-  else if (model.id.toLowerCase().includes('phi')) licenseDisp = 'MIT';
-  else if (model.id.toLowerCase().includes('diffusion')) licenseDisp = 'CreativeML';
+  const licenseDisp = detectLicense(model);
+  const architectureLabel = detectArchitecture(model);
 
   let pipelineText = 'Other';
   const rawTag = model.pipeline_tag || '';
@@ -95,5 +125,6 @@ export const enrichModelData = (model) => {
     name: model.id,
     rawParams: formatParams(paramsInB),
     pipelineText,
+    architectureLabel,
   };
 };

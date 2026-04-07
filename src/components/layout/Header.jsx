@@ -24,7 +24,7 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--border-soft)] bg-[rgba(251,253,255,0.88)] backdrop-blur-xl">
+    <header className="sticky top-0 z-[200] border-b border-[var(--border-soft)] bg-white">
       <div className="shell-container flex min-h-[72px] items-center justify-between gap-4 py-3 md:min-h-[78px]">
         <div className="flex min-w-0 items-center gap-4 lg:gap-12">
           <Link href="/" className="flex min-w-0 items-center">
