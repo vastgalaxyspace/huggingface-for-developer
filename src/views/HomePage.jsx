@@ -595,9 +595,9 @@ const FilterDropdown = ({ type, label, options, selected, onToggle, onClear, des
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-const HomePage = ({ onSearch, loading }) => {
-  const [popularModels, setPopularModels] = useState([]);
-  const [modelsLoading, setModelsLoading] = useState(true);
+const HomePage = ({ onSearch, loading, initialModels = [] }) => {
+  const [popularModels, setPopularModels] = useState(initialModels);
+  const [modelsLoading, setModelsLoading] = useState(initialModels.length === 0);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -630,6 +630,12 @@ const HomePage = ({ onSearch, loading }) => {
   // ── Data fetching ────────────────────────────────────────────────────────
 
   useEffect(() => {
+    if (initialModels.length > 0) {
+      setPopularModels(initialModels);
+      setModelsLoading(false);
+      return;
+    }
+
     (async () => {
       try {
         setModelsLoading(true);
@@ -641,7 +647,7 @@ const HomePage = ({ onSearch, loading }) => {
         setModelsLoading(false);
       }
     })();
-  }, []);
+  }, [initialModels]);
 
   // ── Search debounce ──────────────────────────────────────────────────────
 
@@ -1044,12 +1050,12 @@ const HomePage = ({ onSearch, loading }) => {
             />
           </div>
 
-          {/* ── Quick Preset Filters ──────────────────────────────────────── */}
-          <div className="mb-6" aria-label="Quick filter presets">
-            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">
-              Quick Presets
-            </p>
-            <div className="flex flex-wrap gap-2">
+          {/* ── Quick Preset Bento Grid ──────────────────────────────────────── */}
+          <div className="mb-8" aria-label="Quick filter presets">
+            <h2 className="mb-4 text-[13px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">
+              Start Here: Curated Categories
+            </h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
               {QUICK_PRESETS.map((preset) => {
                 const Icon = preset.icon;
                 const isActive = activePreset === preset.id;
@@ -1059,15 +1065,27 @@ const HomePage = ({ onSearch, loading }) => {
                     onClick={() => applyPreset(preset)}
                     aria-pressed={isActive}
                     title={preset.description}
-                    className={`group flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+                    className={`group relative flex flex-col items-start gap-4 overflow-hidden rounded-2xl border p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
                       isActive
-                        ? 'border-[var(--accent)] bg-[var(--accent)] text-white shadow-sm'
-                        : 'border-[var(--border-soft)] bg-white text-[var(--text-main)] hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]'
+                        ? 'border-[var(--accent)] bg-[var(--accent)] text-white shadow-md'
+                        : 'border-[var(--border-soft)] bg-white hover:border-[var(--accent)] hover:bg-[var(--panel-muted)]'
                     }`}
                   >
-                    <Icon className="h-3.5 w-3.5" />
-                    {preset.label}
-                    {isActive && <X className="h-3 w-3 ml-0.5 opacity-70" />}
+                    <div className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${isActive ? 'bg-white/20' : 'bg-[var(--accent-soft)] group-hover:bg-[var(--accent)]'}`}>
+                      <Icon className={`h-5 w-5 transition-colors ${isActive ? 'text-white' : 'text-[var(--accent)] group-hover:text-white'}`} />
+                    </div>
+                    <div className="relative z-10">
+                      <div className={`text-sm font-bold sm:text-[15px] ${isActive ? 'text-white' : 'text-[var(--text-strong)] group-hover:text-[var(--accent)]'}`}>
+                        {preset.label}
+                      </div>
+                      <div className={`mt-1.5 hidden text-xs leading-relaxed sm:block ${isActive ? 'text-white/80' : 'text-[var(--text-muted)]'}`}>
+                        {preset.description}
+                      </div>
+                    </div>
+                    {isActive && <X className="absolute right-4 top-4 h-4 w-4 opacity-70 transition-opacity hover:opacity-100" />}
+                    {isActive && (
+                      <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-white/10 to-transparent" />
+                    )}
                   </button>
                 );
               })}
@@ -1260,150 +1278,91 @@ const HomePage = ({ onSearch, loading }) => {
           {/* ── Model Table ───────────────────────────────────────────────── */}
           <div className="editorial-panel overflow-hidden rounded-[28px]">
 
-            {/* Desktop table */}
-            <div className="hidden overflow-x-auto lg:block">
-              <table className="w-full whitespace-nowrap text-left text-[15px]" aria-label="Trending AI models">
-                <thead className="bg-[var(--panel-muted)] text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--text-muted)]">
-                  <tr>
-                    <th scope="col" className="w-[360px] px-8 py-5">Model</th>
-                    <th scope="col" className="px-5 py-5">Parameters</th>
-                    <th scope="col" className="px-5 py-5">Downloads</th>
-                    <th scope="col" className="px-5 py-5">License</th>
-                    <th scope="col" className="px-5 py-5">VRAM (FP16)</th>
-                    <th scope="col" className="px-5 py-5">Context</th>
-                    <th scope="col" className="px-5 py-5">Pipeline</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {modelsLoading ? (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-16 text-center text-[var(--text-muted)]">
-                        <div className="mb-3 inline-block h-6 w-6 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
-                        <div>Loading trending models…</div>
-                      </td>
-                    </tr>
-                  ) : displayModels.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-16 text-center">
-                        <Filter className="mx-auto mb-3 h-8 w-8 text-[var(--text-faint)]" />
-                        <p className="font-bold text-[var(--text-main)]">No models match your filters.</p>
-                        <button onClick={clearAllFilters} className="mt-2 text-sm text-[var(--accent)] hover:underline">
-                          Reset all filters
-                        </button>
-                      </td>
-                    </tr>
-                  ) : (
-                    displayModels.map((model, i) => {
-                      const PipelineIcon = getPipelineIcon(model.pipelineText);
-                      const pText = model.pipelineText || 'Other';
-                      return (
-                        <tr
-                          key={model.modelId}
-                          className="group border-b border-[var(--border-soft)] bg-white transition-colors hover:bg-[rgba(243,247,252,0.8)]"
-                        >
-                          <td className="px-8 py-5">
-                            <button
-                              onClick={() => onSearch(model.modelId)}
-                              className="block w-[300px] cursor-pointer truncate text-left text-[17px] font-extrabold text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)]"
-                              aria-label={`View details for ${model.name}`}
-                            >
-                              {model.name}
-                            </button>
-                            <div className="mt-1 text-[11px] font-medium text-[var(--text-faint)]">
-                              Updated {TIMES[i % TIMES.length]}
-                            </div>
-                          </td>
-                          <td className="px-5 py-4 font-medium text-[var(--text-main)]">{model.rawParams ?? 'N/A'}</td>
-                          <td className="px-5 py-4">
-                            <span className="flex items-center gap-1.5 font-medium text-[var(--text-main)]">
-                              <TrendingUp className="h-3.5 w-3.5 text-[rgb(34,197,94)]" />
-                              {formatNumber(model.downloads)}
-                            </span>
-                          </td>
-                          <td className="px-5 py-4">
-                            <Badge variant="accent">{model.licenseInfo?.name ?? 'Unknown'}</Badge>
-                          </td>
-                          <td className="px-5 py-4 font-medium text-[var(--text-main)]">
-                            {model.vramEstimates?.fp16 ? `${model.vramEstimates.fp16} GB` : 'N/A'}
-                          </td>
-                          <td className="px-5 py-4 font-medium text-[var(--text-main)]">
-                            {model.config?.max_position_embeddings > 0
-                              ? `${model.config.max_position_embeddings / 1000}k`
-                              : 'N/A'}
-                          </td>
-                          <td className="px-5 py-4">
-                            <div className="flex items-center gap-2 font-medium text-[var(--text-muted)]">
-                              <PipelineIcon className="h-3.5 w-3.5 shrink-0" />
-                              <span className="text-[13px]">{pText}</span>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile cards */}
-            <div className="grid gap-0 lg:hidden">
+            <div className="grid grid-cols-1 gap-4 p-4 sm:p-5 lg:grid-cols-2 lg:gap-5 lg:p-6 xl:grid-cols-3">
               {modelsLoading ? (
-                <div className="px-6 py-16 text-center text-[var(--text-muted)]">
-                  <div className="mb-3 inline-block h-6 w-6 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
-                  <div>Loading trending models…</div>
+                <div className="col-span-full px-6 py-20 text-center text-[var(--text-muted)]">
+                  <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-[3px] border-[var(--accent)] border-t-transparent" />
+                  <div className="text-lg font-medium">Loading trending models…</div>
                 </div>
               ) : displayModels.length === 0 ? (
-                <div className="px-6 py-16 text-center">
-                  <Filter className="mx-auto mb-3 h-8 w-8 text-[var(--text-faint)]" />
-                  <p className="font-bold text-[var(--text-main)]">No models match your filters.</p>
-                  <button onClick={clearAllFilters} className="mt-2 text-sm text-[var(--accent)] hover:underline">Reset all filters</button>
+                <div className="col-span-full px-6 py-20 text-center">
+                  <Filter className="mx-auto mb-4 h-10 w-10 text-[var(--text-faint)]" />
+                  <p className="text-xl font-bold text-[var(--text-main)]">No models match your filters.</p>
+                  <button onClick={clearAllFilters} className="mt-3 text-[15px] font-semibold text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)] hover:underline">
+                    Reset all filters
+                  </button>
                 </div>
               ) : (
                 displayModels.map((model, i) => {
                   const PipelineIcon = getPipelineIcon(model.pipelineText);
                   const pText = model.pipelineText || 'Other';
+                  
+                  const isGreenLicense = ['apache-2.0', 'mit', 'cc-by'].some(l => model.licenseInfo?.name?.toLowerCase().includes(l));
+                  const isRunOnLaptop = model.vramEstimates?.fp16 && model.vramEstimates.fp16 <= 8;
+
                   return (
-                    <article key={model.modelId} className="border-b border-[var(--border-soft)] bg-white p-5 last:border-b-0 sm:p-6">
-                      <button
-                        onClick={() => onSearch(model.modelId)}
-                        className="block w-full text-left text-base font-extrabold text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)] sm:text-lg"
-                        aria-label={`View ${model.name}`}
-                      >
-                        <span className="line-clamp-2 break-words">{model.name}</span>
-                      </button>
-                      <div className="mt-1 text-[11px] font-medium text-[var(--text-faint)]">Updated {TIMES[i % TIMES.length]}</div>
-
-                      <div className="mt-4 grid grid-cols-2 gap-2.5 text-sm sm:grid-cols-3">
-                        {[
-                          { label: 'Parameters', value: model.rawParams ?? 'N/A' },
-                          { label: 'Downloads', value: formatNumber(model.downloads) },
-                          { label: 'VRAM', value: model.vramEstimates?.fp16 ? `${model.vramEstimates.fp16} GB` : 'N/A' },
-                          {
-                            label: 'Context',
-                            value: model.config?.max_position_embeddings > 0
-                              ? `${model.config.max_position_embeddings / 1000}k`
-                              : 'N/A',
-                          },
-                        ].map(({ label, value }) => (
-                          <div key={label} className="rounded-2xl bg-[var(--panel-muted)] px-3 py-2">
-                            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">{label}</div>
-                            <div className="mt-1 font-semibold text-[var(--text-main)]">{value}</div>
+                    <article 
+                      key={model.modelId} 
+                      className="group relative flex flex-col justify-between overflow-hidden rounded-[20px] border border-[var(--border-soft)] bg-white p-5 shadow-[0_2px_10px_rgba(48,67,95,0.02)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--border-strong)] hover:shadow-[0_16px_40px_rgba(53,87,132,0.08)]"
+                    >
+                      <div>
+                        {/* Top Meta Row */}
+                        <div className="mb-4 flex items-start justify-between gap-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--panel-muted)] px-2.5 py-1 text-[11px] font-bold text-[var(--text-muted)]">
+                              <PipelineIcon className="h-3 w-3 text-[var(--accent)]" />
+                              <span className="truncate max-w-[100px] sm:max-w-none">{pText}</span>
+                            </span>
+                            {isRunOnLaptop && (
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(34,197,94,0.1)] px-2.5 py-1 text-[11px] font-bold text-[rgb(21,128,61)]">
+                                <Cpu className="h-3 w-3" /> <span className="hidden sm:inline">Runs on Laptop</span><span className="sm:hidden">Laptop</span>
+                              </span>
+                            )}
                           </div>
-                        ))}
-
-                        <div className="col-span-2 rounded-2xl bg-[var(--panel-muted)] px-3 py-2 sm:col-span-1">
-                          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">License</div>
-                          <div className="mt-1 break-words font-semibold text-[var(--text-main)]">{model.licenseInfo?.name ?? 'Unknown'}</div>
+                          <span className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-widest ${isGreenLicense ? 'bg-[rgba(34,197,94,0.1)] text-[rgb(21,128,61)]' : 'bg-[var(--panel-muted)] text-[var(--text-muted)]'}`}>
+                            {model.licenseInfo?.name ?? 'Unknown'}
+                          </span>
                         </div>
 
-                        <div className="col-span-2 rounded-2xl bg-[var(--panel-muted)] px-3 py-2 sm:col-span-3">
-                          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">Pipeline</div>
-                          <div className="mt-1 flex items-center gap-1.5 font-semibold text-[var(--text-main)]">
-                            <PipelineIcon className="h-3.5 w-3.5 text-[var(--accent)]" />
-                            {pText}
-                          </div>
+                        {/* Title */}
+                        <button
+                          onClick={() => onSearch(model.modelId)}
+                          className="block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded"
+                          aria-label={`View details for ${model.name}`}
+                        >
+                          <h3 className="line-clamp-2 leading-tight text-lg font-extrabold text-[var(--text-strong)] transition-colors group-hover:text-[var(--accent)] sm:text-xl">
+                            {model.name}
+                          </h3>
+                        </button>
+                        
+                        <div className="mt-2 text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide">
+                          Updated {TIMES[i % TIMES.length]}
                         </div>
                       </div>
+
+                      {/* Stats Grid */}
+                      <div className="mt-5 grid grid-cols-2 gap-2">
+                        <div className="flex flex-wrap items-center justify-between gap-1 rounded-lg bg-[var(--panel-muted)] px-3 py-2.5">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-faint)]">Params</span>
+                          <span className="font-bold text-[var(--text-main)] text-[13px]">{model.rawParams === 'Unknown' ? 'N/A' : (model.rawParams ?? 'N/A')}</span>
+                        </div>
+                        <div className="flex flex-wrap items-center justify-between gap-1 rounded-lg bg-[var(--panel-muted)] px-3 py-2.5">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-faint)]">VRAM</span>
+                          <span className="font-bold text-[var(--text-main)] text-[13px]">{model.vramEstimates?.fp16 ? `${model.vramEstimates.fp16}GB` : 'N/A'}</span>
+                        </div>
+                        <div className="flex flex-wrap items-center justify-between gap-1 rounded-lg bg-[var(--panel-muted)] px-3 py-2.5">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-faint)]">Context</span>
+                          <span className="font-bold text-[var(--text-main)] text-[13px]">{model.config?.max_position_embeddings > 0 ? `${model.config.max_position_embeddings / 1000}k` : 'N/A'}</span>
+                        </div>
+                        <div className="flex flex-wrap items-center justify-between gap-1 rounded-lg bg-[rgba(53,87,132,0.06)] px-3 py-2.5">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent)] opacity-80">Downs</span>
+                          <span className="flex items-center font-extrabold text-[var(--accent)] text-[13px]">
+                            <TrendingUp className="mr-1 h-3.5 w-3.5" />
+                            {formatNumber(model.downloads)}
+                          </span>
+                        </div>
+                      </div>
+
                     </article>
                   );
                 })

@@ -1,4 +1,5 @@
 import { absoluteUrl } from '../src/lib/seo';
+import { getTrendingModels } from '../src/services/huggingface';
 
 const learningTopicRoutes = [
   '/gpu/learning/physical-hardware',
@@ -34,13 +35,27 @@ const routes = [
   { path: '/recommender', priority: 0.85, changeFrequency: 'weekly' },
 ];
 
-export default function sitemap() {
+export default async function sitemap() {
   const lastModified = new Date();
 
-  return routes.map((route) => ({
+  const staticSitemap = routes.map((route) => ({
     url: absoluteUrl(route.path),
     lastModified,
     changeFrequency: route.changeFrequency,
     priority: route.priority,
   }));
+
+  try {
+    const trending = await getTrendingModels(150);
+    const modelRoutes = trending.map((model) => ({
+      url: absoluteUrl(`/model/${model.id}`),
+      lastModified: new Date(model.lastModified || lastModified),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    }));
+    return [...staticSitemap, ...modelRoutes];
+  } catch (error) {
+    console.warn("Failed to fetch dynamic models for sitemap", error);
+    return staticSitemap;
+  }
 }

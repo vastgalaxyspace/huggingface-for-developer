@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import HomePage from "../../views/HomePage";
 
-export default function HomePageClient() {
+export default function HomePageClient({ initialModels = [] }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -19,5 +19,5 @@ export default function HomePageClient() {
     router.push(`/model/${modelId}`);
   };
 
-  return <HomePage onSearch={handleSearch} loading={loading} />;
+  return <HomePage onSearch={handleSearch} loading={loading} initialModels={initialModels} />;
 }

@@ -1,5 +1,8 @@
 // src/utils/modelUtils.js
 
+import { parseModelConfig } from './dataParser';
+import { calculateVRAM } from './vramCalculator';
+
 // Parse model size from name
 export const parseModelSize = (modelId) => {
   if (!modelId) return null;
@@ -27,6 +30,41 @@ export const formatNumber = (num) => {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
   if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
   return n.toString();
+};
+
+const extractParamsFromMetadata = (model) => {
+  const safetensorsTotal =
+    Number(model?.safetensors?.total) ||
+    Number(model?.metadata?.safetensors?.total) ||
+    Number(model?.meta?.safetensors?.total) ||
+    0;
+
+  if (safetensorsTotal > 0) {
+    return safetensorsTotal / 1e9;
+  }
+
+  const explicitCount =
+    Number(model?.cardData?.model_params) ||
+    Number(model?.cardData?.parameters) ||
+    Number(model?.transformersInfo?.num_parameters) ||
+    0;
+
+  if (explicitCount > 0) {
+    return explicitCount >= 1e6 ? explicitCount / 1e9 : explicitCount;
+  }
+
+  return null;
+};
+
+const resolveConfig = (model) => {
+  if (!model) return null;
+  if (model.config?.max_position_embeddings || model.config?.hidden_size || model.config?.num_hidden_layers) {
+    return model.config;
+  }
+  if (model.rawConfig) {
+    return parseModelConfig(model.rawConfig);
+  }
+  return null;
 };
 
 const detectArchitecture = (model) => {
@@ -64,25 +102,53 @@ const detectLicense = (model) => {
 
 export const enrichModelData = (model) => {
   if (!model || !model.id) return model;
-  let paramsInB = null;
+  let paramsInB = extractParamsFromMetadata(model);
+  const parsedConfig = resolveConfig(model);
+  const safetensorsTotal =
+    Number(model?.safetensors?.total) ||
+    Number(model?.metadata?.safetensors?.total) ||
+    Number(model?.meta?.safetensors?.total) ||
+    0;
   const matchB = model.id.match(/(?:^|[-_])(\d+(?:\.\d+)?)[bB](?:[-_]|$)/);
   const matchM = model.id.match(/(?:^|[-_])(\d+(?:\.\d+)?)[mM](?:[-_]|$)/);
   const matchB_generic = model.id.match(/(\d+(?:\.\d+)?)\s*[bB]/);
   const matchM_generic = model.id.match(/(\d+(?:\.\d+)?)\s*[mM](?!in)/);
 
-  if (matchB) paramsInB = parseFloat(matchB[1]);
-  else if (matchM) paramsInB = parseFloat(matchM[1]) / 1000;
-  else if (matchB_generic) paramsInB = parseFloat(matchB_generic[1]);
-  else if (matchM_generic) paramsInB = parseFloat(matchM_generic[1]) / 1000;
+  if (paramsInB === null) {
+    if (matchB) paramsInB = parseFloat(matchB[1]);
+    else if (matchM) paramsInB = parseFloat(matchM[1]) / 1000;
+    else if (matchB_generic) paramsInB = parseFloat(matchB_generic[1]);
+    else if (matchM_generic) paramsInB = parseFloat(matchM_generic[1]) / 1000;
+  }
 
   if (paramsInB === null) {
-    if (model.id.toLowerCase().includes('phi-3')) paramsInB = 3.8;
-    else if (model.id.toLowerCase().includes('phi-4')) paramsInB = 14;
-    else if (model.id.toLowerCase().includes('mixtral-8x7b')) paramsInB = 46.7; // Example specific handler
-    else paramsInB = 7;
+    if (parsedConfig) {
+      paramsInB = calculateVRAM(parsedConfig, safetensorsTotal > 0 ? { safetensorsTotal } : {}).totalParams;
+    }
+  }
+
+  if (paramsInB === null) {
+    const cid = model.id.toLowerCase();
+    if (cid.includes('phi-3')) paramsInB = 3.8;
+    else if (cid.includes('phi-4')) paramsInB = 14;
+    else if (cid.includes('mixtral-8x7b')) paramsInB = 46.7;
+    else if (cid.includes('minilm-l6')) paramsInB = 0.022;
+    else if (cid.includes('minilm-l12')) paramsInB = 0.033;
+    else if (cid.includes('bert-base') || cid.includes('mpnet-base') || cid.includes('roberta-base') || cid.includes('electra-base')) paramsInB = 0.11;
+    else if (cid.includes('bert-large') || cid.includes('roberta-large')) paramsInB = 0.355;
+    else if (cid.includes('clip-vit-large')) paramsInB = 0.427;
+    else if (cid.includes('clip-vit-base') || cid.includes('vit-base') || cid.includes('nsfw_image_detection')) paramsInB = 0.086;
+    else if (cid.includes('distilbert')) paramsInB = 0.066;
+    else if (cid.includes('t5-small')) paramsInB = 0.060;
+    else if (cid.includes('t5-base')) paramsInB = 0.220;
+    else if (cid.includes('t5-large')) paramsInB = 0.770;
+    else if (cid.includes('gpt2-medium')) paramsInB = 0.355; 
+    else if (cid.includes('gpt2-large')) paramsInB = 0.774;
+    else if (cid.includes('gpt2')) paramsInB = 0.124;
   }
 
   const formatParams = (b) => {
+    if (b === null || b === undefined) return 'Unknown';
     if (b >= 1000) return `${(b / 1000).toFixed(1).replace(/\.0$/, '')}T`;
     if (b >= 1) return `${b.toFixed(1).replace(/\.0$/, '')}B`;
     return `${(b * 1000).toFixed(0)}M`;
@@ -92,11 +158,13 @@ export const enrichModelData = (model) => {
     ['mit', 'apache-2.0', 'openrail', 'cc-by'].includes(tag.toLowerCase())
   ) ?? true;
   
-  let estimatedContext = 4096;
-  if (model.id.includes('128k') || model.id.includes('128K')) estimatedContext = 128000;
-  else if (model.id.includes('32k') || model.id.includes('32K')) estimatedContext = 32000;
-  else if (model.id.includes('16k') || model.id.includes('16K')) estimatedContext = 16000;
-  else if (model.id.includes('8k') || model.id.includes('8K')) estimatedContext = 8000;
+  let estimatedContext = parsedConfig?.max_position_embeddings || 4096;
+  if (!parsedConfig?.max_position_embeddings) {
+    if (model.id.includes('128k') || model.id.includes('128K')) estimatedContext = 128000;
+    else if (model.id.includes('32k') || model.id.includes('32K')) estimatedContext = 32000;
+    else if (model.id.includes('16k') || model.id.includes('16K')) estimatedContext = 16000;
+    else if (model.id.includes('8k') || model.id.includes('8K')) estimatedContext = 8000;
+  }
 
   const licenseDisp = detectLicense(model);
   const architectureLabel = detectArchitecture(model);
@@ -133,12 +201,19 @@ export const enrichModelData = (model) => {
     pipelineText = rawTag.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   }
 
+  const vramEstimates = parsedConfig
+    ? calculateVRAM(parsedConfig, safetensorsTotal > 0 ? { safetensorsTotal } : {})
+    : {
+        fp16: paramsInB !== null ? Math.max(0.1, Number((paramsInB * 2).toFixed(1))) : null,
+        totalParams: paramsInB,
+      };
+
   return {
     ...model,
     modelId: model.id,
-    vramEstimates: { fp16: Number((paramsInB * 2).toFixed(1)), totalParams: paramsInB },
+    vramEstimates,
     licenseInfo: { commercial: isCommercial, name: licenseDisp },
-    config: { max_position_embeddings: estimatedContext },
+    config: parsedConfig ? { ...parsedConfig, max_position_embeddings: estimatedContext } : { max_position_embeddings: estimatedContext },
     name: model.id,
     rawParams: formatParams(paramsInB),
     pipelineText,

@@ -3,7 +3,6 @@
 const HF_API_BASE = 'https://huggingface.co';
 const HF_API_MODELS = 'https://huggingface.co/api/models';
 const HF_TOKEN = process.env.NEXT_PUBLIC_HF_TOKEN;
-
 const OPTIONAL_ASSET_ERROR_TEXT = [
   'failed to fetch',
   'load failed',
@@ -186,12 +185,45 @@ export const searchModels = async (query, limit = 10) => {
 export const getTrendingModels = async (limit = 10) => {
   try {
     const response = await fetch(
-      `${HF_API_MODELS}?sort=downloads&direction=-1&limit=${limit}`
+      `${HF_API_MODELS}?sort=trendingScore&direction=-1&limit=${limit}`,
+      { next: { revalidate: 3600 } } // Refresh trending data every hour
     );
     
     if (!response.ok) throw new Error('Failed to fetch trending models');
     
-    return await response.json();
+    const models = await response.json();
+    const sizeRegex = /(?:^|[-_])(\d+(?:\.\d+)?)[bBmM](?:[-_]|$)|(\d+(?:\.\d+)?)\s*[bBmM]/;
+    const candidates = models
+      .filter((model) => {
+        const hasNameSize = sizeRegex.test(String(model.id || ''));
+        const hasMetadataParams =
+          Number(model?.safetensors?.total) > 0 ||
+          Number(model?.cardData?.model_params) > 0 ||
+          Number(model?.cardData?.parameters) > 0 ||
+          Number(model?.transformersInfo?.num_parameters) > 0;
+        return !hasNameSize && !hasMetadataParams;
+      });
+
+    const hydrationEntries = await Promise.all(
+      candidates.map(async (model) => {
+        const [metadata, config] = await Promise.all([
+          fetchModelMetadata(model.id).catch(() => null),
+          fetchModelConfig(model.id),
+        ]);
+        return [model.id, { metadata, config }];
+      })
+    );
+    const hydrationMap = new Map(hydrationEntries);
+
+    return models.map((model) =>
+      hydrationMap.has(model.id)
+        ? {
+            ...model,
+            ...(hydrationMap.get(model.id)?.metadata || {}),
+            rawConfig: hydrationMap.get(model.id)?.config || model.rawConfig,
+          }
+        : model
+    );
   } catch (error) {
     console.error('Error fetching trending models:', error);
     return [];
