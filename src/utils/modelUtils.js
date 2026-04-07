@@ -103,7 +103,25 @@ export const enrichModelData = (model) => {
 
   let pipelineText = 'Other';
   const rawTag = model.pipeline_tag || '';
-  if (rawTag === 'text-generation' || model.id.includes('Llama') || model.id.includes('Mistral')) pipelineText = 'Text Generation';
+  const codeHaystack = [
+    model.id,
+    rawTag,
+    ...(model.tags || []),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  const looksLikeCodeModel =
+    codeHaystack.includes('code') ||
+    codeHaystack.includes('coder') ||
+    codeHaystack.includes('program') ||
+    codeHaystack.includes('devstral') ||
+    codeHaystack.includes('starcoder') ||
+    codeHaystack.includes('deepseek-coder') ||
+    codeHaystack.includes('codestral');
+
+  if (looksLikeCodeModel) pipelineText = 'Code Generation';
+  else if (rawTag === 'text-generation' || model.id.includes('Llama') || model.id.includes('Mistral')) pipelineText = 'Text Generation';
   else if (rawTag === 'text-to-image' || model.id.includes('diffusion')) pipelineText = 'Text-to-Image';
   else if (rawTag === 'image-to-text') pipelineText = 'Image-to-Text';
   else if (rawTag === 'text-to-speech') pipelineText = 'Text-to-Speech';
@@ -111,7 +129,6 @@ export const enrichModelData = (model) => {
   else if (rawTag === 'image-classification') pipelineText = 'Image Classification';
   else if (rawTag === 'object-detection') pipelineText = 'Object Detection';
   else if (rawTag === 'conversational') pipelineText = 'Conversational';
-  else if (model.id.includes('Phi')) pipelineText = 'Code Generation';
   else if (rawTag) {
     pipelineText = rawTag.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   }
