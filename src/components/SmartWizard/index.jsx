@@ -52,34 +52,37 @@ export default function SmartWizard() {
     wizard.direction === "forward" ? "wizard-enter-forward" : "wizard-enter-backward";
 
   return (
-    <div className="min-h-[calc(100vh-78px)] bg-gradient-to-b from-slate-100 to-white">
-      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-        <WizardHeader
-          currentStep={wizard.state.current_step}
-          completedSteps={wizard.state.completed_steps}
-          goToStep={wizard.goToStep}
-        />
+    <div className="min-h-[calc(100vh-78px)] pb-16">
+      {/* Premium Hero Header */}
+      <WizardHeader
+        currentStep={wizard.state.current_step}
+        completedSteps={wizard.state.completed_steps}
+        goToStep={wizard.goToStep}
+      />
 
-        <div className="mx-auto mt-10 max-w-3xl">
-          <div
-            key={wizard.state.current_step}
-            className={`min-h-[400px] rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8 ${transitionClass}`}
-          >
-            {stepContent}
-          </div>
-
-          <WizardNavButtons
-            currentStep={wizard.state.current_step}
-            canProceed={wizard.canProceed()}
-            validationMessage={wizard.getValidationMessage()}
-            onBack={wizard.prevStep}
-            onNext={wizard.handleAdvance}
-            onStartOver={wizard.startOver}
-            onExport={wizard.exportResults}
-            loading={wizard.state.results.loading}
-          />
+      {/* Main Content */}
+      <div className="mx-auto w-full max-w-[820px] px-4 sm:px-6 lg:px-8" style={{ marginTop: "-24px" }}>
+        <div
+          key={wizard.state.current_step}
+          className={`wiz-glass min-h-[420px] p-6 sm:p-8 ${transitionClass}`}
+        >
+          {stepContent}
         </div>
+
+        <WizardNavButtons
+          currentStep={wizard.state.current_step}
+          canProceed={wizard.canProceed()}
+          validationMessage={wizard.getValidationMessage()}
+          onBack={wizard.prevStep}
+          onNext={wizard.handleAdvance}
+          onStartOver={wizard.startOver}
+          onExport={wizard.exportResults}
+          loading={wizard.state.results.loading}
+        />
       </div>
+
+      {/* Bottom spacer */}
+      <div className="h-16" />
     </div>
   );
 }

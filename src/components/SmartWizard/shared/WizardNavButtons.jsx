@@ -1,4 +1,6 @@
-import { ArrowLeft, ArrowRight, Download } from "lucide-react";
+"use client";
+
+import { ArrowLeft, ArrowRight, Download, RotateCcw, Sparkles } from "lucide-react";
 
 export default function WizardNavButtons({
   currentStep,
@@ -14,24 +16,24 @@ export default function WizardNavButtons({
   const isFinalAction = currentStep === 3;
 
   return (
-    <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white/90 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-slate-200/60 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-3">
         {isResults ? (
           <button
             type="button"
             onClick={onStartOver}
-            className="inline-flex items-center rounded-xl border border-gray-300 px-6 py-3 text-gray-600 transition-colors hover:bg-gray-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <RotateCcw className="h-4 w-4" />
             Start Over
           </button>
         ) : currentStep > 1 ? (
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center rounded-xl border border-gray-300 px-6 py-3 text-gray-600 transition-colors hover:bg-gray-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" />
             Back
           </button>
         ) : (
@@ -39,8 +41,21 @@ export default function WizardNavButtons({
         )}
       </div>
 
-      <div className="text-center text-sm font-medium text-gray-500">
-        Step {currentStep} of 4
+      {/* Step counter */}
+      <div className="flex items-center gap-2 text-center">
+        <div className="flex gap-1">
+          {[1, 2, 3, 4].map((s) => (
+            <div
+              key={s}
+              className={`h-1.5 w-6 rounded-full transition-all ${
+                s <= currentStep ? "bg-blue-500" : "bg-slate-200"
+              }`}
+            />
+          ))}
+        </div>
+        <span className="text-xs font-semibold text-slate-400">
+          Step {currentStep}/4
+        </span>
       </div>
 
       <div className="flex items-center justify-end gap-3">
@@ -49,10 +64,10 @@ export default function WizardNavButtons({
             type="button"
             onClick={onExport}
             disabled={loading}
-            className="inline-flex items-center rounded-xl border border-gray-300 px-6 py-3 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Download className="mr-2 h-4 w-4" />
-            Export Results
+            <Download className="h-4 w-4" />
+            Export
           </button>
         ) : (
           <button
@@ -60,14 +75,23 @@ export default function WizardNavButtons({
             onClick={onNext}
             disabled={!canProceed || loading}
             title={!canProceed ? validationMessage : ""}
-            className={`rounded-xl px-6 py-3 font-semibold text-white transition-colors ${
-              isFinalAction
-                ? "bg-emerald-600 hover:bg-emerald-700"
-                : "bg-gray-900 hover:bg-gray-800"
-            } inline-flex items-center disabled:cursor-not-allowed disabled:bg-gray-300`}
+            className={`inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-sm font-bold text-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(37,99,235,0.25),0_0_0_4px_rgba(37,99,235,0.15)] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none ${
+              isFinalAction 
+                ? "bg-gradient-to-br from-emerald-600 to-emerald-700 hover:shadow-[0_8px_24px_rgba(5,150,105,0.25),0_0_0_4px_rgba(5,150,105,0.15)]" 
+                : "bg-gradient-to-br from-blue-600 to-blue-700"
+            }`}
           >
-            {isFinalAction ? "Find Models" : "Continue"}
-            <ArrowRight className="ml-2 h-4 w-4" />
+            {isFinalAction ? (
+              <>
+                <Sparkles className="h-4 w-4" />
+                Find Models
+              </>
+            ) : (
+              <>
+                Continue
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
           </button>
         )}
       </div>

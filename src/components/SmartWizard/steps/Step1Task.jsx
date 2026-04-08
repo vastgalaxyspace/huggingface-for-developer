@@ -128,14 +128,16 @@ export default function Step1Task({ state, updateTask }) {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <section>
-        <p className="mb-4 text-sm font-bold uppercase tracking-widest text-gray-400">
-          What Are You Building?
+        <p className="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-blue-500">
+          Step 1
         </p>
-        <p className="mb-6 text-sm text-gray-500">
-          Start with a task family, then add a bit of context so the recommender can narrow the field.
+        <h2 className="mb-2 text-xl font-black text-slate-900">What Are You Building?</h2>
+        <p className="mb-6 text-sm text-slate-500">
+          Start with a task family, then add context so the recommender can narrow the field.
         </p>
 
-        <div className="mb-6 flex flex-wrap gap-3">
+        {/* Category tabs */}
+        <div className="mb-6 flex flex-wrap gap-2">
           {TASK_CATEGORIES.map((category) => {
             const active = category.id === selectedCategory;
 
@@ -152,8 +154,10 @@ export default function Step1Task({ state, updateTask }) {
                     task_specific: {},
                   })
                 }
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-                  active ? "bg-gray-900 text-white" : "bg-white text-gray-600 ring-1 ring-gray-200 hover:ring-gray-400"
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                  active
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-200"
+                    : "bg-white text-slate-600 ring-1 ring-slate-200 hover:ring-blue-300 hover:text-blue-600"
                 }`}
               >
                 {category.label}
@@ -170,11 +174,11 @@ export default function Step1Task({ state, updateTask }) {
       </section>
 
       {selectedTask ? (
-        <section className="space-y-6 border-t border-gray-200 pt-8 transition-all duration-300">
+        <section className="space-y-6 border-t border-slate-200/60 pt-8 transition-all duration-300">
           {isTextFlow ? (
             <>
               <div>
-                <p className="mb-4 text-sm font-bold uppercase tracking-widest text-gray-400">
+                <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
                   Use Case
                 </p>
                 <SelectionGrid
@@ -187,7 +191,7 @@ export default function Step1Task({ state, updateTask }) {
               </div>
 
               <div>
-                <p className="mb-4 text-sm font-bold uppercase tracking-widest text-gray-400">
+                <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
                   Language
                 </p>
                 <SelectionGrid
@@ -206,13 +210,13 @@ export default function Step1Task({ state, updateTask }) {
                     value={state.task.task_specific.specific_language || ""}
                     onChange={(event) => handleSingleSpecific("specific_language", event.target.value)}
                     placeholder="Enter language name"
-                    className="mt-3 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-700 outline-none focus:border-gray-400"
+                    className="mt-3 w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-700 outline-none transition-colors focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   />
                 ) : null}
               </div>
 
               <div>
-                <p className="mb-4 text-sm font-bold uppercase tracking-widest text-gray-400">
+                <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
                   Context Length Needed
                 </p>
                 <SelectionGrid
@@ -233,7 +237,7 @@ export default function Step1Task({ state, updateTask }) {
           {state.task.primary_task === "text-to-image" ? (
             <>
               <div>
-                <p className="mb-4 text-sm font-bold uppercase tracking-widest text-gray-400">
+                <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
                   Style
                 </p>
                 <SelectionGrid
@@ -249,7 +253,7 @@ export default function Step1Task({ state, updateTask }) {
                 />
               </div>
               <div>
-                <p className="mb-4 text-sm font-bold uppercase tracking-widest text-gray-400">
+                <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
                   Base Resolution
                 </p>
                 <SelectionGrid
@@ -269,7 +273,7 @@ export default function Step1Task({ state, updateTask }) {
           {state.task.primary_task === "automatic-speech-recognition" ? (
             <>
               <div>
-                <p className="mb-4 text-sm font-bold uppercase tracking-widest text-gray-400">
+                <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
                   Language Count
                 </p>
                 <SelectionGrid
@@ -283,7 +287,7 @@ export default function Step1Task({ state, updateTask }) {
                 />
               </div>
               <div>
-                <p className="mb-4 text-sm font-bold uppercase tracking-widest text-gray-400">
+                <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
                   Audio Quality
                 </p>
                 <SelectionGrid
@@ -304,7 +308,7 @@ export default function Step1Task({ state, updateTask }) {
           {selectedCategory === "code" ? (
             <>
               <div>
-                <p className="mb-4 text-sm font-bold uppercase tracking-widest text-gray-400">
+                <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
                   Language
                 </p>
                 <SelectionGrid
@@ -320,7 +324,7 @@ export default function Step1Task({ state, updateTask }) {
                 />
               </div>
               <div>
-                <p className="mb-4 text-sm font-bold uppercase tracking-widest text-gray-400">
+                <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
                   Task Detail
                 </p>
                 <SelectionGrid

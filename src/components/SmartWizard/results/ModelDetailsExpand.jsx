@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronDown, ChevronUp, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Cpu, Hash, Layers, Calendar, CheckCircle2, AlertCircle } from "lucide-react";
 
 function formatDate(dateString) {
-  if (!dateString) return "Unknown";
+  if (!dateString) return "Unknown Record";
   return new Intl.DateTimeFormat("en", {
     month: "short",
     day: "numeric",
@@ -17,97 +17,108 @@ function formatGb(value) {
   return `${value.toFixed(1)} GB`;
 }
 
+function GridBox({ icon: Icon, label, value }) {
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-slate-200/60 bg-white/50 p-4">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0">
+        <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</div>
+        <div className="mt-1 truncate text-sm font-semibold text-slate-700">{value}</div>
+      </div>
+    </div>
+  );
+}
+
 export default function ModelDetailsExpand({ model, hardwareLabel }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border-t border-gray-200 pt-4">
+    <div className="mt-4">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex items-center text-sm font-semibold text-gray-600 transition-colors hover:text-gray-900"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-slate-100 hover:text-slate-900"
       >
-        View Details
-        {open ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />}
+        {open ? "Hide Technical Details" : "View Technical Details"}
+        {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
       </button>
 
       {open ? (
-        <div className="mt-4 grid gap-5 md:grid-cols-2">
-          <div className="space-y-2 text-sm text-gray-600">
-            <div>
-              <div className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                Full Model ID
-              </div>
-              <div className="mt-1 break-all rounded-xl bg-gray-50 px-3 py-2 text-gray-800">
-                {model.modelId}
-              </div>
+        <div className="mt-4 grid gap-6 md:grid-cols-2 animate-in slide-in-from-top-2 fade-in duration-300">
+          
+          {/* Left Column: Specs */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 border-b border-slate-200 pb-2">
+              Model Specifications
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <GridBox icon={Hash} label="Context Window" value={model.context_length ? `${model.context_length.toLocaleString()} tokens` : "Unknown"} />
+              <GridBox icon={Layers} label="Architecture" value={model.config?.architectures?.[0] || "Unknown"} />
+              <GridBox icon={Cpu} label="Parameters" value={model.params_b ? `${model.params_b.toFixed(1)}B` : "Unknown"} />
+              <GridBox icon={Calendar} label="Last Updated" value={formatDate(model.lastModified)} />
             </div>
-            <div>
-              <div className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                Architecture
-              </div>
-              <div className="mt-1">{model.config?.architectures?.join(", ") || "Unknown"}</div>
-            </div>
-            <div>
-              <div className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                Context Length
-              </div>
-              <div className="mt-1">
-                {model.config?.max_position_embeddings?.toLocaleString() || "Unknown"}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                Last Updated
-              </div>
-              <div className="mt-1">{formatDate(model.lastModified)}</div>
+            
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">Quick Deploy Snippet</div>
+              <code className="block rounded-lg bg-slate-900 p-3 text-xs font-medium text-emerald-400 overflow-x-auto whitespace-pre">
+                {`from transformers import AutoModelForCausalLM\nmodel = AutoModelForCausalLM.from_pretrained(\n  "${model.modelId}"\n)`}
+              </code>
             </div>
           </div>
 
-          <div className="space-y-2 text-sm text-gray-600">
-            <div className="text-xs font-bold uppercase tracking-widest text-gray-400">
-              VRAM Breakdown
+          {/* Right Column: VRAM Matrix */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 border-b border-slate-200 pb-2">
+              VRAM Matrix
+            </h4>
+            
+            <div className="rounded-2xl border border-slate-200 p-1 overflow-hidden">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="bg-slate-50">
+                    <th className="px-4 py-2 font-semibold text-slate-600 border-b border-slate-200">Precision</th>
+                    <th className="px-4 py-2 font-semibold text-slate-600 border-b border-slate-200">Inference</th>
+                    <th className="px-4 py-2 font-semibold text-slate-600 border-b border-slate-200">Fine-tuning</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  <tr>
+                    <td className="px-4 py-3 font-medium text-slate-700">FP16 / BF16</td>
+                    <td className="px-4 py-3 font-semibold text-slate-900">{formatGb(model.vram_needed)}</td>
+                    <td className="px-4 py-3 text-slate-500">{formatGb(model.vram_needed ? model.vram_needed * 2.5 : null)}</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-3 font-medium text-slate-700">INT8 (8-bit)</td>
+                    <td className="px-4 py-3 font-semibold text-slate-900">{formatGb(model.vram_needed ? model.vram_needed / 2 : null)}</td>
+                    <td className="px-4 py-3 text-slate-500">{formatGb(model.vram_needed ? model.vram_needed * 1.5 : null)} <span className="text-xs ml-1">(LoRA)</span></td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-3 font-medium text-slate-700">INT4 (GGUF/AWQ)</td>
+                    <td className="px-4 py-3 font-semibold text-slate-900">{formatGb(model.vram_needed ? model.vram_needed / 4 : null)}</td>
+                    <td className="px-4 py-3 text-slate-400">N/A</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <div className="rounded-xl bg-gray-50 p-4">
-              <div>Inference fp16: {formatGb(model.vram_needed)}</div>
-              <div>Inference int8: {formatGb(model.vram_needed ? model.vram_needed / 2 : null)}</div>
-              <div>Inference int4: {formatGb(model.vram_needed ? model.vram_needed / 4 : null)}</div>
-              <div>Fine-tuning (LoRA): {formatGb(model.vram_needed ? model.vram_needed * 1.35 : null)}</div>
-              <div className="mt-3 inline-flex items-center font-semibold text-gray-800">
-                Fits on your {hardwareLabel}:
-                {model.fits_vram ? (
-                  <Check className="ml-2 h-4 w-4 text-emerald-600" />
-                ) : (
-                  <X className="ml-2 h-4 w-4 text-red-500" />
-                )}
+
+            <div className={`mt-4 flex items-center gap-3 rounded-xl border p-4 ${model.fits_vram ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50"}`}>
+              {model.fits_vram ? (
+                <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+              ) : (
+                <AlertCircle className="h-6 w-6 text-rose-500" />
+              )}
+              <div>
+                <div className="text-sm font-bold text-slate-900">
+                  {model.fits_vram ? "Fits your hardware profile" : "Exceeds VRAM budget"}
+                </div>
+                <div className="text-xs font-medium text-slate-600">
+                  Based on target hardware: {hardwareLabel}
+                </div>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2 pt-2">
-              <a
-                href={`https://huggingface.co/${model.modelId}`}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Open Model Page
-              </a>
-              <a
-                href={`https://huggingface.co/${model.modelId}#model-card`}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                View Model Card
-              </a>
-              <a
-                href={`https://huggingface.co/spaces?search=${encodeURIComponent(model.modelId)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Try in Spaces
-              </a>
-            </div>
+
           </div>
         </div>
       ) : null}
