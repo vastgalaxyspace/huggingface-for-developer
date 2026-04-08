@@ -1,5 +1,6 @@
 "use client";
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { Bell, Menu, X } from 'lucide-react';
@@ -27,9 +28,23 @@ const Header = () => {
     <header className="sticky top-0 z-[200] border-b border-[var(--border-soft)] bg-white">
       <div className="shell-container flex min-h-[72px] items-center justify-between gap-4 py-3 md:min-h-[78px]">
         <div className="flex min-w-0 items-center gap-4 lg:gap-12">
-          <Link href="/" className="flex min-w-0 items-center">
-            <span className="text-[1rem] font-extrabold leading-tight tracking-tight text-[var(--text-strong)] sm:text-[1.1rem] md:text-[1.15rem]">
-              InnoAI <span className="hidden sm:inline">AI Explorer</span>
+          <Link href="/" className="flex min-w-0 items-center gap-3">
+            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center sm:h-12 sm:w-12">
+              <Image
+                src="/images/innoai logo main.png"
+                alt="InnoAI logo"
+                width={48}
+                height={48}
+                unoptimized
+                className="h-full w-full object-contain object-center"
+                priority
+              />
+            </div>
+            <span className="min-w-0 text-[0.98rem] font-extrabold leading-tight tracking-tight text-[var(--text-strong)] sm:text-[1.08rem] md:text-[1.15rem]">
+              <span className="block truncate">InnoAI</span>
+              <span className="block text-[0.78rem] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)] sm:text-[0.8rem]">
+                AI Explorer
+              </span>
             </span>
           </Link>
 

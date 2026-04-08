@@ -50,9 +50,9 @@ export const metadata = {
     address: false,
   },
   icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
+    icon: '/images/innoai logo main.png',
+    shortcut: '/images/innoai logo main.png',
+    apple: '/images/innoai logo main.png',
   },
   openGraph: {
     type: 'website',
@@ -104,7 +104,7 @@ const organizationSchema = {
   '@type': 'Organization',
   name: SITE_NAME,
   url: SITE_URL,
-  logo: absoluteUrl('/favicon.svg'),
+  logo: absoluteUrl('/images/innoai logo main.png'),
 };
 
 export default function RootLayout({ children }) {
