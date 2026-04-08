@@ -1,16 +1,25 @@
-import { Shield, CheckCircle, AlertTriangle, Info } from 'lucide-react';
-
-const stripEmoji = (str) => {
-  if (!str) return '';
-  return str.replace(/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]|[\u{2700}-\u{27BF}]|[\u{FE00}-\u{FEFF}]|[\u{1F900}-\u{1F9FF}]|[✅⚠️❌✓✗☑☒⚡🔴🟢🟡🟠💡🤗🦙💻🚀🎮💼☁️🖥️🎯📦💾🌐🏷️\[\]]/gu, '').replace(/^(PASS|WARN|FAIL)\s*/i, '').trim();
-};
+import { Shield, CheckCircle, AlertTriangle, Info, HelpCircle } from 'lucide-react';
 
 const getStatusIcon = (text) => {
   if (!text) return null;
-  if (text.includes('PASS') || text.includes('Commercial use') || text.startsWith('[PASS]')) return <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />;
-  if (text.includes('FAIL') || text.includes('No ') || text.includes('Missing') || text.startsWith('[FAIL]')) return <AlertTriangle className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />;
-  if (text.includes('WARN') || text.startsWith('[WARN]')) return <Info className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />;
+  const t = text.toUpperCase();
+  if (t.includes('[PASS]') || t.includes('PASS')) return <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />;
+  if (t.includes('[FAIL]') || t.includes('FAIL') || t.includes('MISSING')) return <AlertTriangle className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />;
+  if (t.includes('[WARN]') || t.includes('WARN')) return <Info className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />;
   return <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />;
+};
+
+const cleanText = (str) => {
+  if (!str) return '';
+  return str.replace(/^\[(PASS|WARN|FAIL)\]\s*/i, '').trim();
+};
+
+const CATEGORY_DESCRIPTIONS = {
+  License: 'Evaluates commercial usability, modification rights, and distribution permissions.',
+  Community: 'Measures adoption level through downloads, likes, and maintainer activity.',
+  Documentation: 'Checks for model card, usage examples, benchmarks, and limitation disclosures.',
+  Compatibility: 'Assesses support across popular frameworks like vLLM, Transformers, and Ollama.',
+  Efficiency: 'Reviews GQA/MQA optimization, quantization availability, and GPU requirements.',
 };
 
 const ScoreBar = ({ label, score, maxScore, details, issues }) => {
@@ -19,10 +28,13 @@ const ScoreBar = ({ label, score, maxScore, details, issues }) => {
 
   return (
     <div className="rounded-xl border border-[var(--border-soft)] bg-white p-4 transition-shadow hover:shadow-sm">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-1">
         <span className="text-[13px] font-bold text-[var(--text-strong)]">{label}</span>
         <span className="text-[13px] font-bold text-[var(--text-strong)]">{score}/{maxScore}</span>
       </div>
+      {CATEGORY_DESCRIPTIONS[label] && (
+        <p className="text-[10px] text-[var(--text-faint)] mb-2 leading-relaxed">{CATEGORY_DESCRIPTIONS[label]}</p>
+      )}
       <div className="h-2 w-full overflow-hidden rounded-full bg-[rgba(0,0,0,0.06)] mb-3">
         <div className={`h-full rounded-full transition-all duration-700 ${barColor}`} style={{ width: `${pct}%` }} />
       </div>
@@ -31,7 +43,7 @@ const ScoreBar = ({ label, score, maxScore, details, issues }) => {
           {details.slice(0, 3).map((d, i) => (
             <div key={i} className="flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
               {getStatusIcon(d)}
-              <span>{stripEmoji(d)}</span>
+              <span>{cleanText(d)}</span>
             </div>
           ))}
         </div>
@@ -69,12 +81,14 @@ const DeploymentScoreSection = ({ deploymentScore }) => {
   };
 
   return (
-    <section id="section-score" className="mb-14">
+    <section id="section-score" className="mb-10 fade-in-section scroll-mt-28">
       <div className="flex items-center gap-2 mb-1">
         <Shield className="h-5 w-5 text-[var(--accent)]" />
-        <h2 className="text-[1.6rem] font-black tracking-tight text-[var(--text-strong)]">Deployment Readiness</h2>
+        <h2 className="text-[1.5rem] font-black tracking-tight text-[var(--text-strong)]">Deployment Readiness Assessment</h2>
       </div>
-      <p className="mb-5 text-[13px] text-[var(--text-faint)]">Multi-factor assessment for production deployment</p>
+      <p className="mb-5 text-[13px] text-[var(--text-faint)]">
+        Multi-factor assessment evaluating this model across five production-critical dimensions.
+      </p>
 
       <div className={`mb-6 flex items-center justify-between rounded-2xl border-2 p-5 ${ratingColors[rating.color] || ratingColors.yellow}`}>
         <div className="flex items-center gap-4">
@@ -85,7 +99,7 @@ const DeploymentScoreSection = ({ deploymentScore }) => {
               <p className="text-[15px] font-bold">{rating.label}</p>
             </div>
             <p className="text-[12px] opacity-80">
-              {readyForProduction ? 'Ready for production deployment' : 'Review issues before deploying'}
+              {readyForProduction ? 'This model meets criteria for production deployment' : 'Review the categories below before deploying'}
             </p>
           </div>
         </div>
@@ -102,6 +116,7 @@ const DeploymentScoreSection = ({ deploymentScore }) => {
 
       {recommendations && recommendations.length > 0 && (
         <div className="space-y-2">
+          <h4 className="text-[12px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)] mb-3">Recommendations</h4>
           {recommendations.map((rec, i) => {
             const Icon = rec.type === 'success' ? CheckCircle : rec.type === 'warning' ? AlertTriangle : Info;
             const color = rec.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : rec.type === 'warning' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-blue-200 bg-blue-50 text-blue-700';

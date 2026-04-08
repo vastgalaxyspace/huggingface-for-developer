@@ -14,7 +14,7 @@ const LICENSE_DATABASE = {
     status: 'permissive',
     color: 'green',
     icon: 'CheckCircle',
-    summary: '✓ Full commercial use allowed',
+    summary: 'Full commercial use allowed',
     details: 'Can use commercially, modify, distribute, and sublicense. Includes patent protection.',
     warnings: []
   },
@@ -28,7 +28,7 @@ const LICENSE_DATABASE = {
     status: 'permissive',
     color: 'green',
     icon: 'CheckCircle',
-    summary: '✓ Full commercial use allowed',
+    summary: 'Full commercial use allowed',
     details: 'Very permissive. Can use commercially and modify freely. Must include license notice.',
     warnings: []
   },
@@ -42,7 +42,7 @@ const LICENSE_DATABASE = {
     status: 'restricted',
     color: 'yellow',
     icon: 'AlertCircle',
-    summary: '⚠ Commercial use with conditions',
+    summary: 'Commercial use with conditions',
     details: 'Free for commercial use if you have <700M monthly active users. Above that, need Meta approval.',
     warnings: [
       'Must have <700M MAU for free commercial use',
@@ -60,7 +60,7 @@ const LICENSE_DATABASE = {
     status: 'restricted',
     color: 'yellow',
     icon: 'AlertCircle',
-    summary: '⚠ Commercial use with conditions',
+    summary: 'Commercial use with conditions',
     details: 'Similar to Llama 2. Free commercial use under 700M MAU threshold.',
     warnings: [
       'Must have <700M MAU for free commercial use',
@@ -78,7 +78,7 @@ const LICENSE_DATABASE = {
     status: 'non-commercial',
     color: 'red',
     icon: 'XCircle',
-    summary: '✗ Non-commercial use only',
+    summary: 'Non-commercial use only',
     details: 'Cannot use for commercial purposes. Fine for research and personal projects.',
     warnings: [
       'NO commercial use allowed',
@@ -96,7 +96,7 @@ const LICENSE_DATABASE = {
     status: 'responsible',
     color: 'blue',
     icon: 'Shield',
-    summary: '✓ Commercial use with responsible AI clauses',
+    summary: 'Commercial use with responsible AI clauses',
     details: 'Permissive but includes responsible AI requirements. Cannot use for harmful purposes.',
     warnings: [
       'Must follow use restrictions (no harmful content)',
@@ -114,7 +114,7 @@ const LICENSE_DATABASE = {
     status: 'responsible',
     color: 'blue',
     icon: 'Shield',
-    summary: '✓ Commercial use with use-based restrictions',
+    summary: 'Commercial use with use-based restrictions',
     details: 'Open license with responsible AI clauses. Prohibits harmful applications.',
     warnings: [
       'Cannot use for discrimination or harm',
@@ -132,7 +132,7 @@ const LICENSE_DATABASE = {
     status: 'unknown',
     color: 'gray',
     icon: 'AlertCircle',
-    summary: '? Review license carefully',
+    summary: 'Review license carefully',
     details: 'Custom license detected. You must review the full license text before deployment.',
     warnings: [
       'Unknown license terms',
@@ -193,7 +193,6 @@ export const canUseCommercially = (licenseId) => {
 /**
  * Get deployment recommendation based on license
  * @param {string} licenseId - License identifier
- * @param {string} useCase - Intended use case
  * @returns {object} Deployment recommendation
  */
 export const getDeploymentRecommendation = (licenseId) => {
@@ -202,35 +201,35 @@ export const getDeploymentRecommendation = (licenseId) => {
   const recommendations = {
     permissive: {
       status: 'ready',
-      message: '✅ Ready for production deployment',
+      message: 'Ready for production deployment',
       actions: ['Deploy freely', 'Include license notice in distribution'],
       risks: 'Minimal legal risk'
     },
     
     restricted: {
       status: 'review',
-      message: '⚠️ Review license terms before deploying',
+      message: 'Review license terms before deploying',
       actions: ['Check user count limits', 'Review use restrictions', 'Document compliance'],
       risks: 'Conditional approval required for large scale'
     },
     
     'non-commercial': {
       status: 'blocked',
-      message: '❌ Cannot deploy commercially',
+      message: 'Cannot deploy commercially',
       actions: ['Use for research/personal only', 'Find alternative model', 'Contact license holder'],
       risks: 'Legal violation if used commercially'
     },
     
     responsible: {
       status: 'caution',
-      message: '✓ Can deploy with responsible AI compliance',
+      message: 'Can deploy with responsible AI compliance',
       actions: ['Review use restrictions', 'Implement content filtering', 'Document compliance'],
       risks: 'Liability if used for harmful purposes'
     },
     
     unknown: {
       status: 'uncertain',
-      message: '? Legal review required',
+      message: 'Legal review required',
       actions: ['Read full license', 'Consult legal team', 'Contact model author'],
       risks: 'Unknown legal implications'
     }

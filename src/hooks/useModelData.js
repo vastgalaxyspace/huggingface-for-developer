@@ -37,8 +37,11 @@ export const useModelData = (modelId) => {
       // Enrich with calculations
       // Pass safetensors.total from HuggingFace API for accurate parameter count
       const safetensorsTotal = rawData.metadata?.safetensors?.total || null;
-      const vramEstimates = parsedData.config 
-        ? calculateVRAM(parsedData.config, { safetensorsTotal }) 
+
+      // Use parsed config if available, otherwise try to extract from metadata
+      const configForVram = parsedData.config || extractConfigFromMetadata(rawData.metadata);
+      const vramEstimates = configForVram
+        ? calculateVRAM(configForVram, { safetensorsTotal }) 
         : null;
       
       const licenseInfo = getLicenseInfo(
@@ -49,6 +52,8 @@ export const useModelData = (modelId) => {
       // Combine everything
       const enrichedData = {
         ...parsedData,
+        // If config was null from parser but we got some from metadata, use it
+        config: parsedData.config || extractConfigFromMetadata(rawData.metadata),
         vramEstimates,
         licenseInfo,
         rawData // Keep raw data for debugging
@@ -75,6 +80,31 @@ export const useModelData = (modelId) => {
     error,
     refetch: fetchData
   };
+};
+
+/**
+ * Extract config-like fields from HuggingFace metadata as a fallback
+ * The HF API response often includes config/transformersInfo even for gated models
+ */
+const extractConfigFromMetadata = (metadata) => {
+  if (!metadata) return null;
+  
+  // HF API sometimes includes a config object directly
+  const apiConfig = metadata.config;
+  if (apiConfig && typeof apiConfig === 'object' && Object.keys(apiConfig).length > 2) {
+    return apiConfig;
+  }
+
+  // Try to build from transformersInfo
+  const ti = metadata.transformersInfo;
+  if (ti) {
+    return {
+      model_type: ti.auto_model || ti.pipeline_tag || metadata.pipeline_tag || 'unknown',
+      architectures: ti.auto_model ? [ti.auto_model] : [],
+    };
+  }
+
+  return null;
 };
 
 /**

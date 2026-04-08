@@ -45,18 +45,18 @@ const calculateLicenseScore = (modelData) => {
   // Commercial use allowed (10 points)
   if (license.commercial === true) {
     score += 10;
-    details.push('✅ Commercial use allowed');
+    details.push('[PASS] Commercial use allowed');
   } else if (license.commercial === 'conditional') {
     score += 5;
-    details.push('⚠️ Conditional commercial license');
+    details.push('[WARN] Conditional commercial license');
     issues.push('Review license restrictions carefully');
   } else if (license.commercial === false) {
     score += 0;
-    details.push('❌ Non-commercial only');
+    details.push('[FAIL] Non-commercial only');
     issues.push('Cannot use in production without license change');
   } else {
     score += 3;
-    details.push('⚠️ License unclear');
+    details.push('[WARN] License unclear');
     issues.push('Verify commercial use permissions');
   }
 
@@ -64,16 +64,16 @@ const calculateLicenseScore = (modelData) => {
   const clearLicenses = ['apache-2.0', 'mit', 'bsd'];
   if (clearLicenses.some(l => license.name?.toLowerCase().includes(l))) {
     score += 5;
-    details.push('✅ Clear, permissive license');
+    details.push('[PASS] Clear, permissive license');
   } else {
     score += 2;
-    details.push('⚠️ Custom license terms');
+    details.push('[WARN] Custom license terms');
   }
 
   // Modification allowed (3 points)
   if (license.modification !== false) {
     score += 3;
-    details.push('✅ Can modify and fine-tune');
+    details.push('[PASS] Can modify and fine-tune');
   } else {
     issues.push('Modifications restricted');
   }
@@ -81,7 +81,7 @@ const calculateLicenseScore = (modelData) => {
   // Distribution allowed (2 points)
   if (license.distribution !== false) {
     score += 2;
-    details.push('✅ Can distribute');
+    details.push('[PASS] Can distribute');
   } else {
     issues.push('Distribution restricted');
   }
@@ -103,33 +103,33 @@ const calculateCommunityScore = (modelData) => {
   // Download count (8 points)
   if (downloads >= 5000000) {
     score += 8;
-    details.push(`✅ Very popular (${formatNumber(downloads)} downloads)`);
+    details.push(`[PASS] Very popular (${formatNumber(downloads)} downloads)`);
   } else if (downloads >= 1000000) {
     score += 6;
-    details.push(`✅ Popular (${formatNumber(downloads)} downloads)`);
+    details.push(`[PASS] Popular (${formatNumber(downloads)} downloads)`);
   } else if (downloads >= 100000) {
     score += 4;
-    details.push(`⚠️ Moderate adoption (${formatNumber(downloads)} downloads)`);
+    details.push(`[WARN] Moderate adoption (${formatNumber(downloads)} downloads)`);
   } else if (downloads >= 10000) {
     score += 2;
-    details.push(`⚠️ Limited adoption (${formatNumber(downloads)} downloads)`);
+    details.push(`[WARN] Limited adoption (${formatNumber(downloads)} downloads)`);
     issues.push('Lower community usage - less battle-tested');
   } else {
     score += 0;
-    details.push(`❌ Very low adoption (${formatNumber(downloads)} downloads)`);
+    details.push(`[FAIL] Very low adoption (${formatNumber(downloads)} downloads)`);
     issues.push('Minimal real-world usage');
   }
 
   // Likes/Stars (5 points)
   if (likes >= 1000) {
     score += 5;
-    details.push(`✅ Highly rated (${formatNumber(likes)} likes)`);
+    details.push(`[PASS] Highly rated (${formatNumber(likes)} likes)`);
   } else if (likes >= 500) {
     score += 4;
-    details.push(`✅ Well-liked (${formatNumber(likes)} likes)`);
+    details.push(`[PASS] Well-liked (${formatNumber(likes)} likes)`);
   } else if (likes >= 100) {
     score += 2;
-    details.push(`⚠️ Some community interest (${formatNumber(likes)} likes)`);
+    details.push(`[WARN] Some community interest (${formatNumber(likes)} likes)`);
   } else {
     score += 0;
     issues.push('Low community engagement');
@@ -144,29 +144,29 @@ const calculateCommunityScore = (modelData) => {
 
     if (daysSinceUpdate <= 90) {
       score += 5;
-      details.push('✅ Recently updated (< 3 months)');
+      details.push('[PASS] Recently updated (< 3 months)');
     } else if (daysSinceUpdate <= 180) {
       score += 3;
-      details.push('✅ Updated within 6 months');
+      details.push('[PASS] Updated within 6 months');
     } else if (daysSinceUpdate <= 365) {
       score += 1;
-      details.push('⚠️ Updated within a year');
+      details.push('[WARN] Updated within a year');
       issues.push('Consider checking for newer versions');
     } else {
       score += 0;
-      details.push('❌ Not updated in over a year');
+      details.push('[FAIL] Not updated in over a year');
       issues.push('May be abandoned or deprecated');
     }
   } else {
     score += 2;
-    details.push('⚠️ Update date unknown');
+    details.push('[WARN] Update date unknown');
   }
 
   // Author reputation (2 points)
   const trustedAuthors = ['meta', 'mistral', 'microsoft', 'google', 'huggingface'];
   if (trustedAuthors.some(a => modelData.author?.toLowerCase().includes(a))) {
     score += 2;
-    details.push('✅ Trusted organization');
+    details.push('[PASS] Trusted organization');
   }
 
   return { score, maxScore: 20, details, issues };
@@ -185,25 +185,25 @@ const calculateDocumentationScore = (modelData) => {
     const descLength = modelData.card.description.length;
     if (descLength >= 500) {
       score += 8;
-      details.push('✅ Comprehensive model card');
+      details.push('[PASS] Comprehensive model card');
     } else if (descLength >= 200) {
       score += 5;
-      details.push('✅ Basic model card present');
+      details.push('[PASS] Basic model card present');
     } else {
       score += 2;
-      details.push('⚠️ Minimal documentation');
+      details.push('[WARN] Minimal documentation');
       issues.push('Limited model description');
     }
   } else {
     score += 0;
-    details.push('❌ No model card');
+    details.push('[FAIL] No model card');
     issues.push('Missing critical documentation');
   }
 
   // Usage examples (5 points)
   if (modelData.card?.usage) {
     score += 5;
-    details.push('✅ Usage examples provided');
+    details.push('[PASS] Usage examples provided');
   } else {
     score += 0;
     issues.push('No usage examples found');
@@ -212,7 +212,7 @@ const calculateDocumentationScore = (modelData) => {
   // Benchmarks provided (4 points)
   if (modelData.card?.benchmarks && Object.keys(modelData.card.benchmarks).length > 0) {
     score += 4;
-    details.push(`✅ Benchmark results available (${Object.keys(modelData.card.benchmarks).length} metrics)`);
+    details.push(`[PASS] Benchmark results available (${Object.keys(modelData.card.benchmarks).length} metrics)`);
   } else {
     score += 0;
     issues.push('No benchmark data');
@@ -221,7 +221,7 @@ const calculateDocumentationScore = (modelData) => {
   // Limitations documented (3 points)
   if (modelData.card?.limitations) {
     score += 3;
-    details.push('✅ Limitations documented');
+    details.push('[PASS] Limitations documented');
   } else {
     score += 0;
     issues.push('Known limitations not documented');
@@ -241,10 +241,10 @@ const calculateCompatibilityScore = (modelData) => {
   // Config.json present (5 points)
   if (modelData.config) {
     score += 5;
-    details.push('✅ Configuration file available');
+    details.push('[PASS] Configuration file available');
   } else {
     score += 0;
-    details.push('❌ Missing config.json');
+    details.push('[FAIL] Missing config.json');
     issues.push('May have loading issues');
   }
 
@@ -253,10 +253,10 @@ const calculateCompatibilityScore = (modelData) => {
   const modelType = modelData.config?.model_type?.toLowerCase();
   if (commonArchitectures.includes(modelType)) {
     score += 5;
-    details.push(`✅ Standard architecture (${modelType})`);
+    details.push(`[PASS] Standard architecture (${modelType})`);
   } else {
     score += 2;
-    details.push('⚠️ Custom architecture');
+    details.push('[WARN] Custom architecture');
     issues.push('May have limited framework support');
   }
 
@@ -264,7 +264,7 @@ const calculateCompatibilityScore = (modelData) => {
   const vllmCompatible = ['llama', 'mistral', 'qwen', 'phi', 'gemma'].includes(modelType);
   if (vllmCompatible) {
     score += 5;
-    details.push('✅ vLLM compatible');
+    details.push('[PASS] vLLM compatible');
   } else {
     score += 1;
     issues.push('Limited vLLM support');
@@ -272,12 +272,12 @@ const calculateCompatibilityScore = (modelData) => {
 
   // Transformers compatible (3 points) - assume all are
   score += 3;
-  details.push('✅ Transformers compatible');
+  details.push('[PASS] Transformers compatible');
 
   // Tokenizer present (2 points)
   if (modelData.tokenizerConfig) {
     score += 2;
-    details.push('✅ Tokenizer configuration available');
+    details.push('[PASS] Tokenizer configuration available');
   } else {
     score += 1;
     issues.push('Tokenizer config may be missing');
@@ -302,27 +302,27 @@ const calculateEfficiencyScore = (modelData) => {
     const ratio = attentionHeads / kvHeads;
     if (ratio >= 4) {
       score += 8;
-      details.push(`✅ Excellent GQA optimization (${ratio}x)`);
+      details.push(`[PASS] Excellent GQA optimization (${ratio}x)`);
     } else if (ratio >= 2) {
       score += 6;
-      details.push(`✅ Good GQA optimization (${ratio}x)`);
+      details.push(`[PASS] Good GQA optimization (${ratio}x)`);
     } else {
       score += 4;
-      details.push(`✅ Moderate GQA (${ratio}x)`);
+      details.push(`[PASS] Moderate GQA (${ratio}x)`);
     }
   } else if (kvHeads === 1) {
     score += 8;
-    details.push('✅ MQA optimization (maximum efficiency)');
+    details.push('[PASS] MQA optimization (maximum efficiency)');
   } else {
     score += 0;
-    details.push('❌ No GQA/MQA optimization');
+    details.push('[FAIL] No GQA/MQA optimization');
     issues.push('Standard MHA - slower inference');
   }
 
   // Quantization available (5 points)
   if (modelData.quantization?.quantized) {
     score += 5;
-    details.push(`✅ Quantized version available (${modelData.quantization.method})`);
+    details.push(`[PASS] Quantized version available (${modelData.quantization.method})`);
   } else {
     score += 2;
     issues.push('No pre-quantized versions');
@@ -332,7 +332,7 @@ const calculateEfficiencyScore = (modelData) => {
   const hasFlashAttention = modelData.config?.use_cache !== false;
   if (hasFlashAttention) {
     score += 4;
-    details.push('✅ Flash Attention compatible');
+    details.push('[PASS] Flash Attention compatible');
   } else {
     score += 0;
     issues.push('May not support Flash Attention');
@@ -342,13 +342,13 @@ const calculateEfficiencyScore = (modelData) => {
   const vram = parseFloat(modelData.vramEstimates?.fp16 || 999);
   if (vram <= 24) {
     score += 3;
-    details.push('✅ Fits on common GPUs');
+    details.push('[PASS] Fits on common GPUs');
   } else if (vram <= 40) {
     score += 2;
-    details.push('⚠️ Requires high-end GPU');
+    details.push('[WARN] Requires high-end GPU');
   } else {
     score += 0;
-    details.push('❌ Requires multi-GPU setup');
+    details.push('[FAIL] Requires multi-GPU setup');
     issues.push('Very high hardware requirements');
   }
 
@@ -359,12 +359,12 @@ const calculateEfficiencyScore = (modelData) => {
  * Get rating based on score
  */
 const getRating = (score) => {
-  if (score >= 90) return { level: 'excellent', label: 'Excellent', emoji: '🟢', color: 'green' };
-  if (score >= 80) return { level: 'great', label: 'Production Ready', emoji: '🟢', color: 'green' };
-  if (score >= 70) return { level: 'good', label: 'Good', emoji: '🟡', color: 'yellow' };
-  if (score >= 60) return { level: 'fair', label: 'Fair', emoji: '🟡', color: 'yellow' };
-  if (score >= 50) return { level: 'caution', label: 'Proceed with Caution', emoji: '🟠', color: 'orange' };
-  return { level: 'poor', label: 'Not Recommended', emoji: '🔴', color: 'red' };
+  if (score >= 90) return { level: 'excellent', label: 'Excellent', color: 'green' };
+  if (score >= 80) return { level: 'great', label: 'Production Ready', color: 'green' };
+  if (score >= 70) return { level: 'good', label: 'Good', color: 'yellow' };
+  if (score >= 60) return { level: 'fair', label: 'Fair', color: 'yellow' };
+  if (score >= 50) return { level: 'caution', label: 'Proceed with Caution', color: 'orange' };
+  return { level: 'poor', label: 'Not Recommended', color: 'red' };
 };
 
 /**

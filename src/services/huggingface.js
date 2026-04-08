@@ -121,17 +121,9 @@ export const fetchCompleteModelData = async (modelId) => {
       throw new Error('Could not fetch model metadata');
     }
 
-    const isGatedModel = metadata.gated === true || metadata.private === true;
-
-    if (isGatedModel) {
-      return {
-        metadata,
-        config: null,
-        readme: null,
-        tokenizerConfig: null,
-        fetchedAt: new Date().toISOString()
-      };
-    }
+    // Always attempt to fetch config/readme even for gated models.
+    // Many gated models (e.g. Llama 2) have public config/readme — only weights are gated.
+    // fetchOptionalRepoFile handles 401/403 gracefully by returning null.
 
     // Parallel fetch for remaining assets
     const [config, readme, tokenizerConfig] = await Promise.all([

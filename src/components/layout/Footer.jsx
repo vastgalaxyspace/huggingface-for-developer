@@ -28,7 +28,7 @@ const Footer = () => {
 
           <div className="grid gap-3 text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-faint)] sm:grid-cols-2 lg:min-w-[420px]">
             {footerLinks.map((link) => (
-              <Link key={link.href} href={link.href} className="transition-colors hover:text-[var(--text-main)]">
+              <Link key={link.href} href={link.href} prefetch={false} className="transition-colors hover:text-[var(--text-main)]">
                 {link.label}
               </Link>
             ))}

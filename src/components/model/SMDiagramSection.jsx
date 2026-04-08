@@ -95,7 +95,7 @@ const CoreGrid = ({ count, color, size = 6, gap = 3 }) => (
           width: size,
           height: size,
           background: color,
-          opacity: 0.55 + Math.random() * 0.35,
+          opacity: 0.55 + ((i % 5) * 0.07),
           animationDelay: `${i * 60}ms`,
         }}
       />
@@ -218,7 +218,7 @@ const SMDiagramSection = () => {
   const toggle = (id) => setActiveId(prev => prev === id ? null : id);
 
   return (
-    <section id="section-sm" className="mb-14">
+    <section id="section-sm" className="mb-14 scroll-mt-28">
       {/* Section header */}
       <div className="flex items-center gap-2 mb-1">
         <Cpu className="h-5 w-5 text-[var(--accent)]" />

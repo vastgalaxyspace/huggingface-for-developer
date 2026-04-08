@@ -77,6 +77,137 @@ body {
     display: none;
   }
 
+  /* ── Model Detail Hero ── */
+  .model-hero {
+    background: linear-gradient(135deg, rgba(54, 87, 132, 0.04) 0%, rgba(219, 232, 247, 0.3) 50%, rgba(255, 255, 255, 0) 100%);
+    border-bottom: 1px solid var(--border-soft);
+    position: relative;
+  }
+
+  .model-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent) 0%, rgba(54, 87, 132, 0.3) 100%);
+    border-radius: 3px 3px 0 0;
+  }
+
+  /* ── Insight Cards ── */
+  .insight-card {
+    border: 1.5px solid var(--border-soft);
+    border-radius: 18px;
+    padding: 20px;
+    background: white;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .insight-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 8px 28px rgba(59, 83, 114, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .insight-card--green {
+    border-color: rgba(16, 185, 129, 0.25);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.03) 0%, white 100%);
+  }
+
+  .insight-card--yellow {
+    border-color: rgba(245, 158, 11, 0.25);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.03) 0%, white 100%);
+  }
+
+  .insight-card--red {
+    border-color: rgba(239, 68, 68, 0.25);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.03) 0%, white 100%);
+  }
+
+  .insight-card--blue {
+    border-color: rgba(59, 130, 246, 0.25);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, white 100%);
+  }
+
+  .insight-card--purple {
+    border-color: rgba(139, 92, 246, 0.25);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.03) 0%, white 100%);
+  }
+
+  /* ── Section Divider ── */
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-soft), transparent);
+    margin: 48px 0;
+  }
+
+  /* ── Config Table ── */
+  .config-table {
+    border: 1px solid var(--border-soft);
+    border-radius: 22px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 2px 12px rgba(59, 83, 114, 0.04);
+  }
+
+  .config-table-header {
+    background: linear-gradient(135deg, rgba(245, 248, 252, 0.95), rgba(237, 243, 249, 0.95));
+    border-bottom: 1px solid var(--border-soft);
+    padding: 14px 24px;
+  }
+
+  .config-table-row {
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+    border-bottom: 1px solid rgba(124, 147, 178, 0.08);
+    transition: background 0.15s ease;
+  }
+
+  .config-table-row:last-child {
+    border-bottom: none;
+  }
+
+  .config-table-row:hover {
+    background: rgba(245, 248, 252, 0.6);
+  }
+
+  .config-table-label {
+    padding: 12px 24px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: rgba(245, 248, 252, 0.4);
+    border-right: 1px solid rgba(124, 147, 178, 0.08);
+  }
+
+  .config-table-value {
+    padding: 12px 24px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-strong);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Fade In Animation ── */
+  .fade-in-section {
+    animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* ── Score Ring ── */
+  .score-ring {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .score-ring svg {
+    transform: rotate(-90deg);
+  }
+
   /* ── SM Diagram Styles ── */
   .sm-block {
     width: 100%;
@@ -118,6 +249,12 @@ body {
   .sm-core-dot {
     animation: sm-dot-shimmer 2s ease-in-out infinite;
   }
+}
+
+/* ── Keyframes ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes sm-pulse {

@@ -1,4 +1,4 @@
-import { DollarSign } from 'lucide-react';
+import { DollarSign, Info } from 'lucide-react';
 import { formatCurrency } from '../../utils/tcoCalculator';
 
 const recColor = {
@@ -12,15 +12,19 @@ const TCOSection = ({ tco }) => {
   const { comparison, breakEven, recommendations } = tco;
 
   return (
-    <section id="section-tco" className="mb-14">
+    <section id="section-tco" className="mb-10 fade-in-section scroll-mt-28">
       <div className="flex items-center gap-2 mb-1">
         <DollarSign className="h-5 w-5 text-[var(--accent)]" />
-        <h2 className="text-[1.6rem] font-black tracking-tight text-[var(--text-strong)]">Total Cost of Ownership</h2>
+        <h2 className="text-[1.5rem] font-black tracking-tight text-[var(--text-strong)]">Total Cost of Ownership</h2>
       </div>
-      <p className="mb-5 text-[13px] text-[var(--text-faint)]">API vs Cloud GPU vs Self-Hosted cost comparison</p>
+      <p className="mb-2 text-[13px] text-[var(--text-faint)]">API vs Cloud GPU vs Self-Hosted cost comparison</p>
+      <p className="mb-5 text-[11px] font-medium text-[var(--text-muted)] flex items-center gap-1.5">
+        <Info className="h-3 w-3" />
+        Cost estimates are approximate and vary by region, usage patterns, and provider.
+      </p>
 
       {comparison && (
-        <div className="mb-6 overflow-hidden rounded-[22px] border border-[var(--border-soft)] bg-white">
+        <div className="mb-6 overflow-hidden rounded-[22px] border border-[var(--border-soft)] bg-white shadow-[0_2px_12px_rgba(59,83,114,0.04)]">
           <table className="w-full text-[13px]">
             <thead className="border-b border-[var(--border-soft)] bg-[rgba(245,248,252,0.92)]">
               <tr>

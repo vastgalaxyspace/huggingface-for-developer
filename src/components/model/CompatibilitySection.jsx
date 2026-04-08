@@ -1,4 +1,4 @@
-import { Puzzle, CheckCircle, XCircle, Box, Zap, Terminal, Rocket, Layers } from 'lucide-react';
+import { Puzzle, CheckCircle, XCircle, Box, Zap, Terminal, Rocket, Layers, Info } from 'lucide-react';
 
 const frameworkIcons = {
   transformers: <Layers className="h-4 w-4 text-amber-600" />,
@@ -15,14 +15,37 @@ const confidenceColor = (c) => {
 };
 
 const CompatibilitySection = ({ compatibility }) => {
-  if (!compatibility) return null;
+  if (!compatibility) {
+    return (
+      <section id="section-compatibility" className="mb-10 fade-in-section scroll-mt-28">
+        <div className="flex items-center gap-2 mb-1">
+          <Puzzle className="h-5 w-5 text-[var(--accent)]" />
+          <h2 className="text-[1.5rem] font-black tracking-tight text-[var(--text-strong)]">Framework Compatibility</h2>
+        </div>
+        <p className="mb-5 text-[13px] text-[var(--text-faint)]">Compatibility with popular inference frameworks and tools</p>
+        <div className="rounded-[22px] border border-dashed border-[var(--border-soft)] bg-[rgba(249,251,254,0.5)] p-8">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-[var(--text-faint)] mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="text-[14px] font-bold text-[var(--text-strong)] mb-1">Compatibility Data Unavailable</h4>
+              <p className="text-[12px] text-[var(--text-muted)] leading-relaxed">
+                Framework compatibility analysis requires the model configuration. Most models based on standard architectures
+                (Llama, Mistral, Qwen) work with Transformers, vLLM, and Ollama out of the box.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   const { frameworks, features } = compatibility;
 
   return (
-    <section id="section-compatibility" className="mb-14">
+    <section id="section-compatibility" className="mb-10 fade-in-section scroll-mt-28">
       <div className="flex items-center gap-2 mb-1">
         <Puzzle className="h-5 w-5 text-[var(--accent)]" />
-        <h2 className="text-[1.6rem] font-black tracking-tight text-[var(--text-strong)]">Framework Compatibility</h2>
+        <h2 className="text-[1.5rem] font-black tracking-tight text-[var(--text-strong)]">Framework Compatibility</h2>
       </div>
       <p className="mb-5 text-[13px] text-[var(--text-faint)]">Compatibility with popular inference frameworks and tools</p>
 

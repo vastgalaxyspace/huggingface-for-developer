@@ -22,13 +22,13 @@ const CodeSnippetsSection = ({ codeSnippets, frameworks, modelId }) => {
   };
 
   return (
-    <section id="section-code" className="mb-14">
+    <section id="section-code" className="mb-10 fade-in-section scroll-mt-28">
       <div className="flex items-center gap-2 mb-1">
         <Code className="h-5 w-5 text-[var(--accent)]" />
-        <h2 className="text-[1.6rem] font-black tracking-tight text-[var(--text-strong)]">Usage Examples</h2>
+        <h2 className="text-[1.5rem] font-black tracking-tight text-[var(--text-strong)]">Usage Examples</h2>
         <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--accent)]">{frameworks.length} snippets</span>
       </div>
-      <p className="mb-5 text-[13px] text-[var(--text-faint)]">Ready-to-use code snippets for {modelId}</p>
+      <p className="mb-5 text-[13px] text-[var(--text-faint)]">Ready-to-use code for {modelId}</p>
 
       <div className="overflow-hidden rounded-[22px] border border-[var(--border-soft)] bg-white shadow-[0_10px_24px_rgba(59,83,114,0.05)]">
         <div className="flex flex-wrap border-b border-[var(--border-soft)] bg-[rgba(245,248,252,0.6)]">

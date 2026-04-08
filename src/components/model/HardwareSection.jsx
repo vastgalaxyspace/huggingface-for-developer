@@ -1,4 +1,4 @@
-import { Server, Monitor, Cloud, AlertTriangle } from 'lucide-react';
+import { Server, Monitor, Cloud, AlertTriangle, Info } from 'lucide-react';
 
 const tierColors = {
   consumer: 'bg-emerald-50 border-emerald-200 text-emerald-700',
@@ -8,13 +8,37 @@ const tierColors = {
 };
 
 const HardwareSection = ({ gpuRecommendations, cloudCosts, multiGPU, vramEstimates }) => {
-  if (!gpuRecommendations && !cloudCosts) return null;
+  const hasVram = vramEstimates && vramEstimates.fp16 > 0;
+
+  if (!hasVram && !gpuRecommendations && !cloudCosts) {
+    return (
+      <section id="section-hardware" className="mb-10 fade-in-section scroll-mt-28">
+        <div className="flex items-center gap-2 mb-1">
+          <Server className="h-5 w-5 text-[var(--accent)]" />
+          <h2 className="text-[1.5rem] font-black tracking-tight text-[var(--text-strong)]">Hardware and GPU Recommendations</h2>
+        </div>
+        <p className="mb-5 text-[13px] text-[var(--text-faint)]">GPU recommendations based on model VRAM requirements</p>
+        <div className="rounded-[22px] border border-dashed border-[var(--border-soft)] bg-[rgba(249,251,254,0.5)] p-8">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-[var(--text-faint)] mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="text-[14px] font-bold text-[var(--text-strong)] mb-1">Hardware Data Unavailable</h4>
+              <p className="text-[12px] text-[var(--text-muted)] leading-relaxed">
+                Hardware recommendations require VRAM estimates which are not available for this model.
+                This typically means the model configuration could not be fully parsed.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section id="section-hardware" className="mb-14">
+    <section id="section-hardware" className="mb-10 fade-in-section scroll-mt-28">
       <div className="flex items-center gap-2 mb-1">
         <Server className="h-5 w-5 text-[var(--accent)]" />
-        <h2 className="text-[1.6rem] font-black tracking-tight text-[var(--text-strong)]">Hardware and GPU Recommendations</h2>
+        <h2 className="text-[1.5rem] font-black tracking-tight text-[var(--text-strong)]">Hardware and GPU Recommendations</h2>
       </div>
       <p className="mb-5 text-[13px] text-[var(--text-faint)]">
         Based on ~{vramEstimates?.fp16 || '?'}GB VRAM requirement (FP16)

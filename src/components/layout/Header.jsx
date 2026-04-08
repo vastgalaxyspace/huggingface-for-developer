@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Bell, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Home' },
@@ -28,7 +28,7 @@ const Header = () => {
     <header className="sticky top-0 z-[200] border-b border-[var(--border-soft)] bg-white">
       <div className="shell-container flex min-h-[72px] items-center justify-between gap-4 py-3 md:min-h-[78px]">
         <div className="flex min-w-0 items-center gap-4 lg:gap-12">
-          <Link href="/" className="flex min-w-0 items-center gap-3">
+          <Link href="/" prefetch={false} className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center sm:h-12 sm:w-12">
               <Image
                 src="/images/innoai logo main.png"
@@ -53,6 +53,7 @@ const Header = () => {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={false}
                 className={`flex h-full items-center border-b-[3px] pt-[3px] transition-colors ${
                   isActive(item.href)
                     ? 'border-[var(--text-strong)] text-[var(--text-strong)]'
@@ -66,9 +67,6 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-3 text-[var(--text-muted)]">
-          <button className="hidden h-10 w-10 items-center justify-center rounded-xl border border-transparent transition-colors hover:border-[var(--border-soft)] hover:bg-white hover:text-[var(--text-strong)] sm:flex">
-            <Bell className="h-[18px] w-[18px]" />
-          </button>
           <button
             type="button"
             aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
@@ -89,6 +87,7 @@ const Header = () => {
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={false}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors ${
                     isActive(item.href)

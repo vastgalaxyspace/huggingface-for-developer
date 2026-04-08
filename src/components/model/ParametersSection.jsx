@@ -36,7 +36,7 @@ const ParamCard = ({ param, value }) => {
 
       {open && (
         <div className="mt-3 pt-3 border-t border-[rgba(0,0,0,0.06)] space-y-2">
-          <p className="text-[12px] text-[var(--text-muted)]">{param.explanation}</p>
+          <p className="text-[12px] text-[var(--text-muted)] leading-relaxed">{param.explanation}</p>
           {param.devNote && (
             <div className="rounded-lg bg-[rgba(0,0,0,0.03)] p-2.5">
               <div className="flex items-center gap-1.5 mb-0.5">
@@ -64,16 +64,17 @@ const ParametersSection = ({ parameterCategories, config }) => {
   const toggleCat = (cat) => setExpandedCat(expandedCat === cat ? null : cat);
 
   return (
-    <section id="section-params" className="mb-14">
+    <section id="section-params" className="mb-10 fade-in-section scroll-mt-28">
       <div className="flex items-center gap-2 mb-1">
         <Settings className="h-5 w-5 text-[var(--accent)]" />
-        <h2 className="text-[1.6rem] font-black tracking-tight text-[var(--text-strong)]">
+        <h2 className="text-[1.5rem] font-black tracking-tight text-[var(--text-strong)]">
           Model Parameters Explained
         </h2>
         <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-[11px] font-bold text-[var(--accent)]">{totalParams} params</span>
       </div>
       <p className="mb-5 text-[13px] text-[var(--text-faint)]">
-        Every configuration parameter explained with developer context and deployment impact
+        Every configuration parameter explained with developer context and deployment impact.
+        Click any parameter to expand its explanation.
       </p>
 
       <div className="space-y-4">

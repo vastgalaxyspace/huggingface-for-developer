@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import {
   ArrowLeft, Database, Cpu, Shield, Server, Puzzle, Code,
   DollarSign, Settings, Star, Download, Calendar, ExternalLink,
-  Copy, Check, Gauge, CheckCircle, PanelLeftClose, PanelLeftOpen, X
+  Copy, Check, Gauge, CheckCircle, PanelLeftClose, PanelLeftOpen, X,
+  AlertTriangle, Info, Box, Layers, Hash, Zap
 } from 'lucide-react';
 
 import VRAMSection from '../components/model/VRAMSection';
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { id: 'section-params', label: 'Parameters', icon: Settings },
 ];
 
+/* ── Utility functions ── */
 const fmt = (num) => {
   if (!num) return '0';
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -41,9 +43,36 @@ const fmtDate = (ds) => {
   return new Date(ds).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
-const stripEmoji = (str) => {
-  if (!str) return '';
-  return str.replace(/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]|[\u{2700}-\u{27BF}]|[\u{FE00}-\u{FEFF}]|[\u{1F900}-\u{1F9FF}]|[\u2714\u2716\u2713\u2717\u2611\u2612\u26A1\uD83D\uDD34\uD83D\uDCA1\uD83E\uDD17\uD83E\uDD99\uD83D\uDCBB\uD83D\uDE80\uD83C\uDFAE\uD83D\uDCBC\u2601\uFE0F\uD83D\uDDA5\uFE0F\uD83C\uDFAF\uD83D\uDCE6\uD83D\uDCBE\uD83C\uDF10\uD83C\uDFF7\uFE0F]/gu, '').replace(/^[^\w\s]+\s*/, '').trim();
+const safeValue = (val, fallback = 'Not available') => {
+  if (val === null || val === undefined || val === 'Unknown' || val === 'unknown') return fallback;
+  return val;
+};
+
+/* ── Score Ring SVG Component ── */
+const ScoreRing = ({ score, size = 72, strokeWidth = 5 }) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
+  const color = score >= 70 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444';
+
+  return (
+    <div className="score-ring" style={{ width: size, height: size }}>
+      <svg width={size} height={size}>
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={strokeWidth} />
+        <circle
+          cx={size / 2} cy={size / 2} r={radius} fill="none"
+          stroke={color} strokeWidth={strokeWidth}
+          strokeDasharray={circumference} strokeDashoffset={offset}
+          strokeLinecap="round"
+          style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1)' }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-[18px] font-black leading-none" style={{ color }}>{score}</span>
+        <span className="text-[8px] font-bold uppercase tracking-wider text-[var(--text-faint)] mt-0.5">/ 100</span>
+      </div>
+    </div>
+  );
 };
 
 const ModelDetailPage = ({
@@ -55,14 +84,14 @@ const ModelDetailPage = ({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Scroll spy
+  // Scroll spy — listen on window
   useEffect(() => {
     const onScroll = () => {
       for (const item of NAV_ITEMS) {
         const el = document.getElementById(item.id);
         if (el) {
           const rect = el.getBoundingClientRect();
-          if (rect.top <= 120 && rect.bottom > 120) { setActiveSection(item.id); break; }
+          if (rect.top <= 140 && rect.bottom > 140) { setActiveSection(item.id); break; }
         }
       }
     };
@@ -90,21 +119,71 @@ const ModelDetailPage = ({
   };
 
   const scrollTo = (id) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setActiveSection(id);
     if (isMobile) setSidebarOpen(false);
   };
 
+  // ── Derived data ──
   const nameParts = modelData?.modelId ? modelData.modelId.split('/') : ['unknown', 'Unknown'];
   const author = nameParts[0];
   const modelName = nameParts.length > 1 ? nameParts[1] : nameParts[0];
   const paramCount = modelData?.vramEstimates?.totalParams || 0;
-  const paramString = paramCount >= 1000 ? `${(paramCount / 1000).toFixed(1)}T` : `${paramCount}B`;
+  const paramString = paramCount > 0
+    ? (paramCount >= 1000 ? `${(paramCount / 1000).toFixed(1)}T` : `${paramCount}B`)
+    : null;
+  const hasVram = modelData?.vramEstimates?.fp16 && modelData.vramEstimates.fp16 > 0;
+
+  // License color mapping
+  const licenseColorClass = modelData?.licenseInfo?.color === 'green'
+    ? 'insight-card--green' : modelData?.licenseInfo?.color === 'red'
+    ? 'insight-card--red' : modelData?.licenseInfo?.color === 'yellow'
+    ? 'insight-card--yellow' : 'insight-card--blue';
+
+  // Config table rows
+  const configRows = [
+    { label: 'Architecture', value: safeValue(modelData?.config?.model_type), icon: Layers },
+    { label: 'Context Window', value: modelData?.config?.max_position_embeddings ? `${modelData.config.max_position_embeddings.toLocaleString()} tokens` : 'Not available', icon: Hash },
+    { label: 'Hidden Size', value: modelData?.config?.hidden_size ? modelData.config.hidden_size.toLocaleString() : 'Not available', icon: Box },
+    { label: 'Layers', value: safeValue(modelData?.config?.num_hidden_layers), icon: Layers },
+    { label: 'Attention Heads', value: safeValue(modelData?.config?.num_attention_heads), icon: Zap },
+    { label: 'KV Heads (GQA)', value: (() => {
+      const kv = modelData?.config?.num_key_value_heads;
+      const attn = modelData?.config?.num_attention_heads;
+      if (!kv || !attn) return 'Not available';
+      if (kv !== attn) return `${kv} (${Math.round(attn / kv)}x GQA)`;
+      return `${kv} (Standard MHA)`;
+    })(), icon: Zap },
+    { label: 'Vocabulary Size', value: modelData?.config?.vocab_size ? modelData.config.vocab_size.toLocaleString() : 'Not available', icon: Database },
+    { label: 'Precision', value: safeValue(modelData?.config?.torch_dtype), icon: Cpu },
+  ];
+
+  // Add MoE row if applicable
+  if (modelData?.config?.num_experts) {
+    configRows.push({
+      label: 'MoE Experts',
+      value: `${modelData.config.num_experts} experts, ${modelData.config.num_experts_per_tok || '?'} active per token`,
+      icon: Puzzle,
+    });
+  }
+
+  // Add sliding window if applicable
+  if (modelData?.config?.sliding_window) {
+    configRows.push({
+      label: 'Sliding Window',
+      value: `${modelData.config.sliding_window.toLocaleString()} tokens`,
+      icon: Hash,
+    });
+  }
 
   return (
     <div className="min-h-screen">
       <div className="shell-container">
 
-        {/* ── TOP BAR ── Always visible, outside sidebar */}
+        {/* ── TOP BAR ── */}
         <div className="mb-4 flex items-center justify-between">
           <button
             onClick={onBack}
@@ -126,7 +205,6 @@ const ModelDetailPage = ({
               <span className="sm:hidden">HF</span>
             </a>
 
-            {/* Sidebar toggle - only visible on >= lg when sidebar is closed, or always on mobile */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="inline-flex items-center justify-center rounded-xl border border-[var(--border-soft)] bg-white p-2.5 text-[var(--text-muted)] shadow-[0_2px_8px_rgba(45,63,88,0.06)] transition-all hover:text-[var(--text-strong)] hover:shadow-[0_4px_16px_rgba(45,63,88,0.1)]"
@@ -170,10 +248,10 @@ const ModelDetailPage = ({
                     <div>
                       <h2 className="text-[11px] font-extrabold leading-tight text-[var(--text-strong)]">Navigation</h2>
                       {deploymentScore && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5 mt-0.5">
                           <div className={`h-1.5 w-1.5 rounded-full ${deploymentScore.total >= 70 ? 'bg-emerald-500' : deploymentScore.total >= 50 ? 'bg-amber-500' : 'bg-red-500'}`} />
-                          <span className={`text-[9px] font-bold ${deploymentScore.total >= 70 ? 'text-emerald-600' : deploymentScore.total >= 50 ? 'text-amber-600' : 'text-red-500'}`}>
-                            {deploymentScore.total}/100
+                          <span className={`text-[10px] font-bold ${deploymentScore.total >= 70 ? 'text-emerald-600' : deploymentScore.total >= 50 ? 'text-amber-600' : 'text-red-500'}`}>
+                            Score: {deploymentScore.total}/100
                           </span>
                         </div>
                       )}
@@ -218,108 +296,239 @@ const ModelDetailPage = ({
             </aside>
 
             {/* ── MAIN CONTENT ── */}
-            <main className="flex-1 min-w-0 px-6 py-8 md:px-10 lg:px-14 lg:py-10 overflow-y-auto">
-              <div className="mx-auto max-w-[900px]">
+            <main className="flex-1 min-w-0">
+              <div
+                className={`w-full transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                  sidebarOpen && !isMobile ? 'mx-auto max-w-[920px]' : 'max-w-[1120px]'
+                }`}
+              >
 
-                {/* HEADER */}
-                <section id="section-overview" className="mb-10">
-                  <div className="mb-4 flex flex-wrap items-center gap-2">
-                    {modelData?.pipelineTag && (
-                      <span className="rounded-full border border-[rgba(54,87,132,0.12)] bg-[var(--accent-soft)] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--accent)]">{modelData.pipelineTag}</span>
-                    )}
-                    {modelData?.config?.model_type && (
-                      <span className="rounded-full border border-[var(--border-soft)] bg-[rgba(243,245,248,0.88)] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--text-muted)]">{modelData.config.model_type}</span>
-                    )}
-                    {modelData?.quantization?.quantized && (
-                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-emerald-700">Quantized ({modelData.quantization.method})</span>
-                    )}
-                    <span className="rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.15em] text-purple-700">{paramString} params</span>
-                  </div>
-
-                  <h1 className="mb-2 text-3xl font-black tracking-tight text-[var(--text-strong)] lg:text-4xl">{modelName}</h1>
-
-                  <div className="mb-4 flex flex-wrap items-center gap-3 text-[13px] text-[var(--text-muted)]">
-                    <span>by <strong className="text-[var(--accent)]">{author}</strong></span>
-                    {modelData?.lastModified && (
-                      <>
-                        <span className="text-[var(--border-soft)]">|</span>
-                        <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> {fmtDate(modelData.lastModified)}</span>
-                      </>
-                    )}
-                    <span className="text-[var(--border-soft)]">|</span>
-                    <span className="flex items-center gap-1"><Download className="h-3.5 w-3.5" /> {fmt(modelData?.downloads)}</span>
-                    <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500" /> {fmt(modelData?.likes)}</span>
-                    <button onClick={handleCopyId} className="flex items-center gap-1 rounded-lg bg-[rgba(0,0,0,0.04)] px-2.5 py-1 text-[11px] font-bold hover:bg-[rgba(0,0,0,0.08)] transition-colors">
-                      {copiedId ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-                      {copiedId ? 'Copied' : 'Copy ID'}
-                    </button>
-                  </div>
-
-                  {modelData?.card?.description && (
-                    <p className="mb-6 text-[15px] font-medium leading-relaxed text-[var(--text-muted)]">{modelData.card.description}</p>
-                  )}
-
-                  {/* Quick Decision Cards */}
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-8">
-                    <div className={`rounded-2xl border-2 p-4 ${
-                      modelData?.licenseInfo?.color === 'green' ? 'border-emerald-200 bg-emerald-50' :
-                      modelData?.licenseInfo?.color === 'red' ? 'border-red-200 bg-red-50' :
-                      'border-amber-200 bg-amber-50'
-                    }`}>
-                      <div className="flex items-center gap-2 mb-1"><Shield className="h-4 w-4" /><span className="text-[10px] font-bold uppercase tracking-wider opacity-70">License</span></div>
-                      <p className="text-[18px] font-black text-[var(--text-strong)]">{modelData?.licenseInfo?.name || 'Unknown'}</p>
-                      <p className="text-[11px] font-medium opacity-80">{stripEmoji(modelData?.licenseInfo?.summary || '')}</p>
+                {/* ══════════════════════════════════════════════
+                    SECTION: HERO / OVERVIEW
+                    ══════════════════════════════════════════════ */}
+                <section id="section-overview" className="fade-in-section scroll-mt-28">
+                  {/* Hero area with accent bar */}
+                  <div className="model-hero px-6 py-8 md:px-10 lg:px-14 lg:py-10">
+                    {/* Badges row */}
+                    <div className="mb-4 flex flex-wrap items-center gap-2">
+                      {modelData?.pipelineTag && (
+                        <span className="rounded-full border border-[rgba(54,87,132,0.12)] bg-[var(--accent-soft)] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--accent)]">
+                          {modelData.pipelineTag}
+                        </span>
+                      )}
+                      {modelData?.config?.model_type && modelData.config.model_type !== 'unknown' && (
+                        <span className="rounded-full border border-[var(--border-soft)] bg-[rgba(243,245,248,0.88)] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                          {modelData.config.model_type}
+                        </span>
+                      )}
+                      {modelData?.quantization?.quantized && (
+                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-emerald-700">
+                          Quantized ({modelData.quantization.method})
+                        </span>
+                      )}
+                      {paramString && (
+                        <span className="rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.15em] text-purple-700">
+                          {paramString} params
+                        </span>
+                      )}
+                      {modelData?.gated && (
+                        <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.15em] text-amber-700">
+                          Gated Model
+                        </span>
+                      )}
                     </div>
-                    <div className="rounded-2xl border-2 border-blue-200 bg-blue-50 p-4">
-                      <div className="flex items-center gap-2 mb-1"><Cpu className="h-4 w-4 text-blue-600" /><span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">VRAM (FP16)</span></div>
-                      <p className="text-[18px] font-black text-[var(--text-strong)]">~{modelData?.vramEstimates?.fp16 || '?'} GB</p>
-                      <p className="text-[11px] font-medium text-blue-600">INT8: ~{modelData?.vramEstimates?.int8 || '?'}GB | INT4: ~{modelData?.vramEstimates?.int4 || '?'}GB</p>
+
+                    {/* Model Name */}
+                    <h1 className="mb-2 text-3xl font-black tracking-tight text-[var(--text-strong)] lg:text-4xl">
+                      {modelName}
+                    </h1>
+
+                    {/* Meta row */}
+                    <div className="mb-5 flex flex-wrap items-center gap-3 text-[13px] text-[var(--text-muted)]">
+                      <span>by <strong className="text-[var(--accent)]">{author}</strong></span>
+                      {modelData?.lastModified && (
+                        <>
+                          <span className="text-[var(--border-soft)]">|</span>
+                          <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> {fmtDate(modelData.lastModified)}</span>
+                        </>
+                      )}
+                      <span className="text-[var(--border-soft)]">|</span>
+                      <span className="flex items-center gap-1"><Download className="h-3.5 w-3.5" /> {fmt(modelData?.downloads)}</span>
+                      <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500" /> {fmt(modelData?.likes)}</span>
+                      <button onClick={handleCopyId} className="flex items-center gap-1 rounded-lg bg-[rgba(0,0,0,0.04)] px-2.5 py-1 text-[11px] font-bold hover:bg-[rgba(0,0,0,0.08)] transition-colors">
+                        {copiedId ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                        {copiedId ? 'Copied' : 'Copy ID'}
+                      </button>
                     </div>
-                    <div className="rounded-2xl border-2 border-purple-200 bg-purple-50 p-4">
-                      <div className="flex items-center gap-2 mb-1"><Database className="h-4 w-4 text-purple-600" /><span className="text-[10px] font-bold uppercase tracking-wider text-purple-600">Parameters</span></div>
-                      <p className="text-[18px] font-black text-[var(--text-strong)]">{paramString}</p>
-                      <p className="text-[11px] font-medium text-purple-600 flex items-center gap-1">
-                        {modelData?.vramEstimates?.paramSource === 'safetensors'
-                          ? <><CheckCircle className="h-3 w-3" /> Verified (safetensors)</>
-                          : 'Estimated from config'}
+
+                    {/* Description */}
+                    {modelData?.card?.description && (
+                      <p className="mb-0 text-[14px] font-medium leading-relaxed text-[var(--text-muted)] max-w-[720px]">
+                        {modelData.card.description}
                       </p>
-                    </div>
+                    )}
                   </div>
 
-                  {/* Model Metadata Table */}
-                  <div className="overflow-hidden rounded-[22px] border border-[var(--border-soft)] bg-white">
-                    <h3 className="px-5 py-3 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--text-faint)] bg-[rgba(245,248,252,0.92)] border-b border-[var(--border-soft)]">Model Configuration</h3>
-                    {[
-                      ['Architecture', modelData?.config?.model_type || 'Unknown'],
-                      ['Context Window', modelData?.config?.max_position_embeddings ? `${modelData.config.max_position_embeddings.toLocaleString()} tokens` : 'Unknown'],
-                      ['Hidden Size', modelData?.config?.hidden_size?.toLocaleString() || 'Unknown'],
-                      ['Layers', modelData?.config?.num_hidden_layers || 'Unknown'],
-                      ['Attention Heads', modelData?.config?.num_attention_heads || 'Unknown'],
-                      ['KV Heads (GQA)', modelData?.config?.num_key_value_heads !== modelData?.config?.num_attention_heads
-                        ? `${modelData?.config?.num_key_value_heads} (${Math.round((modelData?.config?.num_attention_heads || 1) / (modelData?.config?.num_key_value_heads || 1))}x GQA)`
-                        : `${modelData?.config?.num_key_value_heads || 'Unknown'} (Standard MHA)`],
-                      ['Vocabulary Size', modelData?.config?.vocab_size?.toLocaleString() || 'Unknown'],
-                      ['Precision', modelData?.config?.torch_dtype || 'Unknown'],
-                      ...(modelData?.config?.num_experts ? [['MoE Experts', `${modelData.config.num_experts} experts, ${modelData.config.num_experts_per_tok || '?'} active per token`]] : []),
-                      ...(modelData?.config?.sliding_window ? [['Sliding Window', `${modelData.config.sliding_window.toLocaleString()} tokens`]] : []),
-                    ].map(([label, value], i) => (
-                      <div key={label} className={`grid grid-cols-1 text-[13px] md:grid-cols-12 ${i > 0 ? 'border-t border-[var(--border-soft)]' : ''}`}>
-                        <div className="bg-[rgba(245,248,252,0.92)] px-5 py-3 font-semibold text-[var(--text-faint)] md:col-span-4">{label}</div>
-                        <div className="px-5 py-3 font-bold text-[var(--text-main)] md:col-span-8">{value}</div>
+                  {/* Quick Insight Cards */}
+                  <div className="px-6 py-6 md:px-10 lg:px-14">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-8">
+
+                      {/* License Card */}
+                      <div className={`insight-card ${licenseColorClass}`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Shield className="h-4 w-4 text-[var(--text-muted)]" />
+                          <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">License</span>
+                        </div>
+                        <p className="text-[17px] font-black text-[var(--text-strong)] mb-1">
+                          {modelData?.licenseInfo?.name || 'Unknown'}
+                        </p>
+                        <p className="text-[11px] font-medium text-[var(--text-muted)] leading-relaxed">
+                          {modelData?.licenseInfo?.summary || 'Review license details below'}
+                        </p>
                       </div>
-                    ))}
+
+                      {/* VRAM Card */}
+                      <div className={`insight-card ${hasVram ? 'insight-card--blue' : ''}`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Cpu className="h-4 w-4 text-blue-500" />
+                          <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">VRAM (FP16)</span>
+                        </div>
+                        {hasVram ? (
+                          <>
+                            <p className="text-[17px] font-black text-[var(--text-strong)] mb-1">
+                              ~{modelData.vramEstimates.fp16} GB
+                            </p>
+                            <p className="text-[11px] font-medium text-blue-600">
+                              INT8: ~{modelData.vramEstimates.int8}GB &middot; INT4: ~{modelData.vramEstimates.int4}GB
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-[17px] font-black text-[var(--text-muted)] mb-1">Pending</p>
+                            <p className="text-[11px] font-medium text-[var(--text-faint)]">
+                              Insufficient config data to estimate
+                            </p>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Parameters Card */}
+                      <div className={`insight-card ${paramString ? 'insight-card--purple' : ''}`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Database className="h-4 w-4 text-purple-500" />
+                          <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">Parameters</span>
+                        </div>
+                        {paramString ? (
+                          <>
+                            <p className="text-[17px] font-black text-[var(--text-strong)] mb-1">{paramString}</p>
+                            <p className="text-[11px] font-medium text-purple-600 flex items-center gap-1">
+                              {modelData.vramEstimates?.paramSource === 'safetensors'
+                                ? <><CheckCircle className="h-3 w-3" /> Verified (safetensors)</>
+                                : 'Estimated from config'}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-[17px] font-black text-[var(--text-muted)] mb-1">Pending</p>
+                            <p className="text-[11px] font-medium text-[var(--text-faint)]">
+                              Parameter count unavailable
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Deployment Score Mini Preview */}
+                    {deploymentScore && (
+                      <div className="mb-8 flex items-center gap-5 rounded-2xl border border-[var(--border-soft)] bg-white p-5 shadow-[0_2px_12px_rgba(59,83,114,0.04)]">
+                        <ScoreRing score={deploymentScore.total} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-[15px] font-bold text-[var(--text-strong)]">Deployment Readiness</h3>
+                            <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                              deploymentScore.total >= 70 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                              deploymentScore.total >= 50 ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                              'bg-red-50 text-red-700 border border-red-200'
+                            }`}>
+                              {deploymentScore.rating?.label}
+                            </span>
+                          </div>
+                          <p className="text-[12px] text-[var(--text-muted)]">
+                            {deploymentScore.readyForProduction
+                              ? 'This model meets the criteria for production deployment.'
+                              : 'Review the detailed assessment below for areas to evaluate.'}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => scrollTo('section-score')}
+                          className="hidden sm:flex items-center gap-1 rounded-lg bg-[rgba(0,0,0,0.04)] px-3 py-2 text-[11px] font-bold text-[var(--text-muted)] hover:bg-[rgba(0,0,0,0.08)] transition-colors"
+                        >
+                          View Details
+                          <ArrowLeft className="h-3 w-3 rotate-180" />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Model Configuration Table */}
+                    <div className="overflow-hidden rounded-[22px] border border-[var(--border-soft)] bg-white shadow-[0_2px_12px_rgba(59,83,114,0.04)]">
+                      <div className="bg-gradient-to-r from-[rgba(245,248,252,0.95)] to-[rgba(237,243,249,0.95)] border-b border-[var(--border-soft)] px-6 py-3.5">
+                        <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--text-faint)]">
+                          Model Configuration
+                        </h3>
+                      </div>
+                      <div className="divide-y divide-[rgba(124,147,178,0.08)]">
+                        {configRows.map((row) => {
+                          const RowIcon = row.icon;
+                          const isAvailable = row.value !== 'Not available';
+                          return (
+                            <div key={row.label} className="grid grid-cols-[minmax(140px,2fr)_3fr] transition-colors hover:bg-[rgba(245,248,252,0.6)]">
+                              <div className="flex items-center gap-2.5 px-6 py-3 bg-[rgba(245,248,252,0.4)] border-r border-[rgba(124,147,178,0.08)] text-[13px] font-semibold text-[var(--text-muted)]">
+                                <RowIcon className="h-3.5 w-3.5 flex-shrink-0 text-[var(--text-faint)]" />
+                                <span>{row.label}</span>
+                              </div>
+                              <div className={`px-6 py-3 text-[13px] font-bold tabular-nums ${
+                                isAvailable ? 'text-[var(--text-strong)]' : 'text-[var(--text-faint)] font-medium italic'
+                              }`}>
+                                {row.value}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </section>
 
-                <DeploymentScoreSection deploymentScore={deploymentScore} />
-                <VRAMSection vramEstimates={modelData?.vramEstimates} />
-                <LicenseSection licenseInfo={modelData?.licenseInfo} licenseDisplay={licenseDisplay} deploymentRec={deploymentRec} />
-                <HardwareSection gpuRecommendations={gpuRecommendations} cloudCosts={cloudCosts} multiGPU={multiGPU} vramEstimates={modelData?.vramEstimates} />
-                <SMDiagramSection />
-                <CompatibilitySection compatibility={compatibility} />
-                <CodeSnippetsSection codeSnippets={codeSnippets} frameworks={frameworks} modelId={modelData?.modelId} />
-                <TCOSection tco={tco} />
-                <ParametersSection parameterCategories={parameterCategories} config={modelData?.config} />
+                {/* ── REMAINING SECTIONS ── */}
+                <div className="px-6 md:px-10 lg:px-14 pb-10">
+                  <div className="section-divider" />
+                  <DeploymentScoreSection deploymentScore={deploymentScore} />
+
+                  <div className="section-divider" />
+                  <VRAMSection vramEstimates={modelData?.vramEstimates} />
+
+                  <div className="section-divider" />
+                  <LicenseSection licenseInfo={modelData?.licenseInfo} licenseDisplay={licenseDisplay} deploymentRec={deploymentRec} />
+
+                  <div className="section-divider" />
+                  <HardwareSection gpuRecommendations={gpuRecommendations} cloudCosts={cloudCosts} multiGPU={multiGPU} vramEstimates={modelData?.vramEstimates} />
+
+                  <div className="section-divider" />
+                  <SMDiagramSection />
+
+                  <div className="section-divider" />
+                  <CompatibilitySection compatibility={compatibility} />
+
+                  <div className="section-divider" />
+                  <CodeSnippetsSection codeSnippets={codeSnippets} frameworks={frameworks} modelId={modelData?.modelId} />
+
+                  <div className="section-divider" />
+                  <TCOSection tco={tco} />
+
+                  <div className="section-divider" />
+                  <ParametersSection parameterCategories={parameterCategories} config={modelData?.config} />
+                </div>
+
               </div>
             </main>
           </div>
