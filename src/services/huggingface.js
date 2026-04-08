@@ -21,6 +21,23 @@ const getHeaders = () => {
   return headers;
 };
 
+const isBrowser = typeof window !== 'undefined';
+
+const fetchModelViaProxy = async (modelId) => {
+  const response = await fetch(`/api/hf-model?modelId=${encodeURIComponent(modelId)}`, {
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('Model not found. Check the model ID and try again.');
+    }
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
 const isRestrictedStatus = (status) => status === 401 || status === 403;
 
 const isLikelyNetworkFetchError = (error) => {
@@ -62,6 +79,11 @@ const fetchOptionalRepoFile = async (modelId, filePath, responseType = 'json') =
  */
 export const fetchModelMetadata = async (modelId) => {
   try {
+    if (isBrowser) {
+      const data = await fetchModelViaProxy(modelId);
+      return data?.metadata || null;
+    }
+
     const response = await fetch(`${HF_API_MODELS}/${modelId}`, {
       headers: getHeaders()
     });
@@ -114,8 +136,10 @@ export const fetchCompleteModelData = async (modelId) => {
       throw new Error('Invalid model ID format. Use: author/model-name');
     }
     
-    // Metadata is fetched first to check existence and gated status
-    const metadata = await fetchModelMetadata(modelId);
+    // Browser path uses same-origin proxy to avoid CORS/network policy issues.
+    // Server path fetches Hugging Face directly.
+    const proxied = isBrowser ? await fetchModelViaProxy(modelId) : null;
+    const metadata = proxied?.metadata || await fetchModelMetadata(modelId);
     
     if (!metadata) {
       throw new Error('Could not fetch model metadata');
@@ -127,7 +151,7 @@ export const fetchCompleteModelData = async (modelId) => {
 
     // Parallel fetch for remaining assets
     const [config, readme, tokenizerConfig] = await Promise.all([
-      fetchModelConfig(modelId),
+      Promise.resolve(proxied?.config || null).then((proxyConfig) => proxyConfig ?? fetchModelConfig(modelId)),
       fetchModelReadme(modelId),
       fetchTokenizerConfig(modelId)
     ]);
