@@ -20,6 +20,45 @@ function renderContent(text) {
       );
     }
 
+    // Table
+    if (trimmed.startsWith('|') && trimmed.includes('\n|') && trimmed.includes('---')) {
+      const lines = trimmed.split('\n');
+      const headerLine = lines[0];
+      const bodyLines = lines.slice(2);
+      
+      const parseRow = (rowStr) => rowStr.split('|').map(c => c.trim()).filter((_, idx, arr) => idx !== 0 && idx !== arr.length - 1);
+      
+      return (
+        <div key={i} className="my-8 overflow-x-auto rounded-xl border border-[var(--border-soft)] shadow-sm bg-[var(--panel-bg)]">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-[var(--panel-muted)] border-b border-[var(--border-soft)]">
+              <tr>
+                {parseRow(headerLine).map((cell, cIdx) => (
+                  <th key={cIdx} className="px-5 py-3.5 font-bold text-[0.85rem] text-[var(--text-strong)] uppercase tracking-wider">
+                    {cell}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--border-soft)] text-sm text-[var(--text-main)] bg-[var(--page-bg)]">
+              {bodyLines.map((row, rowIdx) => {
+                if (!row.trim()) return null;
+                return (
+                  <tr key={rowIdx} className="hover:bg-[var(--panel-muted)]/30 transition-colors">
+                    {parseRow(row).map((cell, cIdx) => (
+                      <td key={cIdx} className="px-5 py-4 leading-relaxed font-medium">
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
     // Bullet list
     if (trimmed.startsWith('- ')) {
       const items = trimmed.split('\n').filter((l) => l.trim());

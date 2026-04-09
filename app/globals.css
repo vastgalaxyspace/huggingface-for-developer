@@ -27,13 +27,13 @@
   --wiz-gradient-start: #1e3a5f;
   --wiz-gradient-end: #0f172a;
   --slider-track-bg: #e5e7eb;
-  --slider-fill-start: #d946ef;
-  --slider-fill-end: #2563eb;
-  --slider-thumb-core: #3b82f6;
-  --slider-thumb-ring: #ffffff;
-  --slider-thumb-focus: rgba(59, 130, 246, 0.22);
-  --slider-thumb-shadow: 0 8px 18px rgba(15, 23, 42, 0.14), 0 1px 3px rgba(15, 23, 42, 0.1);
-  --slider-thumb-halo: 0 0 0 8px rgba(59, 130, 246, 0.16);
+  --slider-fill-start: #4f46e5;
+  --slider-fill-end: #4f46e5;
+  --slider-thumb-core: #4f46e5;
+  --slider-thumb-ring: #4338ca;
+  --slider-thumb-focus: rgba(79, 70, 229, 0.22);
+  --slider-thumb-shadow: 0 4px 10px rgba(31, 41, 55, 0.2);
+  --slider-thumb-halo: 0 0 0 0 rgba(0, 0, 0, 0);
 }
 
 html {
@@ -795,89 +795,97 @@ input[type="range"]:not(.app-slider--overlay) {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 8px;
+  height: 7px;
   border-radius: 999px;
   background: var(--slider-track-bg);
   background-image: linear-gradient(90deg, var(--slider-fill-start) 0%, var(--slider-fill-end) 100%);
   background-size: var(--range-progress, 0%) 100%;
   background-repeat: no-repeat;
   cursor: pointer;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+  border: none;
+  box-shadow: none;
   accent-color: var(--slider-thumb-core);
   /* Force this style even when utility classes set custom range bg/height/accent */
-  height: 8px !important;
+  height: 7px !important;
   border-radius: 999px !important;
   background-color: var(--slider-track-bg) !important;
   background-image: linear-gradient(90deg, var(--slider-fill-start) 0%, var(--slider-fill-end) 100%) !important;
   background-size: var(--range-progress, 0%) 100% !important;
   background-repeat: no-repeat !important;
-  border: 1px solid rgba(148, 163, 184, 0.2) !important;
-  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+  border: none !important;
+  box-shadow: none !important;
   accent-color: var(--slider-thumb-core) !important;
 }
 
 input[type="range"]:not(.app-slider--overlay)::-webkit-slider-runnable-track {
-  height: 8px;
+  height: 7px;
   border-radius: 999px;
   background: transparent;
   border: none;
 }
 
 input[type="range"]:not(.app-slider--overlay)::-moz-range-track {
-  height: 8px;
+  height: 7px;
   border-radius: 999px;
   background: var(--slider-track-bg);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+  border: none;
+  box-shadow: none;
 }
 
 input[type="range"]:not(.app-slider--overlay)::-moz-range-progress {
-  height: 8px;
+  height: 7px;
   border-radius: 999px;
   background: linear-gradient(90deg, var(--slider-fill-start) 0%, var(--slider-fill-end) 100%);
 }
 
-input[type="range"]:not(.app-slider--overlay)::-webkit-slider-thumb {
+input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 30px;
-  height: 30px;
-  margin-top: -12px;
+  width: 24px;
+  height: 24px;
+  margin-top: -8.5px;
   border-radius: 50%;
-  background: var(--slider-thumb-core);
-  border: 7px solid var(--slider-thumb-ring);
-  box-shadow: var(--slider-thumb-halo), var(--slider-thumb-shadow);
+  background:
+    radial-gradient(circle at 50% 32%, rgba(255, 255, 255, 0.95) 1.2px, transparent 1.3px),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.95) 1.2px, transparent 1.3px),
+    radial-gradient(circle at 50% 68%, rgba(255, 255, 255, 0.95) 1.2px, transparent 1.3px),
+    var(--slider-thumb-core);
+  border: 2px solid var(--slider-thumb-ring);
+  box-shadow: var(--slider-thumb-shadow);
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-input[type="range"]:not(.app-slider--overlay)::-moz-range-thumb {
-  width: 30px;
-  height: 30px;
+input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: var(--slider-thumb-core);
-  border: 7px solid var(--slider-thumb-ring);
-  box-shadow: var(--slider-thumb-halo), var(--slider-thumb-shadow);
+  background:
+    radial-gradient(circle at 50% 32%, rgba(255, 255, 255, 0.95) 1.2px, transparent 1.3px),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.95) 1.2px, transparent 1.3px),
+    radial-gradient(circle at 50% 68%, rgba(255, 255, 255, 0.95) 1.2px, transparent 1.3px),
+    var(--slider-thumb-core);
+  border: 2px solid var(--slider-thumb-ring);
+  box-shadow: var(--slider-thumb-shadow);
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-input[type="range"]:not(.app-slider--overlay):hover::-webkit-slider-thumb {
+input[type="range"]:hover::-webkit-slider-thumb {
   transform: scale(1.04);
-  box-shadow: 0 0 0 9px rgba(59, 130, 246, 0.2), 0 10px 20px rgba(15, 23, 42, 0.16), 0 2px 4px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 0 0 6px rgba(79, 70, 229, 0.12), 0 6px 14px rgba(31, 41, 55, 0.24);
 }
 
-input[type="range"]:not(.app-slider--overlay):hover::-moz-range-thumb {
+input[type="range"]:hover::-moz-range-thumb {
   transform: scale(1.04);
-  box-shadow: 0 0 0 9px rgba(59, 130, 246, 0.2), 0 10px 20px rgba(15, 23, 42, 0.16), 0 2px 4px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 0 0 6px rgba(79, 70, 229, 0.12), 0 6px 14px rgba(31, 41, 55, 0.24);
 }
 
 input[type="range"]:not(.app-slider--overlay):focus {
   outline: none;
 }
-input[type="range"]:not(.app-slider--overlay):focus::-webkit-slider-thumb {
+input[type="range"]:focus::-webkit-slider-thumb {
   box-shadow: 0 0 0 10px var(--slider-thumb-focus), var(--slider-thumb-shadow);
 }
-input[type="range"]:not(.app-slider--overlay):focus::-moz-range-thumb {
+input[type="range"]:focus::-moz-range-thumb {
   box-shadow: 0 0 0 10px var(--slider-thumb-focus), var(--slider-thumb-shadow);
 }
 
@@ -899,4 +907,14 @@ input[type="range"].app-slider--overlay::-moz-range-track {
   border: none;
   background: transparent;
   box-shadow: none;
+}
+
+/* Normalize native search input chrome to avoid duplicated/misaligned icons */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
 }

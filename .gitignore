@@ -31,3 +31,4 @@ dist-ssr
 out
 build_log.txt
 .vercel
+split.js
