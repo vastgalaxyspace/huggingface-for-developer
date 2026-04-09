@@ -12,6 +12,7 @@ import { CUDA_PROGRAMMING_THEORY } from "../../../../src/data/cudaProgrammingThe
 import { DRIVER_STACK_THEORY } from "../../../../src/data/driverStackTheory";
 import { LIBRARIES_FRAMEWORKS_THEORY } from "../../../../src/data/librariesFrameworksTheory";
 import PhysicalHardwareVisuals from "../../../../src/components/gpu/visuals/PhysicalHardwareVisuals";
+import LearningTopicVisuals from "../../../../src/components/gpu/visuals/LearningTopicVisuals";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../src/components/ui/card";
 
 const TOPICS = {
@@ -224,6 +225,7 @@ export default function LearningTopicClient({ slug }) {
   const isDriverStackLearning = slug === "driver-stack" && activeTab === "learning";
   const isLibrariesFrameworksLearning = slug === "libraries-frameworks" && activeTab === "learning";
   const isPhysicalVisuals = slug === "physical-hardware" && activeTab === "visuals";
+  const hasDedicatedVisuals = activeTab === "visuals" && slug !== "physical-hardware";
   const sidebarTopics = useMemo(
     () =>
       isPhysicalLearning
@@ -276,17 +278,17 @@ export default function LearningTopicClient({ slug }) {
     <div className="min-h-[calc(100vh-78px)] bg-[#f2f6fb] py-8 md:py-12">
       <div className="shell-container">
         <Card className="rounded-[20px] border-[#cddaea] bg-gradient-to-b from-white via-[#fbfdff] to-[#f7fbff] p-6 md:p-8">
-          <Link href="/gpu" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#274867]">
+          <Link href="/gpu" className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-[#1f3f5f]">
             <ArrowLeft className="h-3.5 w-3.5" /> Back to GPU Hub
           </Link>
 
-          <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.2em] text-[#647c95]">{topic.id} / Learning Path</p>
+          <p className="mt-5 text-xs font-bold uppercase tracking-[0.16em] text-[#4e6883]">{topic.id} / Learning Path</p>
           <h1 className="mt-2 text-4xl font-black tracking-[-0.02em] text-[#152a40] md:text-5xl">{topic.title}</h1>
-          <p className="mt-3 max-w-[760px] text-sm leading-7 text-[#5a728a]">{topic.subtitle}</p>
+          <p className="mt-3 max-w-[760px] text-base leading-8 text-[#2f4a64]">{topic.subtitle}</p>
 
           <div className="mt-6 grid gap-4 lg:grid-cols-[250px_1fr]">
             <Card className="rounded border-[#d7e5f4] bg-[#f6fbff] p-3">
-              <p className="mb-2 px-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#7b90a6]">
+              <p className="mb-2 px-1 text-xs font-black uppercase tracking-[0.16em] text-[#4e6883]">
                 Main Sections
               </p>
               <div className="space-y-1">
@@ -300,18 +302,18 @@ export default function LearningTopicClient({ slug }) {
                           setSelectedTopicIndex(0);
                         }
                       }}
-                      className={`w-full text-left text-xs font-black uppercase tracking-[0.18em] ${
+                      className={`w-full rounded text-left text-sm font-black uppercase tracking-[0.14em] ${
                         activeTab === tab.key
-                          ? "border border-[#adc9e4] bg-[#edf5ff] px-3 py-2.5 text-[#163e66]"
-                          : "border border-transparent bg-[#f8fbff] px-3 py-2.5 text-[#5f7891] hover:bg-white"
+                          ? "border border-[#adc9e4] bg-[#edf5ff] px-3 py-3 text-[#183a5b]"
+                          : "border border-transparent bg-[#f8fbff] px-3 py-3 text-[#34506c] hover:bg-white"
                       }`}
                     >
                       {tab.label}
                     </button>
 
                     {activeTab === tab.key ? (
-                      <div className="mt-2 border-l-2 border-[#d7e1ec] pl-2">
-                        <p className="mb-1 px-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#7a90a7]">
+                      <div className="mt-2 border-l-2 border-[#c8d7e7] pl-2">
+                        <p className="mb-1 px-2 text-xs font-bold uppercase tracking-[0.14em] text-[#4e6883]">
                           Sub Topics
                         </p>
                         <div className="space-y-1">
@@ -320,10 +322,10 @@ export default function LearningTopicClient({ slug }) {
                               key={`${item}-${index}`}
                               type="button"
                               onClick={() => setSelectedTopicIndex(index)}
-                              className={`w-full text-left text-[11px] font-semibold tracking-[0.02em] ${
+                              className={`w-full rounded text-left text-sm leading-6 font-semibold tracking-[0.01em] ${
                                 safeIndex === index
-                                  ? "border border-[#bed3e8] bg-white px-2 py-2 text-[#1d4468]"
-                                  : "border border-transparent px-2 py-2 text-[#5f7891] hover:bg-white"
+                                  ? "border border-[#bed3e8] bg-white px-2.5 py-2.5 text-[#163a5d]"
+                                  : "border border-transparent px-2.5 py-2.5 text-[#34506c] hover:bg-white"
                               }`}
                             >
                               {String(index + 1).padStart(2, "0")} - {item}
@@ -354,9 +356,11 @@ export default function LearningTopicClient({ slug }) {
                 <PhysicalHardwareTopic topic={selectedLibrariesFrameworksTopic} />
               ) : isPhysicalVisuals ? (
                 <PhysicalHardwareVisuals selectedIndex={safeIndex} />
+              ) : hasDedicatedVisuals ? (
+                <LearningTopicVisuals slug={slug} selectedIndex={safeIndex} />
               ) : selectedListTopic ? (
-                <Card className="rounded border-[#d7e5f4] bg-[#f8fcff] px-4 py-3 text-sm leading-6 text-[#4f6882]">
-                  <Sparkles className="mr-2 inline h-3.5 w-3.5 text-[#6f849b]" />
+                <Card className="rounded border-[#d7e5f4] bg-[#f8fcff] px-4 py-3 text-base leading-8 text-[#2f4a64]">
+                  <Sparkles className="mr-2 inline h-4 w-4 text-[#4e6883]" />
                   {selectedListTopic}
                 </Card>
               ) : null}
@@ -380,20 +384,20 @@ function PhysicalHardwareTopic({ topic }) {
   return (
     <Card className="overflow-hidden rounded-xl border-[#d7e5f4] bg-white">
       <CardHeader className={`border-b border-[#d7e5f4] px-4 py-3 ${theme.header}`}>
-        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#51687f]">Topic {topic.id}</p>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#39546f]">Topic {topic.id}</p>
         <div className="mt-1 flex items-center gap-2">
-          <span className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-white ${theme.badge}`}>
+          <span className={`rounded px-2 py-1 text-xs font-bold uppercase tracking-[0.08em] text-white ${theme.badge}`}>
             {topic.id}
           </span>
-          <CardTitle className="text-lg">{topic.title}</CardTitle>
+          <CardTitle className="text-xl leading-7 text-[#0f2944]">{topic.title}</CardTitle>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4 px-4 py-4">
+      <CardContent className="space-y-4 px-4 py-4 md:px-5 md:py-5">
         {topic.blocks.map((block, blockIndex) => (
-          <Card key={`${topic.id}-${blockIndex}`} className="rounded border-[#d7e5f4] bg-[#fbfdff] p-3">
-            <h4 className="text-[11px] font-black uppercase tracking-[0.14em] text-[#5c7590]">{block.title}</h4>
-            <div className="mt-3 space-y-3">
+          <Card key={`${topic.id}-${blockIndex}`} className="rounded border-[#d7e5f4] bg-[#fbfdff] p-4 md:p-5">
+            <h4 className="text-sm font-black uppercase tracking-[0.12em] text-[#34506c]">{block.title}</h4>
+            <div className="mt-4 space-y-4">
               {block.sections.map((section, sectionIndex) => (
                 <RenderSection key={`${topic.id}-${blockIndex}-${section.type}-${sectionIndex}`} section={section} />
               ))}
@@ -408,9 +412,9 @@ function PhysicalHardwareTopic({ topic }) {
 function RenderSection({ section }) {
   if (section.type === "content") {
     return (
-      <div className="space-y-2">
+      <div className="space-y-3">
         {section.paragraphs.map((paragraph, index) => (
-          <p key={index} className="text-sm leading-7 text-[#4f6882]">
+          <p key={index} className="text-base leading-8 text-[#2f4a64]">
             {paragraph}
           </p>
         ))}
@@ -420,9 +424,9 @@ function RenderSection({ section }) {
 
   if (section.type === "list") {
     return (
-      <ul className="space-y-1.5">
+      <ul className="space-y-2.5">
         {section.items.map((item, index) => (
-          <li key={index} className="rounded border border-[#dbe3ed] bg-white px-3 py-2 text-sm leading-6 text-[#4f6882]">
+          <li key={index} className="rounded border border-[#dbe3ed] bg-white px-3.5 py-2.5 text-base leading-7 text-[#2f4a64]">
             {item}
           </li>
         ))}
@@ -434,11 +438,11 @@ function RenderSection({ section }) {
     return (
       <div className="grid gap-3 md:grid-cols-2">
         {section.columns.map((column, index) => (
-          <div key={index} className="rounded border border-[#dbe3ed] bg-white p-3">
-            <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#5f7891]">{column.label}</p>
+          <div key={index} className="rounded border border-[#dbe3ed] bg-white p-3.5">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-[#39546f]">{column.label}</p>
             <ul className="mt-2 space-y-1.5">
               {column.items.map((item, itemIndex) => (
-                <li key={itemIndex} className="border-t border-[#e7edf4] pt-1.5 text-[13px] leading-6 text-[#4f6882] first:border-t-0 first:pt-0">
+                <li key={itemIndex} className="border-t border-[#e7edf4] pt-1.5 text-sm leading-7 text-[#2f4a64] first:border-t-0 first:pt-0">
                   {item}
                 </li>
               ))}
@@ -452,9 +456,9 @@ function RenderSection({ section }) {
   if (section.type === "formula") {
     return (
       <Card className="rounded border-[#d7e5f4] bg-[#f8fbff] px-3 py-3">
-        <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-6 text-[#3f5b77]">{section.main}</pre>
+        <pre className="whitespace-pre-wrap break-words font-mono text-sm leading-7 text-[#213f5b]">{section.main}</pre>
         {section.sub ? (
-          <p className="mt-2 whitespace-pre-wrap text-[11px] leading-6 text-[#647c95]">{section.sub}</p>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-[#34506c]">{section.sub}</p>
         ) : null}
       </Card>
     );
@@ -464,9 +468,9 @@ function RenderSection({ section }) {
     return (
       <div className="grid gap-2 sm:grid-cols-2">
         {section.items.map((kv, index) => (
-          <div key={index} className="rounded border border-[#dbe3ed] bg-white px-3 py-2.5">
-            <p className="text-[11px] text-[#6c839b]">{kv.key}</p>
-            <p className="mt-1 whitespace-pre-wrap font-mono text-sm text-[#3f5b77]">{kv.value}</p>
+          <div key={index} className="rounded border border-[#dbe3ed] bg-white px-3.5 py-3">
+            <p className="text-xs font-semibold text-[#4e6883]">{kv.key}</p>
+            <p className="mt-1 whitespace-pre-wrap font-mono text-sm leading-7 text-[#213f5b]">{kv.value}</p>
           </div>
         ))}
       </div>
@@ -477,7 +481,7 @@ function RenderSection({ section }) {
     return (
       <div className="flex flex-wrap gap-2">
         {section.items.map((tag, index) => (
-          <span key={index} className="rounded border border-[#dbe3ed] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#5f7891]">
+          <span key={index} className="rounded border border-[#dbe3ed] bg-white px-2.5 py-1.5 text-xs font-semibold text-[#34506c]">
             {tag}
           </span>
         ))}
@@ -492,7 +496,7 @@ function RenderSection({ section }) {
           <thead className="bg-[#f4f8fc]">
             <tr>
               {section.headers.map((header, index) => (
-                <th key={index} className="whitespace-nowrap border-b border-[#dbe3ed] px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-[#617b95]">
+                <th key={index} className="whitespace-nowrap border-b border-[#dbe3ed] px-3 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-[#39546f]">
                   {header}
                 </th>
               ))}
@@ -502,7 +506,7 @@ function RenderSection({ section }) {
             {section.rows.map((row, rowIndex) => (
               <tr key={rowIndex} className="border-b border-[#edf2f7] last:border-b-0">
                 {row.map((cell, cellIndex) => (
-                  <td key={cellIndex} className="whitespace-pre-wrap px-3 py-2 text-[13px] text-[#4f6882]">
+                  <td key={cellIndex} className="whitespace-pre-wrap px-3 py-2.5 text-sm leading-7 text-[#2f4a64]">
                     {cell}
                   </td>
                 ))}
@@ -528,7 +532,7 @@ function SubTopicNavigator({ total, currentIndex, onSelect }) {
           type="button"
           disabled={!hasPrev}
           onClick={() => hasPrev && onSelect(currentIndex - 1)}
-          className="inline-flex items-center justify-center gap-2 rounded border border-[#cfdcea] bg-white px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#355371] disabled:cursor-not-allowed disabled:opacity-45"
+          className="inline-flex items-center justify-center gap-2 rounded border border-[#cfdcea] bg-white px-3 py-2.5 text-sm font-bold uppercase tracking-[0.1em] text-[#1f3f5f] disabled:cursor-not-allowed disabled:opacity-45"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Previous
@@ -537,7 +541,7 @@ function SubTopicNavigator({ total, currentIndex, onSelect }) {
           type="button"
           disabled={!hasNext}
           onClick={() => hasNext && onSelect(currentIndex + 1)}
-          className="inline-flex items-center justify-center gap-2 rounded border border-[#cfdcea] bg-white px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#355371] disabled:cursor-not-allowed disabled:opacity-45"
+          className="inline-flex items-center justify-center gap-2 rounded border border-[#cfdcea] bg-white px-3 py-2.5 text-sm font-bold uppercase tracking-[0.1em] text-[#1f3f5f] disabled:cursor-not-allowed disabled:opacity-45"
         >
           Next
           <ArrowRight className="h-3.5 w-3.5" />

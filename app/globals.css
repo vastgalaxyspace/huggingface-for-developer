@@ -26,6 +26,14 @@
   --wiz-surface-hover: rgba(255, 255, 255, 0.95);
   --wiz-gradient-start: #1e3a5f;
   --wiz-gradient-end: #0f172a;
+  --slider-track-bg: #e5e7eb;
+  --slider-fill-start: #d946ef;
+  --slider-fill-end: #2563eb;
+  --slider-thumb-core: #3b82f6;
+  --slider-thumb-ring: #ffffff;
+  --slider-thumb-focus: rgba(59, 130, 246, 0.22);
+  --slider-thumb-shadow: 0 8px 18px rgba(15, 23, 42, 0.14), 0 1px 3px rgba(15, 23, 42, 0.1);
+  --slider-thumb-halo: 0 0 0 8px rgba(59, 130, 246, 0.16);
 }
 
 html {
@@ -783,77 +791,104 @@ body {
 }
 
 /* Global slider theme */
-input[type="range"] {
+input[type="range"]:not(.app-slider--overlay) {
   -webkit-appearance: none;
   appearance: none;
-  height: 12px;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--slider-track-bg);
+  background-image: linear-gradient(90deg, var(--slider-fill-start) 0%, var(--slider-fill-end) 100%);
+  background-size: var(--range-progress, 0%) 100%;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+  accent-color: var(--slider-thumb-core);
+  /* Force this style even when utility classes set custom range bg/height/accent */
+  height: 8px !important;
+  border-radius: 999px !important;
+  background-color: var(--slider-track-bg) !important;
+  background-image: linear-gradient(90deg, var(--slider-fill-start) 0%, var(--slider-fill-end) 100%) !important;
+  background-size: var(--range-progress, 0%) 100% !important;
+  background-repeat: no-repeat !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+  accent-color: var(--slider-thumb-core) !important;
+}
+
+input[type="range"]:not(.app-slider--overlay)::-webkit-slider-runnable-track {
+  height: 8px;
   border-radius: 999px;
   background: transparent;
-  cursor: pointer;
+  border: none;
 }
 
-input[type="range"]::-webkit-slider-runnable-track {
-  height: 12px;
+input[type="range"]:not(.app-slider--overlay)::-moz-range-track {
+  height: 8px;
   border-radius: 999px;
-  border: 1px solid rgba(109, 128, 160, 0.28);
-  background: linear-gradient(180deg, #2d3f5d 0%, #1b2a43 100%);
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.08), inset 0 -1px 2px rgba(0, 0, 0, 0.28);
+  background: var(--slider-track-bg);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
 }
 
-input[type="range"]::-moz-range-track {
-  height: 12px;
+input[type="range"]:not(.app-slider--overlay)::-moz-range-progress {
+  height: 8px;
   border-radius: 999px;
-  border: 1px solid rgba(109, 128, 160, 0.28);
-  background: linear-gradient(180deg, #2d3f5d 0%, #1b2a43 100%);
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.08), inset 0 -1px 2px rgba(0, 0, 0, 0.28);
+  background: linear-gradient(90deg, var(--slider-fill-start) 0%, var(--slider-fill-end) 100%);
 }
 
-input[type="range"]::-webkit-slider-thumb {
+input[type="range"]:not(.app-slider--overlay)::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 22px;
-  height: 22px;
-  margin-top: -6px;
-  border-radius: 999px;
-  border: 3px solid #7f94ff;
-  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #f3f6ff 40%, #e2e8ff 100%);
-  box-shadow: 0 4px 10px rgba(25, 40, 78, 0.38), 0 0 0 3px rgba(127, 148, 255, 0.16);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 30px;
+  height: 30px;
+  margin-top: -12px;
+  border-radius: 50%;
+  background: var(--slider-thumb-core);
+  border: 7px solid var(--slider-thumb-ring);
+  box-shadow: var(--slider-thumb-halo), var(--slider-thumb-shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-input[type="range"]::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  border: 3px solid #7f94ff;
-  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #f3f6ff 40%, #e2e8ff 100%);
-  box-shadow: 0 4px 10px rgba(25, 40, 78, 0.38), 0 0 0 3px rgba(127, 148, 255, 0.16);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+input[type="range"]:not(.app-slider--overlay)::-moz-range-thumb {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--slider-thumb-core);
+  border: 7px solid var(--slider-thumb-ring);
+  box-shadow: var(--slider-thumb-halo), var(--slider-thumb-shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-input[type="range"]:hover::-webkit-slider-thumb {
+input[type="range"]:not(.app-slider--overlay):hover::-webkit-slider-thumb {
   transform: scale(1.04);
-  box-shadow: 0 6px 12px rgba(25, 40, 78, 0.45), 0 0 0 5px rgba(127, 148, 255, 0.2);
+  box-shadow: 0 0 0 9px rgba(59, 130, 246, 0.2), 0 10px 20px rgba(15, 23, 42, 0.16), 0 2px 4px rgba(15, 23, 42, 0.1);
 }
 
-input[type="range"]:hover::-moz-range-thumb {
+input[type="range"]:not(.app-slider--overlay):hover::-moz-range-thumb {
   transform: scale(1.04);
-  box-shadow: 0 6px 12px rgba(25, 40, 78, 0.45), 0 0 0 5px rgba(127, 148, 255, 0.2);
+  box-shadow: 0 0 0 9px rgba(59, 130, 246, 0.2), 0 10px 20px rgba(15, 23, 42, 0.16), 0 2px 4px rgba(15, 23, 42, 0.1);
 }
 
-input[type="range"]:focus {
+input[type="range"]:not(.app-slider--overlay):focus {
   outline: none;
 }
-
-input[type="range"]:focus::-webkit-slider-thumb {
-  box-shadow: 0 6px 12px rgba(25, 40, 78, 0.45), 0 0 0 6px rgba(127, 148, 255, 0.24);
+input[type="range"]:not(.app-slider--overlay):focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 10px var(--slider-thumb-focus), var(--slider-thumb-shadow);
 }
-
-input[type="range"]:focus::-moz-range-thumb {
-  box-shadow: 0 6px 12px rgba(25, 40, 78, 0.45), 0 0 0 6px rgba(127, 148, 255, 0.24);
+input[type="range"]:not(.app-slider--overlay):focus::-moz-range-thumb {
+  box-shadow: 0 0 0 10px var(--slider-thumb-focus), var(--slider-thumb-shadow);
 }
 
 /* Overlay sliders keep transparent track while using the same thumb style */
+input[type="range"].app-slider--overlay {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  accent-color: var(--slider-thumb-core) !important;
+}
+
 input[type="range"].app-slider--overlay::-webkit-slider-runnable-track {
   border: none;
   background: transparent;

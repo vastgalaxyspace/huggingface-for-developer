@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: '/compare', label: 'Compare' },
   { href: '/recommender', label: 'Recommender' },
   { href: '/gpu', label: 'GPU Hub' },
+  { href: '/ai-inference', label: 'AI Inference' },
   { href: '/ai-updates', label: 'AI Updates' },
   { href: '/about', label: 'About Us' },
 ];
@@ -23,6 +24,37 @@ const Header = () => {
     if (path !== '/' && pathname?.startsWith(path)) return true;
     return false;
   };
+
+  useEffect(() => {
+    const updateSlider = (target) => {
+      if (target && target.type === 'range') {
+        const min = parseFloat(target.min || 0);
+        const max = parseFloat(target.max || 100);
+        const val = parseFloat(target.value);
+        const p = ((val - min) / (max - min)) * 100;
+        target.style.setProperty('--range-progress', `${p}%`);
+      }
+    };
+
+    const handleInput = (e) => updateSlider(e.target);
+    
+    // Capture manual dragging
+    document.addEventListener('input', handleInput);
+    
+    // Initialize current sliders
+    const applyToAll = () => {
+      document.querySelectorAll('input[type="range"]').forEach(updateSlider);
+    };
+    
+    applyToAll();
+    // Catch late-rendered elements after routing
+    const timeout = setTimeout(applyToAll, 300);
+
+    return () => {
+      document.removeEventListener('input', handleInput);
+      clearTimeout(timeout);
+    };
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-[200] border-b border-[var(--border-soft)] bg-white">
