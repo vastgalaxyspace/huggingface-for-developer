@@ -1042,7 +1042,6 @@ function GenerationSlider() {
       // Simulate smooth CSS-like drag using an interval
       let current = 0;
       const target = 50;
-      const steps = 30;
       const interval = setInterval(() => {
         current += (target - current) * 0.15;
         if (Math.abs(target - current) < 0.5) {

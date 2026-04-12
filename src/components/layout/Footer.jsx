@@ -3,11 +3,13 @@ import Link from 'next/link';
 const Footer = () => {
   const footerLinks = [
     { href: '/about', label: 'About' },
+    { href: '/guides', label: 'Guides' },
     { href: '/compare', label: 'Compare Models' },
     { href: '/recommender', label: 'Recommender' },
     { href: '/gpu', label: 'GPU Tools' },
     { href: '/ai-updates', label: 'AI Updates' },
     { href: '/privacy', label: 'Privacy' },
+    { href: '/terms', label: 'Terms' },
     { href: '/contact', label: 'Contact' },
   ];
 

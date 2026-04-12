@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Settings, BookOpen, ChevronLeft, ArrowLeft, Menu, X } from 'lucide-react';
 import { TUTORIAL_CHAPTERS } from '../../../src/data/inference-tutorial-data';

@@ -17,11 +17,11 @@ function formatGb(value) {
   return `${value.toFixed(1)} GB`;
 }
 
-function GridBox({ icon: Icon, label, value }) {
+function GridBox({ icon, label, value }) {
   return (
     <div className="flex items-start gap-3 rounded-xl border border-slate-200/60 bg-white/50 p-4">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
-        <Icon className="h-4 w-4" />
+        {icon}
       </div>
       <div className="min-w-0">
         <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</div>
@@ -54,10 +54,10 @@ export default function ModelDetailsExpand({ model, hardwareLabel }) {
               Model Specifications
             </h4>
             <div className="grid grid-cols-2 gap-3">
-              <GridBox icon={Hash} label="Context Window" value={model.context_length ? `${model.context_length.toLocaleString()} tokens` : "Unknown"} />
-              <GridBox icon={Layers} label="Architecture" value={model.config?.architectures?.[0] || "Unknown"} />
-              <GridBox icon={Cpu} label="Parameters" value={model.params_b ? `${model.params_b.toFixed(1)}B` : "Unknown"} />
-              <GridBox icon={Calendar} label="Last Updated" value={formatDate(model.lastModified)} />
+              <GridBox icon={<Hash className="h-4 w-4" />} label="Context Window" value={model.context_length ? `${model.context_length.toLocaleString()} tokens` : "Unknown"} />
+              <GridBox icon={<Layers className="h-4 w-4" />} label="Architecture" value={model.config?.architectures?.[0] || "Unknown"} />
+              <GridBox icon={<Cpu className="h-4 w-4" />} label="Parameters" value={model.params_b ? `${model.params_b.toFixed(1)}B` : "Unknown"} />
+              <GridBox icon={<Calendar className="h-4 w-4" />} label="Last Updated" value={formatDate(model.lastModified)} />
             </div>
             
             <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">

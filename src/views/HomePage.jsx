@@ -199,6 +199,13 @@ const coreTools = [
     body: 'Follow the latest AI model updates, releases, and ecosystem changes from one place.',
     cta: 'Read Updates',
   },
+  {
+    href: '/guides',
+    icon: AlignLeft,
+    title: 'Deployment Guides',
+    body: 'Read practical guides on model selection, RAG, quantization, and low-latency production architecture.',
+    cta: 'Browse Guides',
+  },
 ];
 
 const audienceGroups = [

@@ -1,5 +1,6 @@
 import { absoluteUrl } from '../src/lib/seo';
 import { getTrendingModels } from '../src/services/huggingface';
+import { getAllGuides } from '../src/data/guidesContent';
 
 const learningTopicRoutes = [
   '/gpu/learning/physical-hardware',
@@ -14,7 +15,10 @@ const learningTopicRoutes = [
 const routes = [
   { path: '/', priority: 1.0, changeFrequency: 'daily' },
   { path: '/about', priority: 0.7, changeFrequency: 'monthly' },
+  { path: '/guides', priority: 0.9, changeFrequency: 'weekly' },
   { path: '/ai-updates', priority: 0.7, changeFrequency: 'weekly' },
+  { path: '/ai-inference', priority: 0.8, changeFrequency: 'weekly' },
+  { path: '/ai-inference/tutorial', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/compare', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/contact', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/gpu', priority: 0.9, changeFrequency: 'weekly' },
@@ -32,17 +36,26 @@ const routes = [
     changeFrequency: 'monthly',
   })),
   { path: '/privacy', priority: 0.45, changeFrequency: 'yearly' },
+  { path: '/terms', priority: 0.45, changeFrequency: 'yearly' },
   { path: '/recommender', priority: 0.85, changeFrequency: 'weekly' },
 ];
 
 export default async function sitemap() {
   const lastModified = new Date();
+  const guides = getAllGuides();
 
   const staticSitemap = routes.map((route) => ({
     url: absoluteUrl(route.path),
     lastModified,
     changeFrequency: route.changeFrequency,
     priority: route.priority,
+  }));
+
+  const guideRoutes = guides.map((guide) => ({
+    url: absoluteUrl(`/guides/${guide.slug}`),
+    lastModified: new Date(guide.lastUpdated || lastModified),
+    changeFrequency: 'monthly',
+    priority: 0.75,
   }));
 
   try {
@@ -53,9 +66,9 @@ export default async function sitemap() {
       changeFrequency: 'weekly',
       priority: 0.8,
     }));
-    return [...staticSitemap, ...modelRoutes];
+    return [...staticSitemap, ...guideRoutes, ...modelRoutes];
   } catch (error) {
     console.warn("Failed to fetch dynamic models for sitemap", error);
-    return staticSitemap;
+    return [...staticSitemap, ...guideRoutes];
   }
 }
