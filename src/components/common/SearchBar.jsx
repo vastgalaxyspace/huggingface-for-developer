@@ -29,15 +29,15 @@ const SearchBar = ({ onSearch, loading = false }) => {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Enter model ID (e.g., meta-llama/Llama-2-7b-chat-hf)"
             disabled={loading}
-            className="w-full px-6 py-4 pl-14 pr-32 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="w-full rounded-2xl border border-[var(--border-soft)] bg-white px-6 py-4 pl-14 pr-32 text-lg text-[var(--text-main)] placeholder-[var(--text-faint)] transition-all focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[rgba(53,87,132,0.2)] disabled:cursor-not-allowed disabled:opacity-50"
           />
           
           {/* Search Icon */}
           <div className="absolute left-5 top-1/2 -translate-y-1/2">
             {loading ? (
-              <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+              <Loader2 className="w-6 h-6 animate-spin text-[var(--accent)]" />
             ) : (
-              <Search className="w-6 h-6 text-gray-400" />
+              <Search className="w-6 h-6 text-[var(--text-faint)]" />
             )}
           </div>
 
@@ -45,7 +45,7 @@ const SearchBar = ({ onSearch, loading = false }) => {
           <button
             type="submit"
             disabled={loading || !query.trim()}
-            className="absolute right-2 top-1/2 -translate-y-1/2 px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-[var(--accent)] px-6 py-2 font-semibold text-white transition-all hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? 'Loading...' : 'Analyze'}
           </button>
@@ -54,7 +54,7 @@ const SearchBar = ({ onSearch, loading = false }) => {
 
       {/* Example Models */}
       <div className="flex flex-wrap gap-2 mt-4 items-center">
-        <span className="text-sm text-gray-400">Quick start:</span>
+        <span className="text-sm text-[var(--text-faint)]">Quick start:</span>
         {examples.map((example) => (
           <button
             key={example}
@@ -63,7 +63,7 @@ const SearchBar = ({ onSearch, loading = false }) => {
               onSearch(example);
             }}
             disabled={loading}
-            className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-sm text-gray-300 border border-white/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-lg border border-[var(--border-soft)] bg-white px-3 py-1.5 text-sm text-[var(--text-muted)] transition-all hover:border-[var(--border-strong)] hover:text-[var(--text-main)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {example.split('/')[1]}
           </button>

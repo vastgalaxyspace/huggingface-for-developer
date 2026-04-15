@@ -1,6 +1,8 @@
 import Link from 'next/link';
 
 const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
   const footerLinks = [
     { href: '/about', label: 'About' },
     { href: '/guides', label: 'Guides' },
@@ -21,14 +23,14 @@ const Footer = () => {
             <div className="flex flex-col gap-2 text-sm text-[var(--text-muted)] md:flex-row md:items-center">
               <span className="font-extrabold uppercase tracking-[0.28em] text-[var(--text-faint)]">InnoAI AI Explorer</span>
               <span className="hidden text-[var(--border-strong)] md:inline">|</span>
-              <span>&copy; 2024 InnoAI AI Explorer. All rights reserved.</span>
+              <span>&copy; {currentYear} InnoAI AI Explorer. All rights reserved.</span>
             </div>
             <p className="mt-4 text-sm leading-7 text-[var(--text-muted)]">
               Research open-source AI models, compare LLMs, estimate VRAM, and plan GPU infrastructure with tools built for developers, researchers, and ML teams.
             </p>
           </div>
 
-          <div className="grid gap-3 text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-faint)] sm:grid-cols-2 lg:min-w-[420px]">
+          <div className="grid gap-2.5 text-sm font-semibold text-[var(--text-muted)] sm:grid-cols-2 lg:min-w-[420px]">
             {footerLinks.map((link) => (
               <Link key={link.href} href={link.href} prefetch={false} className="transition-colors hover:text-[var(--text-main)]">
                 {link.label}

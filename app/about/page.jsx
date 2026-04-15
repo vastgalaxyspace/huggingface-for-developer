@@ -11,7 +11,7 @@ export const metadata = pageMetadata({
 export default function AboutPage() {
   return (
     <div className="shell-container py-12">
-      <div className="max-w-4xl mx-auto">
+      <div>
         <h1 className="text-4xl font-extrabold tracking-tight text-[var(--text-strong)] mb-6">
           About Us
         </h1>

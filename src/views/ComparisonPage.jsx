@@ -4,6 +4,7 @@ import { Table, BarChart2, Plus, X, Loader2, Info } from 'lucide-react';
 import ModelSelector from '../components/ModelSelector';
 import { fetchCompleteModelData } from '../services/huggingface';
 import { enrichModelData } from '../utils/modelUtils';
+import { notify } from '../lib/notifications';
 
 const ComparisonPage = () => {
   const [viewMode, setViewMode] = useState('table');
@@ -17,7 +18,7 @@ const ComparisonPage = () => {
     }
     
     if (selectedModels.length >= 3) {
-      alert("You can only compare up to 3 models at a time.");
+      notify('You can only compare up to 3 models at a time.', 'info');
       return;
     }
 

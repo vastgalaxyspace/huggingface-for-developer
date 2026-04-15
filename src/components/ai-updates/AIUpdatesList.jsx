@@ -30,6 +30,64 @@ const getCategoryLabel = (value) => {
   return FILTER_OPTIONS.find((option) => option.key === normalized)?.label || "AI News";
 };
 
+const formatUpdateDate = (update) => {
+  if (update?.date) return update.date;
+
+  const createdAt = update?.createdAt?.toDate?.();
+  if (!createdAt || Number.isNaN(createdAt.getTime())) return "Unknown date";
+
+  return createdAt.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const getInsightForUpdate = (update) => {
+  const category = normalizeCategory(update?.category);
+  const text = `${update?.title || ''} ${update?.description || ''}`.toLowerCase();
+
+  if (category === "ai_models") {
+    return {
+      why: "New model launches can shift your cost-to-quality curve and change your shortlist priorities.",
+      action: "Re-run model comparison with your production prompts and verify latency/quality tradeoffs.",
+    };
+  }
+
+  if (category === "ai_tools") {
+    return {
+      why: "Tooling updates affect deployment speed, observability quality, and integration risk.",
+      action: "Validate compatibility in a staging workflow before adopting in production pipelines.",
+    };
+  }
+
+  if (category === "ai_infrastructure") {
+    return {
+      why: "Infrastructure changes directly impact throughput, cost predictability, and reliability under load.",
+      action: "Update your sizing assumptions and run a fresh VRAM + throughput validation cycle.",
+    };
+  }
+
+  if (category === "ai_research") {
+    return {
+      why: "Research shifts can become product advantages when translated into practical evaluation criteria.",
+      action: "Map findings to measurable benchmarks and test them against your real user scenarios.",
+    };
+  }
+
+  if (text.includes("pricing") || text.includes("cost") || text.includes("token")) {
+    return {
+      why: "Pricing updates can invalidate previous model selection decisions and budget assumptions.",
+      action: "Recalculate total monthly serving costs and revisit fallback model strategy.",
+    };
+  }
+
+  return {
+    why: "Ecosystem changes can influence model viability, integration effort, and deployment risk.",
+    action: "Convert major headlines into a concrete compare-test-adopt decision workflow.",
+  };
+};
+
 export default function AIUpdatesList() {
   const [updates, setUpdates] = useState([]);
   const [activeFilter, setActiveFilter] = useState("all");
@@ -39,14 +97,11 @@ export default function AIUpdatesList() {
   useEffect(() => {
     async function fetchUpdates() {
       try {
-        const q = query(
-          collection(db, "ai_updates"), 
-          orderBy("createdAt", "desc")
-        );
+        const q = query(collection(db, "ai_updates"), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);
-        const fetchedUpdates = querySnapshot.docs.map(doc => ({
+        const fetchedUpdates = querySnapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         }));
         setUpdates(fetchedUpdates);
       } catch (err) {
@@ -117,32 +172,51 @@ export default function AIUpdatesList() {
         </div>
       ) : (
         <div className="flex flex-col gap-2.5">
-          {filteredUpdates.map((update) => (
-            <a
-              key={update.id}
-              href={update.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group block rounded-lg border border-[var(--border-soft)] bg-white p-3 sm:px-4 sm:py-3 shadow-sm transition-all hover:border-blue-300 hover:bg-slate-50"
-            >
-              <div className="mb-1 flex flex-col justify-between gap-1 sm:flex-row sm:items-center sm:gap-4">
-                <h2 className="text-base font-semibold text-[var(--text-strong)] transition-colors group-hover:text-blue-600">
-                  {update.title}
-                </h2>
-                <div className="flex shrink-0 items-center gap-2">
-                  <span className="inline-flex items-center rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
-                    {getCategoryLabel(update.category)}
-                  </span>
-                  <span className="text-xs text-[var(--text-muted)]">
-                    {update.date || new Date(update.createdAt?.toDate()).toLocaleDateString()}
-                  </span>
+          {filteredUpdates.map((update) => {
+            const isExternal = Boolean(update.link);
+            const insight = getInsightForUpdate(update);
+
+            return (
+              <a
+                key={update.id}
+                href={isExternal ? update.link : undefined}
+                target={isExternal ? "_blank" : undefined}
+                rel={isExternal ? "noopener noreferrer" : undefined}
+                className="group block rounded-lg border border-[var(--border-soft)] bg-white p-3 sm:px-4 sm:py-3 shadow-sm transition-all hover:border-blue-300 hover:bg-slate-50"
+              >
+                <div className="mb-1 flex flex-col justify-between gap-1 sm:flex-row sm:items-center sm:gap-4">
+                  <h2 className="text-base font-semibold text-[var(--text-strong)] transition-colors group-hover:text-blue-600">
+                    {update.title}
+                  </h2>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="inline-flex items-center rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
+                      {getCategoryLabel(update.category)}
+                    </span>
+                    <span className="text-xs text-[var(--text-muted)]">
+                      {formatUpdateDate(update)}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <p className="text-sm leading-snug text-[var(--text-muted)]">
-                {update.description}
-              </p>
-            </a>
-          ))}
+                <p className="text-sm leading-snug text-[var(--text-muted)]">
+                  {update.description}
+                </p>
+                <div className="mt-3 grid gap-2 rounded-lg border border-[var(--border-soft)] bg-[var(--panel-muted)] p-2.5 sm:grid-cols-2">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--text-faint)]">
+                      Why This Matters
+                    </p>
+                    <p className="mt-1 text-xs leading-6 text-[var(--text-muted)]">{insight.why}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--text-faint)]">
+                      Operator Action
+                    </p>
+                    <p className="mt-1 text-xs leading-6 text-[var(--text-muted)]">{insight.action}</p>
+                  </div>
+                </div>
+              </a>
+            );
+          })}
         </div>
       )}
     </div>

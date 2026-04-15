@@ -17,7 +17,7 @@ export default function ContactPage() {
       <div className="editorial-panel rounded-[28px] px-6 py-10 sm:px-10">
         <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]">Contact</p>
         <h1 className="mt-3 text-4xl font-black tracking-tight text-[var(--text-strong)]">Contact InnoAI</h1>
-        <div className="mt-6 max-w-3xl space-y-5 text-[15px] leading-8 text-[var(--text-muted)]">
+        <div className="mt-6 space-y-5 text-[15px] leading-8 text-[var(--text-muted)]">
           <p>
             We welcome product feedback, data corrections, partnership requests, and editorial suggestions related to
             AI model analysis, benchmarking assumptions, and GPU planning content.

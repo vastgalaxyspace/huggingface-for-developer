@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { notify } from '../lib/notifications';
 
 const FAVORITES_KEY = 'hf_model_explorer_favorites';
 
@@ -111,10 +112,10 @@ export const useFavorites = () => {
             });
             return merged;
           });
-          alert('Favorites imported successfully!');
+          notify('Favorites imported successfully.', 'success');
         }
       } catch {
-        alert('Error importing favorites. Please check the file format.');
+        notify('Error importing favorites. Please check the file format.', 'error');
       }
     };
     reader.readAsText(file);

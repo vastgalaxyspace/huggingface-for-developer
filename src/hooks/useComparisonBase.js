@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { notify } from '../lib/notifications';
 
 /**
  * Custom hook for managing model comparison
@@ -10,22 +11,17 @@ export const useComparison = () => {
 
   // Add model to comparison
   const addToComparison = useCallback((modelId) => {
-    setComparisonList(prev => {
-      // Don't add if already in list
-      if (prev.includes(modelId)) {
-        return prev;
-      }
-      
-      // Don't add if at max capacity
-      if (prev.length >= MAX_COMPARE) {
-        // Schedule alert outside the state updater to avoid side effects
-        setTimeout(() => alert(`Maximum ${MAX_COMPARE} models can be compared at once`), 0);
-        return prev;
-      }
-      
-      return [...prev, modelId];
-    });
-  }, []);
+    if (comparisonList.includes(modelId)) {
+      return;
+    }
+
+    if (comparisonList.length >= MAX_COMPARE) {
+      notify(`Maximum ${MAX_COMPARE} models can be compared at once`, 'info');
+      return;
+    }
+
+    setComparisonList((prev) => (prev.includes(modelId) ? prev : [...prev, modelId]));
+  }, [comparisonList]);
 
   // Remove model from comparison
   const removeFromComparison = useCallback((modelId) => {

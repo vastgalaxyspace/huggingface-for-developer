@@ -35,9 +35,9 @@ const PRIMARY_NAV_ITEMS = [
         icon: Scale,
       },
       {
-        href: '/guides/llama-vs-qwen-vs-gemma-coding',
+        href: '/coding-model-analysis',
         title: 'Coding Model Analysis',
-        description: 'Practical comparison for code workflows',
+        description: 'Single-page AI coding models, tools, and benchmark guide',
         icon: BarChart3,
       },
       {
@@ -152,44 +152,6 @@ const NAV_ITEMS = [
   { href: '/ai-updates', label: 'AI Updates' },
   { href: '/about', label: 'About Us' },
 ];
-
-const DUMMY_SUB_ITEMS = [
-  {
-    href: '#',
-    title: 'Coming Soon',
-    description: 'This section will be updated with real content shortly',
-    icon: Box,
-  },
-  {
-    href: '#',
-    title: 'Draft Module',
-    description: 'Placeholder card while final data is being prepared',
-    icon: Layers,
-  },
-  {
-    href: '#',
-    title: 'Sample Entry',
-    description: 'Temporary link for navigation layout testing',
-    icon: BookOpen,
-  },
-  {
-    href: '#',
-    title: 'Planned Resource',
-    description: 'You can replace this item with production data later',
-    icon: Cpu,
-  },
-];
-
-function getMenuItems(items = []) {
-  const safeItems = Array.isArray(items) ? items.filter(Boolean) : [];
-  if (safeItems.length >= 4) return safeItems.slice(0, 4);
-
-  const merged = [...safeItems];
-  for (let i = 0; merged.length < 4; i += 1) {
-    merged.push(DUMMY_SUB_ITEMS[i % DUMMY_SUB_ITEMS.length]);
-  }
-  return merged;
-}
 
 const Header = () => {
   const pathname = usePathname();
@@ -326,7 +288,7 @@ const Header = () => {
                       >
                         <div className="rounded-2xl border border-[var(--border-soft)] bg-white p-3 shadow-[0_18px_48px_rgba(24,39,75,0.16)]">
                           <div className="space-y-1.5">
-                          {getMenuItems(item.items).map((subItem, index) => {
+                          {(Array.isArray(item.items) ? item.items : []).slice(0, 4).map((subItem, index) => {
                             const Icon = subItem.icon;
                             return (
                               <Link

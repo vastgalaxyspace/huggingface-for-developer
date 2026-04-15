@@ -16,7 +16,7 @@ export default function FavoritesPageClient() {
   } = useFavorites();
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10 min-h-[calc(100vh-64px)]">
+    <div className="shell-container py-10 min-h-[calc(100vh-64px)]">
       <button
         onClick={() => router.push("/")}
         className="flex items-center gap-2 text-slate-500 hover:text-slate-800 mb-8 transition-colors group"

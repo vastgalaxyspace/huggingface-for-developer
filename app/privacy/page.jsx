@@ -15,7 +15,7 @@ export default function PrivacyPage() {
         <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]">Privacy</p>
         <h1 className="mt-3 text-4xl font-black tracking-tight text-[var(--text-strong)]">Privacy Policy</h1>
         <p className="mt-5 text-sm leading-8 text-[var(--text-muted)]">Last updated: April 12, 2026</p>
-        <div className="mt-6 max-w-3xl space-y-5 text-[15px] leading-8 text-[var(--text-muted)]">
+        <div className="mt-6 space-y-5 text-[15px] leading-8 text-[var(--text-muted)]">
           <p>
             InnoAI is designed to help users research open-source AI models and deployment workflows. We aim to collect
             minimal information needed to operate, improve, and secure the website.

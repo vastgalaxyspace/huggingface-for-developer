@@ -600,9 +600,47 @@ const FilterDropdown = ({ type, label, options, selected, onToggle, onClear, des
   );
 };
 
+const formatUpdatedLabel = (value, nowMs) => {
+  if (!value) return 'Updated recently';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Updated recently';
+
+  if (typeof nowMs !== 'number') return 'Updated recently';
+
+  const diffMs = nowMs - date.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  if (diffMinutes < 1) return 'Updated just now';
+  if (diffMinutes < 60) return `Updated ${diffMinutes}m ago`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `Updated ${diffHours}h ago`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `Updated ${diffDays}d ago`;
+
+  return `Updated ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+};
+
+const formatUpdatedTitle = (value, hydrated) => {
+  if (!value) return undefined;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return undefined;
+  if (!hydrated) return date.toISOString();
+
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+};
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const HomePage = ({ onSearch, loading, initialModels = [] }) => {
+  const [hydrated, setHydrated] = useState(false);
   const [popularModels, setPopularModels] = useState(initialModels);
   const [modelsLoading, setModelsLoading] = useState(initialModels.length === 0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -633,6 +671,10 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const MODELS_PER_PAGE = 15;
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   // ── Data fetching ────────────────────────────────────────────────────────
 
@@ -872,8 +914,6 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
   const totalActiveCount = activeBasicCount + activeAdvancedCount;
 
   const currentSortLabel = SORT_OPTIONS.find((s) => s.id === sortBy)?.label ?? 'Latest Trending';
-
-  const TIMES = ['2h ago', '1d ago', '5h ago', '12h ago', '3d ago'];
 
   // ── Render ───────────────────────────────────────────────────────────────
 
@@ -1300,7 +1340,7 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
                   </button>
                 </div>
               ) : (
-                displayModels.map((model, i) => {
+                displayModels.map((model) => {
                   const PipelineIcon = getPipelineIcon(model.pipelineText);
                   const pText = model.pipelineText || 'Other';
                   
@@ -1342,8 +1382,11 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
                           </h3>
                         </button>
                         
-                        <div className="mt-2 text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide">
-                          Updated {TIMES[i % TIMES.length]}
+                        <div
+                          className="mt-2 text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide"
+                          title={formatUpdatedTitle(model.lastModified, hydrated)}
+                        >
+                          {hydrated ? formatUpdatedLabel(model.lastModified, Date.now()) : 'Updated recently'}
                         </div>
                       </div>
 

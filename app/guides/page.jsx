@@ -15,7 +15,7 @@ export default function GuidesPage() {
 
   return (
     <div className="shell-container py-10">
-      <div className="max-w-6xl mx-auto">
+      <div>
         <div className="editorial-panel rounded-[24px] px-6 py-8 sm:px-10">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]">Editorial Hub</p>
           <h1 className="mt-3 text-4xl font-black tracking-tight text-[var(--text-strong)] sm:text-5xl">
@@ -38,6 +38,14 @@ export default function GuidesPage() {
               </p>
               <h2 className="mt-2 text-xl font-black leading-tight text-[var(--text-strong)]">{guide.title}</h2>
               <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">{guide.description}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--accent)]">
+                  {guide.difficulty}
+                </span>
+                <span className="rounded-full bg-[var(--panel-muted)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                  By {guide.author}
+                </span>
+              </div>
               <div className="mt-5 flex items-center justify-between text-xs font-semibold text-[var(--text-faint)]">
                 <span>{guide.readTime}</span>
                 <span>Updated {guide.lastUpdated}</span>

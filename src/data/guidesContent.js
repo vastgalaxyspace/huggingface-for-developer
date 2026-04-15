@@ -139,32 +139,79 @@ export const guides = [
   {
     slug: 'llama-vs-qwen-vs-gemma-coding',
     title: 'Llama vs Qwen vs Gemma for Coding Workflows',
-    description: 'A practical comparison method for code generation and debugging tasks.',
+    description: 'A complete coding-model analysis covering tools, benchmarks, prompts, automation, and agentic workflows.',
     category: 'Comparisons',
     readTime: '8 min read',
     lastUpdated: '2026-04-12',
-    keyTakeaways: ['Compare by coding task type.', 'Measure structure, not only correctness.', 'Latency matters for UX.'],
+    keyTakeaways: [
+      'Coding model selection should include workflow fit, not only benchmark rank.',
+      'Tooling ecosystem and IDE integration strongly affect developer productivity.',
+      'Automation and agentic capabilities are now practical selection criteria.',
+      'Prompt quality and evaluation discipline drive long-term reliability.',
+    ],
     sections: [
       {
-        heading: 'Define coding categories',
+        heading: 'What is AI coding and why this category matters',
         content:
-          'Separate evaluation into generation, explanation, debugging, and refactoring. Performance varies by task type.',
+          'AI coding now spans generation, debugging, refactoring, test writing, and code explanation. A useful analysis page should map these job types clearly so teams can pick models based on delivery outcomes rather than hype.',
       },
       {
-        heading: 'Score maintainability',
+        heading: 'Top AI coding models and where each one fits',
         content:
-          'Assess readability, error handling, and code style alignment in addition to test pass rate.',
+          'Compare Claude, GPT-4o/o3, Gemini 2.5 Pro, Codestral, DeepSeek-Coder, and Llama code-focused variants by strengths: long-context reasoning, multi-file edits, bug-fixing reliability, and speed. Avoid a single winner framing; use task-specific fit.',
       },
       {
-        heading: 'Align with session economics',
+        heading: 'AI coding tools and IDE ecosystem',
         content:
-          'Measure p50 and p95 latency with realistic prompt sizes. Interactive products fail when response times are unstable.',
+          'Include Copilot, Claude Code, Cursor, Windsurf, Replit AI, Tabnine, Codeium, JetBrains AI, and Supermaven with practical differences: inline completion quality, repo awareness, agent mode depth, and enterprise controls.',
+      },
+      {
+        heading: 'Automation workflows with coding AI',
+        content:
+          'Cover high-ROI automations such as test generation, CI/CD checks, code-review summarization, doc generation, and repetitive refactoring. Teams should evaluate measurable cycle-time reduction, not just output novelty.',
+      },
+      {
+        heading: 'Agentic coding and autonomous execution',
+        content:
+          'Explain coding agents that can plan, edit, run, and iterate across repositories. Compare patterns like single-agent loops and multi-agent orchestration, and call out safety boundaries such as approval gates and scoped permissions.',
+      },
+      {
+        heading: 'Languages and stacks where coding AI is strongest',
+        content:
+          'Most models perform best on Python and JavaScript/TypeScript, then Java/Go, with mixed reliability on Rust-heavy low-level logic and complex SQL migrations. Highlight where stronger human review is still required.',
+      },
+      {
+        heading: 'Prompt engineering for developer teams',
+        content:
+          'Document reusable templates for bug fixing, refactoring, test writing, and architecture explanation. Show before/after prompt quality patterns so developers can reduce ambiguity and increase deterministic outputs.',
+      },
+      {
+        heading: 'Benchmarks and performance interpretation',
+        content:
+          'Use HumanEval, MBPP, and SWE-bench as directional signals. Pair benchmark scores with internal evaluation suites, latency percentiles, and pass-rate-on-first-attempt to reflect real developer experience.',
+      },
+      {
+        heading: 'Learning resources and upcoming trends',
+        content:
+          'Link official model docs, IDE tool docs, and practical coding-agent resources. Track near-term trends including voice-to-code workflows, stronger pair-programming copilots, and self-healing CI pipelines.',
       },
     ],
-    checklist: ['Create coding eval suite', 'Track correction rate', 'Measure latency distribution'],
+    checklist: [
+      'Define coding task categories for your org',
+      'Create a side-by-side model comparison sheet',
+      'Pilot at least two IDE copilots',
+      'Measure automation ROI in CI/CD',
+      'Set guardrails for agentic execution',
+      'Score language-specific reliability',
+      'Standardize prompt templates per use case',
+      'Track benchmark + real-world quality together',
+      'Create a quarterly re-evaluation cycle',
+    ],
     faq: [
-      { q: 'Should leaderboard rank decide?', a: 'No, use your own task and quality criteria.' },
-      { q: 'How often to re-evaluate?', a: 'Quarterly or after major model releases.' },
+      { q: 'Should leaderboard rank decide coding model choice?', a: 'No. Treat public benchmarks as signals and validate using your real repository tasks.' },
+      { q: 'What is the most overlooked evaluation factor?', a: 'IDE workflow fit and correction rate during normal coding sessions.' },
+      { q: 'Are coding agents production-ready?', a: 'For bounded tasks, yes. For broad autonomous changes, keep human approval checkpoints.' },
+      { q: 'How often should teams update this analysis?', a: 'Quarterly, or immediately after major model/tool releases.' },
     ],
     related: ['prompt-patterns-that-work', 'model-selection-mistakes'],
   },
@@ -394,10 +441,40 @@ export const guides = [
   },
 ];
 
+const DEFAULT_SOURCES = [
+  { label: 'Model metadata and tags from Hugging Face model pages', href: 'https://huggingface.co/models' },
+  { label: 'InnoAI internal comparison and deployment heuristics', href: '/compare' },
+  { label: 'InnoAI GPU sizing and VRAM estimation tools', href: '/gpu/tools/vram-calculator' },
+];
+
+const parseReadMinutes = (readTime = '') => {
+  const match = String(readTime).match(/(\d+)/);
+  return match ? Number(match[1]) : 8;
+};
+
+const inferDifficulty = (readTime = '') => {
+  const minutes = parseReadMinutes(readTime);
+  if (minutes <= 7) return 'Beginner';
+  if (minutes <= 9) return 'Intermediate';
+  return 'Advanced';
+};
+
+const enrichGuide = (guide) => ({
+  ...guide,
+  author: guide.author || 'InnoAI Editorial Team',
+  reviewedBy: guide.reviewedBy || 'InnoAI Technical Review Board',
+  publishedDate: guide.publishedDate || guide.lastUpdated || '2026-04-12',
+  qualityVersion: guide.qualityVersion || 'v1.0',
+  difficulty: guide.difficulty || inferDifficulty(guide.readTime),
+  whatYouWillLearn: guide.whatYouWillLearn || guide.keyTakeaways || [],
+  sources: Array.isArray(guide.sources) && guide.sources.length > 0 ? guide.sources : DEFAULT_SOURCES,
+});
+
 export function getAllGuides() {
-  return guides;
+  return guides.map(enrichGuide);
 }
 
 export function getGuideBySlug(slug) {
-  return guides.find((guide) => guide.slug === slug) || null;
+  const guide = guides.find((entry) => entry.slug === slug);
+  return guide ? enrichGuide(guide) : null;
 }

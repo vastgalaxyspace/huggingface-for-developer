@@ -32,3 +32,8 @@ out
 build_log.txt
 .vercel
 split.js
+
+# Python / FastAPI backend
+backend/.venv
+backend/__pycache__
+backend/**/*.pyc

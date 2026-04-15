@@ -58,7 +58,7 @@ export default async function Page({ params }) {
   const modelId = idArray.join('/');
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
+    <div className="shell-container py-8">
       <ModelDetailClient modelId={modelId} />
     </div>
   );

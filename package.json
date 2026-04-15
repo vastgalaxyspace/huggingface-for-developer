@@ -7,9 +7,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint app src --ext .js,.jsx"
+    "lint": "eslint app src --ext .js,.jsx",
+    "content:check": "node scripts/content-depth-check.mjs"
   },
   "dependencies": {
+    "chart.js": "^4.5.1",
     "firebase": "^12.11.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^0.563.0",

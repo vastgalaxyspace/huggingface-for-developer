@@ -204,7 +204,7 @@ export default function TutorialPage() {
 
       {/* Right Content Area */}
       <main className="flex-1 min-w-0 bg-[var(--page-bg)]">
-        <div className="max-w-4xl mx-auto px-6 py-10 md:py-16 md:px-12 lg:px-20">
+        <div className="w-full px-6 py-10 md:py-16 md:px-12 lg:px-20">
           {section && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="mb-4 text-[var(--text-muted)] font-semibold tracking-wide text-sm uppercase flex items-center gap-2">
