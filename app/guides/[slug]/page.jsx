@@ -1,7 +1,521 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { AlertTriangle, Cpu, DollarSign, Layers3, ListChecks, Users } from 'lucide-react';
 import { absoluteUrl, pageMetadata, SITE_NAME } from '../../../src/lib/seo';
 import { getAllGuides, getGuideBySlug } from '../../../src/data/guidesContent';
+import SelectionPitfallsWorksheet from '../../../src/components/guides/SelectionPitfallsWorksheet';
+import BudgetPlannerWorkbench from '../../../src/components/guides/BudgetPlannerWorkbench';
+import PrecisionStrategyWorkbench from '../../../src/components/guides/PrecisionStrategyWorkbench';
+
+function SelectionPitfallsLayout({ guide }) {
+  const practicalScorecard = [
+    { metric: 'Correctness', weight: '35%', how: 'Pass/fail against expected output on real repo tasks' },
+    { metric: 'Latency', weight: '20%', how: 'Track TTFT and full response time at p95' },
+    { metric: 'Cost', weight: '15%', how: 'Monthly cost at expected token volume' },
+    { metric: 'Codebase Fit', weight: '20%', how: 'Performance on internal conventions/APIs' },
+    { metric: 'Security Fit', weight: '10%', how: 'Retention policy + compliance check' },
+  ];
+
+  const sevenDayPlan = [
+    { day: 'Day 1', action: 'Define primary use case + hard constraints (latency, budget, privacy).' },
+    { day: 'Day 2', action: 'Collect 10 to 20 real tasks from your repo (bug, feature, tests).' },
+    { day: 'Day 3', action: 'Run same prompts on top 3 models and log raw outputs.' },
+    { day: 'Day 4', action: 'Score each output using the weighted scorecard.' },
+    { day: 'Day 5', action: 'Review results with at least 2 different team roles.' },
+    { day: 'Day 6', action: 'Pilot winner behind feature flag on low-risk traffic.' },
+    { day: 'Day 7', action: 'Decide: adopt, keep fallback, or rerun with improved prompts.' },
+  ];
+
+  const redFlags = [
+    'Model looks great on benchmarks but fails your internal naming/API patterns.',
+    'Autocomplete feels laggy even though output quality is strong.',
+    'Prompts/completions retention terms are unclear for proprietary code.',
+    'New model version breaks existing prompt format or response schema.',
+    'Open model infra costs exceed managed API costs at team concurrency.',
+  ];
+
+  const sectionLinks = guide.sections.map((section, index) => ({
+    id: `section-${index + 1}`,
+    label: section.heading,
+  }));
+
+  return (
+    <div className="shell-container py-10">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+        <div className="space-y-8">
+          <section className="relative overflow-hidden rounded-[30px] border border-[var(--border-soft)] bg-white px-6 py-8 shadow-[0_18px_50px_rgba(48,67,95,0.08)] sm:px-10 sm:py-10">
+            <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[rgba(54,87,132,0.12)] blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-[rgba(37,99,235,0.10)] blur-3xl" />
+
+            <p className="section-kicker">{guide.category}</p>
+            <h1 className="mt-3 max-w-4xl text-3xl font-black tracking-tight text-[var(--text-strong)] sm:text-5xl">
+              {guide.title}
+            </h1>
+            <p className="mt-4 max-w-4xl text-sm leading-7 text-[var(--text-muted)] sm:text-base">
+              {guide.description}
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                <div className="flex items-center gap-2 text-[var(--accent)]">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span className="text-xs font-bold uppercase tracking-[0.12em]">Pitfalls Covered</span>
+                </div>
+                <p className="mt-2 text-2xl font-black text-[var(--text-strong)]">12</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                <div className="flex items-center gap-2 text-[var(--accent)]">
+                  <ListChecks className="h-4 w-4" />
+                  <span className="text-xs font-bold uppercase tracking-[0.12em]">Checklist Ready</span>
+                </div>
+                <p className="mt-2 text-2xl font-black text-[var(--text-strong)]">Yes</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4 sm:col-span-2 lg:col-span-1">
+                <div className="flex items-center gap-2 text-[var(--accent)]">
+                  <Users className="h-4 w-4" />
+                  <span className="text-xs font-bold uppercase tracking-[0.12em]">Audience</span>
+                </div>
+                <p className="mt-2 text-2xl font-black text-[var(--text-strong)]">Teams + Leads</p>
+              </div>
+            </div>
+          </section>
+
+          {Array.isArray(guide.whatYouWillLearn) && guide.whatYouWillLearn.length > 0 && (
+            <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+              <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+                What You Will Learn
+              </h2>
+              <ul className="mt-4 space-y-2 text-sm leading-7 text-[var(--text-main)] sm:text-base">
+                {guide.whatYouWillLearn.map((point) => (
+                  <li key={point}>- {point}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[var(--accent)]">
+              Practical View
+            </div>
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+              1) Model Evaluation Scorecard (Use This Template)
+            </h2>
+            <div className="mt-5 overflow-x-auto rounded-2xl border border-[var(--border-soft)] bg-white/85">
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-[var(--panel-muted)] text-xs uppercase tracking-[0.12em] text-[var(--text-faint)]">
+                  <tr>
+                    <th className="px-4 py-3 font-bold">Metric</th>
+                    <th className="px-4 py-3 font-bold">Weight</th>
+                    <th className="px-4 py-3 font-bold">How To Measure</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {practicalScorecard.map((row) => (
+                    <tr key={row.metric} className="border-t border-[var(--border-soft)] odd:bg-white even:bg-[#f8fbff]">
+                      <td className="px-4 py-3 font-semibold text-[var(--text-strong)]">{row.metric}</td>
+                      <td className="px-4 py-3 text-[var(--text-main)]">{row.weight}</td>
+                      <td className="px-4 py-3 text-[var(--text-main)]">{row.how}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <SelectionPitfallsWorksheet />
+          </section>
+
+          <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+              2) 7-Day Practical Rollout Plan
+            </h2>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {sevenDayPlan.map((item) => (
+                <article key={item.day} className="rounded-xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                  <p className="text-sm font-black text-[var(--text-strong)]">{item.day}</p>
+                  <p className="mt-1 text-sm text-[var(--text-main)]">{item.action}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+              3) Red-Flag Checklist (Stop and Re-evaluate)
+            </h2>
+            <ul className="mt-4 space-y-2 text-sm leading-7 text-[var(--text-main)] sm:text-base">
+              {redFlags.map((flag) => (
+                <li key={flag}>- {flag}</li>
+              ))}
+            </ul>
+          </section>
+
+          {guide.sections.map((section, index) => (
+            <section
+              id={`section-${index + 1}`}
+              key={section.heading}
+              className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8"
+            >
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[var(--accent)]">
+                Section {index + 1}
+              </div>
+              <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+                {section.heading}
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-[var(--text-main)] sm:text-base">{section.content}</p>
+            </section>
+          ))}
+
+          <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+              Pre-Selection Checklist
+            </h2>
+            <ul className="mt-4 space-y-2 text-sm leading-7 text-[var(--text-main)] sm:text-base">
+              {guide.checklist.map((item) => (
+                <li key={item}>- {item}</li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">FAQ</h2>
+            <div className="mt-4 space-y-4">
+              {guide.faq.map((entry) => (
+                <article key={entry.q} className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                  <h3 className="font-bold text-[var(--text-strong)]">{entry.q}</h3>
+                  <p className="mt-2 text-sm leading-7 text-[var(--text-main)]">{entry.a}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          {Array.isArray(guide.endLinks) && guide.endLinks.length > 0 && (
+            <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+              <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+                Continue with Decision Resources
+              </h2>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                {guide.endLinks.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="rounded-xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4 transition-colors hover:border-[var(--border-strong)] hover:bg-white"
+                  >
+                    <h3 className="text-sm font-black tracking-tight text-[var(--text-strong)]">{item.title}</h3>
+                    <p className="mt-2 text-xs leading-6 text-[var(--text-muted)]">{item.body}</p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+              Sources and Last Updated Date
+            </h2>
+            <p className="mt-3 text-sm text-[var(--text-main)]">Last updated: {guide.lastUpdated}</p>
+            <ul className="mt-4 space-y-2 text-sm leading-7 text-[var(--text-main)]">
+              {guide.sources.map((source) =>
+                source.href.startsWith('http') ? (
+                  <li key={source.href}>
+                    <a href={source.href} target="_blank" rel="noopener noreferrer" className="font-semibold text-[var(--accent)] hover:text-[var(--accent-strong)]">
+                      {source.label}
+                    </a>
+                  </li>
+                ) : (
+                  <li key={source.href}>
+                    <Link href={source.href} className="font-semibold text-[var(--accent)] hover:text-[var(--accent-strong)]">
+                      {source.label}
+                    </Link>
+                  </li>
+                ),
+              )}
+            </ul>
+          </section>
+        </div>
+
+        <aside className="hidden lg:sticky lg:top-24 lg:block">
+          <div className="editorial-panel rounded-[24px] border border-[var(--border-soft)] p-4">
+            <div className="mb-3 flex items-center gap-2 text-[var(--accent)]">
+              <Layers3 className="h-4 w-4" />
+              <p className="text-xs font-bold uppercase tracking-[0.12em]">On this page</p>
+            </div>
+            <nav className="max-h-[70vh] space-y-2 overflow-auto pr-1">
+              {sectionLinks.map((item) => (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  className="block rounded-lg px-2 py-1.5 text-xs font-semibold text-[var(--text-main)] transition hover:bg-[var(--panel-muted)] hover:text-[var(--accent)]"
+                >
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function BudgetFrameworkLayout({ guide }) {
+  const sectionLinks = guide.sections.map((section, index) => ({
+    id: `budget-section-${index + 1}`,
+    label: section.heading,
+  }));
+
+  return (
+    <div className="shell-container py-10">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+        <div className="space-y-8">
+          <section className="relative overflow-hidden rounded-[30px] border border-[var(--border-soft)] bg-white px-6 py-8 shadow-[0_18px_50px_rgba(48,67,95,0.08)] sm:px-10 sm:py-10">
+            <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[rgba(54,87,132,0.12)] blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-[rgba(37,99,235,0.10)] blur-3xl" />
+
+            <p className="section-kicker">{guide.category}</p>
+            <h1 className="mt-3 max-w-4xl text-3xl font-black tracking-tight text-[var(--text-strong)] sm:text-5xl">
+              {guide.title}
+            </h1>
+            <p className="mt-4 max-w-4xl text-sm leading-7 text-[var(--text-muted)] sm:text-base">
+              {guide.description}
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                <div className="flex items-center gap-2 text-[var(--accent)]">
+                  <DollarSign className="h-4 w-4" />
+                  <span className="text-xs font-bold uppercase tracking-[0.12em]">Budget Tiers</span>
+                </div>
+                <p className="mt-2 text-2xl font-black text-[var(--text-strong)]">3</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                <div className="flex items-center gap-2 text-[var(--accent)]">
+                  <Cpu className="h-4 w-4" />
+                  <span className="text-xs font-bold uppercase tracking-[0.12em]">GPU Focus</span>
+                </div>
+                <p className="mt-2 text-2xl font-black text-[var(--text-strong)]">Practical</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4 sm:col-span-2 lg:col-span-1">
+                <div className="flex items-center gap-2 text-[var(--accent)]">
+                  <ListChecks className="h-4 w-4" />
+                  <span className="text-xs font-bold uppercase tracking-[0.12em]">Includes</span>
+                </div>
+                <p className="mt-2 text-2xl font-black text-[var(--text-strong)]">Calculator + Table</p>
+              </div>
+            </div>
+          </section>
+
+          <BudgetPlannerWorkbench />
+
+          {guide.sections.map((section, index) => (
+            <section
+              id={`budget-section-${index + 1}`}
+              key={section.heading}
+              className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8"
+            >
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[var(--accent)]">
+                Section {index + 1}
+              </div>
+              <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+                {section.heading}
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-[var(--text-main)] sm:text-base">{section.content}</p>
+            </section>
+          ))}
+
+          <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+              Budget Planning Checklist
+            </h2>
+            <ul className="mt-4 space-y-2 text-sm leading-7 text-[var(--text-main)] sm:text-base">
+              {guide.checklist.map((item) => (
+                <li key={item}>- {item}</li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">FAQ</h2>
+            <div className="mt-4 space-y-4">
+              {guide.faq.map((entry) => (
+                <article key={entry.q} className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                  <h3 className="font-bold text-[var(--text-strong)]">{entry.q}</h3>
+                  <p className="mt-2 text-sm leading-7 text-[var(--text-main)]">{entry.a}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+              Sources and Last Updated Date
+            </h2>
+            <p className="mt-3 text-sm text-[var(--text-main)]">Last updated: {guide.lastUpdated}</p>
+            <ul className="mt-4 space-y-2 text-sm leading-7 text-[var(--text-main)]">
+              {guide.sources.map((source) =>
+                source.href.startsWith('http') ? (
+                  <li key={source.href}>
+                    <a href={source.href} target="_blank" rel="noopener noreferrer" className="font-semibold text-[var(--accent)] hover:text-[var(--accent-strong)]">
+                      {source.label}
+                    </a>
+                  </li>
+                ) : (
+                  <li key={source.href}>
+                    <Link href={source.href} className="font-semibold text-[var(--accent)] hover:text-[var(--accent-strong)]">
+                      {source.label}
+                    </Link>
+                  </li>
+                ),
+              )}
+            </ul>
+          </section>
+        </div>
+
+        <aside className="hidden lg:sticky lg:top-24 lg:block">
+          <div className="editorial-panel rounded-[24px] border border-[var(--border-soft)] p-4">
+            <div className="mb-3 flex items-center gap-2 text-[var(--accent)]">
+              <Layers3 className="h-4 w-4" />
+              <p className="text-xs font-bold uppercase tracking-[0.12em]">On this page</p>
+            </div>
+            <nav className="max-h-[70vh] space-y-2 overflow-auto pr-1">
+              <a
+                href="#interactive-planner"
+                className="block rounded-lg px-2 py-1.5 text-xs font-semibold text-[var(--text-main)] transition hover:bg-[var(--panel-muted)] hover:text-[var(--accent)]"
+              >
+                Interactive Planner
+              </a>
+              {sectionLinks.map((item) => (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  className="block rounded-lg px-2 py-1.5 text-xs font-semibold text-[var(--text-main)] transition hover:bg-[var(--panel-muted)] hover:text-[var(--accent)]"
+                >
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function PrecisionStrategyLayout({ guide }) {
+  const sectionLinks = [
+    { id: 'precision-families', label: 'Precision Families' },
+    { id: 'comparison-table', label: 'Comparison Table' },
+    { id: 'memory-calculator', label: 'Memory Calculator' },
+    { id: 'benchmark-results', label: 'Practical Benchmarks' },
+    { id: 'benchmark-runner', label: 'Benchmark Runner' },
+    { id: 'tradeoff-chart', label: 'Tradeoff Chart' },
+    { id: 'compatibility-matrix', label: 'Compatibility Matrix' },
+    { id: 'cost-estimator', label: 'Cost Estimator' },
+    { id: 'scenario-mapping', label: 'Scenario Mapping' },
+    { id: 'precision-recommender', label: 'Recommender' },
+    { id: 'regression-pack', label: 'Regression Pack' },
+    { id: 'response-diff', label: 'Response Diff' },
+    { id: 'sources-methodology', label: 'Sources' },
+  ];
+
+  return (
+    <div className="shell-container py-10">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+        <div className="space-y-8">
+          <section className="relative overflow-hidden rounded-[30px] border border-[var(--border-soft)] bg-white px-6 py-8 shadow-[0_18px_50px_rgba(48,67,95,0.08)] sm:px-10 sm:py-10">
+            <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[rgba(54,87,132,0.12)] blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-[rgba(37,99,235,0.10)] blur-3xl" />
+
+            <p className="section-kicker">{guide.category}</p>
+            <h1 className="mt-3 max-w-4xl text-3xl font-black tracking-tight text-[var(--text-strong)] sm:text-5xl">
+              Precision Strategy
+            </h1>
+            <p className="mt-4 max-w-4xl text-sm leading-7 text-[var(--text-muted)] sm:text-base">
+              Understand deployment tradeoffs across FP32, TF32, BF16, FP16, INT8, INT4, GPTQ, AWQ, and GGUF quantizations.
+              Precision decides the balance between memory, speed, cost, and output quality.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              <a
+                href="#comparison-table"
+                className="rounded-xl bg-[var(--accent)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[var(--accent-strong)]"
+              >
+                Compare Precisions
+              </a>
+              <a
+                href="#memory-calculator"
+                className="rounded-xl border border-[var(--border-strong)] bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--text-strong)] transition hover:bg-[var(--panel-muted)]"
+              >
+                Run Memory Calculator
+              </a>
+              <a
+                href="#benchmark-results"
+                className="rounded-xl border border-[var(--border-strong)] bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--text-strong)] transition hover:bg-[var(--panel-muted)]"
+              >
+                View Benchmarks
+              </a>
+            </div>
+          </section>
+
+          {Array.isArray(guide.whatYouWillLearn) && guide.whatYouWillLearn.length > 0 && (
+            <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+              <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+                What You Will Learn
+              </h2>
+              <ul className="mt-4 space-y-2 text-sm leading-7 text-[var(--text-main)] sm:text-base">
+                {guide.whatYouWillLearn.map((point) => (
+                  <li key={point}>- {point}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <PrecisionStrategyWorkbench />
+
+          <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+              Deployment Checklist
+            </h2>
+            <ul className="mt-4 space-y-2 text-sm leading-7 text-[var(--text-main)] sm:text-base">
+              {guide.checklist.map((item) => (
+                <li key={item}>- {item}</li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">FAQ</h2>
+            <div className="mt-4 space-y-4">
+              {guide.faq.map((entry) => (
+                <article key={entry.q} className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                  <h3 className="font-bold text-[var(--text-strong)]">{entry.q}</h3>
+                  <p className="mt-2 text-sm leading-7 text-[var(--text-main)]">{entry.a}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <aside className="hidden lg:sticky lg:top-24 lg:block">
+          <div className="editorial-panel rounded-[24px] border border-[var(--border-soft)] p-4">
+            <div className="mb-3 flex items-center gap-2 text-[var(--accent)]">
+              <Layers3 className="h-4 w-4" />
+              <p className="text-xs font-bold uppercase tracking-[0.12em]">On this page</p>
+            </div>
+            <nav className="max-h-[70vh] space-y-2 overflow-auto pr-1">
+              {sectionLinks.map((item) => (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  className="block rounded-lg px-2 py-1.5 text-xs font-semibold text-[var(--text-main)] transition hover:bg-[var(--panel-muted)] hover:text-[var(--accent)]"
+                >
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
 
 export async function generateStaticParams() {
   return getAllGuides().map((guide) => ({ slug: guide.slug }));
@@ -113,7 +627,7 @@ export default async function GuideDetailPage({ params }) {
   ];
 
   return (
-    <div className="shell-container py-10">
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
@@ -126,7 +640,15 @@ export default async function GuideDetailPage({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
-      <article className="w-full">
+      {guide.slug === 'model-selection-mistakes' ? (
+        <SelectionPitfallsLayout guide={guide} />
+      ) : guide.slug === 'choose-ai-model-by-gpu-budget' ? (
+        <BudgetFrameworkLayout guide={guide} />
+      ) : guide.slug === 'quantization-4bit-8bit-fp16' ? (
+        <PrecisionStrategyLayout guide={guide} />
+      ) : (
+        <div className="shell-container py-10">
+          <article className="w-full">
         <div className="editorial-panel rounded-[24px] px-6 py-8 sm:px-10">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]">{guide.category}</p>
           <h1 className="mt-3 text-4xl font-black tracking-tight text-[var(--text-strong)] sm:text-5xl">
@@ -225,6 +747,24 @@ export default async function GuideDetailPage({ params }) {
           </div>
         </section>
 
+        {Array.isArray(guide.endLinks) && guide.endLinks.length > 0 && (
+          <section className="mt-8 rounded-2xl border border-[var(--border-soft)] bg-white p-6">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)]">Decision Resources</h2>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              {guide.endLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4 transition-colors hover:border-[var(--border-strong)] hover:bg-white"
+                >
+                  <h3 className="text-sm font-black tracking-tight text-[var(--text-strong)]">{item.title}</h3>
+                  <p className="mt-2 text-xs leading-6 text-[var(--text-muted)]">{item.body}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section className="mt-8 rounded-2xl border border-[var(--border-soft)] bg-white p-6">
           <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)]">Sources and Methodology</h2>
           <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">
@@ -278,12 +818,14 @@ export default async function GuideDetailPage({ params }) {
           </p>
         </section>
 
-        <div className="mt-8">
-          <Link href="/guides" className="text-sm font-bold text-[var(--accent)] hover:text-[var(--accent-strong)]">
-            Back to all guides
-          </Link>
+          <div className="mt-8">
+            <Link href="/guides" className="text-sm font-bold text-[var(--accent)] hover:text-[var(--accent-strong)]">
+              Back to all guides
+            </Link>
+          </div>
+        </article>
         </div>
-      </article>
-    </div>
+      )}
+    </>
   );
 }

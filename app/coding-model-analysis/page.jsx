@@ -1,602 +1,469 @@
-'use client';
+import { Code2, Gauge, ShieldCheck, DollarSign, Clock3, Layers3 } from 'lucide-react';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import Chart from 'chart.js/auto';
-import styles from './page.module.css';
+const LAST_UPDATED = 'April 15, 2026';
 
-const navItems = [
-  { id: 'hero', label: 'Overview' },
-  { id: 'models', label: 'Models' },
-  { id: 'tools', label: 'Tools' },
-  { id: 'automation', label: 'Automation' },
-  { id: 'agentic', label: 'Agentic' },
-  { id: 'languages', label: 'Languages' },
-  { id: 'prompts', label: 'Prompts' },
-  { id: 'benchmarks', label: 'Benchmarks' },
-  { id: 'resources', label: 'Resources' },
+const sectionLinks = [
+  { id: 'section-1', label: '1. Purpose' },
+  { id: 'section-2', label: '2. AI Coding Model' },
+  { id: 'section-3', label: '3. Models Covered' },
+  { id: 'section-4', label: '4. Comparison Table' },
+  { id: 'section-5', label: '5. Benchmarks' },
+  { id: 'section-6', label: '6. Real-World Tasks' },
+  { id: 'section-7', label: '7. Languages' },
+  { id: 'section-8', label: '8. Context Window' },
+  { id: 'section-9', label: '9. Speed & Latency' },
+  { id: 'section-10', label: '10. Pricing Analysis' },
+  { id: 'section-11', label: '11. Hosting Options' },
+  { id: 'section-12', label: '12. Privacy' },
+  { id: 'section-13', label: '13. Integrations' },
+  { id: 'section-14', label: '14. Best by Use Case' },
+  { id: 'section-15', label: '15. How to Evaluate' },
+  { id: 'section-16', label: '16. FAQ' },
+  { id: 'section-17', label: '17. Sources' },
 ];
 
-const models = [
-  {
-    name: 'Claude 3.7 Sonnet',
-    maker: 'Anthropic',
-    bestUseCase: 'Large repo refactors and long reasoning chains',
-    contextWindow: '200K',
-    speed: 4,
-    badge: 'Paid',
-  },
-  {
-    name: 'GPT-4o',
-    maker: 'OpenAI',
-    bestUseCase: 'Balanced coding copilot with strong multimodal support',
-    contextWindow: '128K',
-    speed: 5,
-    badge: 'Paid',
-  },
-  {
-    name: 'Gemini 2.5 Pro',
-    maker: 'Google',
-    bestUseCase: 'Very long context engineering analysis',
-    contextWindow: '1,048K',
-    speed: 3,
-    badge: 'Free + Paid',
-  },
-  {
-    name: 'DeepSeek-Coder V2',
-    maker: 'DeepSeek',
-    bestUseCase: 'Strong open coding model for generation and editing',
-    contextWindow: '128K',
-    speed: 4,
-    badge: 'Free/Open',
-  },
-  {
-    name: 'Mistral Codestral',
-    maker: 'Mistral AI',
-    bestUseCase: 'Code completion and FIM-heavy workflows',
-    contextWindow: '128K',
-    speed: 4,
-    badge: 'Paid',
-  },
-  {
-    name: 'Llama 3',
-    maker: 'Meta',
-    bestUseCase: 'Self-hosted coding assistants and customization',
-    contextWindow: '8K',
-    speed: 4,
-    badge: 'Free/Open',
-  },
+const modelsCovered = [
+  ['OpenAI GPT-4.1', 'OpenAI', '2025-04-14', 'Closed / proprietary', 'API'],
+  ['Claude Sonnet 4.6', 'Anthropic', '2026-02-17', 'Closed / proprietary', 'API'],
+  ['Gemini 2.5 Pro', 'Google', '2025 (2.5 generation)', 'Closed / proprietary', 'API'],
+  ['Codestral 25.08', 'Mistral AI', '2025-07-30', 'Commercial model', 'API'],
+  ['DeepSeek-Coder-V2-Instruct', 'DeepSeek', '2024-06', 'Open weights', 'Local + hosted endpoints'],
+  ['Qwen2.5-Coder-7B-Instruct', 'Alibaba (Qwen Team)', '2024-09', 'Open weights', 'Local + hosted endpoints'],
+  ['Code Llama 70B Instruct', 'Meta', '2023-08', 'Open weights', 'Local + cloud providers'],
 ];
 
-const toolGroups = [
-  {
-    title: 'AI Editors',
-    tools: [
-      { name: 'Cursor', desc: 'Agent-first editor with project-aware code generation.', url: 'https://cursor.com' },
-      { name: 'Windsurf', desc: 'Codeium editor for full-stack app building and edits.', url: 'https://windsurf.com' },
-      { name: 'Replit AI', desc: 'In-browser coding with AI assistant and deploy flow.', url: 'https://replit.com' },
-    ],
-  },
-  {
-    title: 'IDE Plugins',
-    tools: [
-      { name: 'GitHub Copilot', desc: 'Inline completions and chat inside popular IDEs.', url: 'https://github.com/features/copilot' },
-      { name: 'Codeium', desc: 'Fast code completion and chat plugin suite.', url: 'https://codeium.com' },
-      { name: 'Tabnine', desc: 'Private and enterprise-oriented code assistant.', url: 'https://www.tabnine.com' },
-      { name: 'JetBrains AI', desc: 'Native AI features integrated with JetBrains IDEs.', url: 'https://www.jetbrains.com/ai' },
-      { name: 'Supermaven', desc: 'Low-latency, long-context coding autocomplete.', url: 'https://supermaven.com' },
-    ],
-  },
-  {
-    title: 'Terminal/Agents',
-    tools: [
-      { name: 'Claude Code', desc: 'Terminal-native coding agent for repo-level tasks.', url: 'https://www.anthropic.com/claude-code' },
-      { name: 'Devin', desc: 'Autonomous software engineer style agent workflow.', url: 'https://devin.ai' },
-      { name: 'OpenHands', desc: 'Open-source coding agent framework for real tasks.', url: 'https://www.all-hands.dev' },
-    ],
-  },
+const comparisonRows = [
+  ['OpenAI GPT-4.1', '1,047,576', '$2.00', '$8.00', 'Not officially published', '32,768', 'Yes', 'Yes (snapshot fine-tuning)', 'Commercial'],
+  ['Claude Sonnet 4.6', 'Up to 1M (beta)', '$3.00', '$15.00', 'Not officially published', 'Not publicly standardized', 'Yes', 'No', 'Commercial'],
+  ['Gemini 2.5 Pro', 'Up to 1,048,576', '$1.25 to $2.50', '$10.00 to $15.00', 'Not officially published', 'Not publicly standardized', 'Yes', 'Limited / product-specific', 'Commercial'],
+  ['Codestral 25.08', '128,000', '$0.30', '$0.90', 'Not officially published', 'Provider-dependent', 'No', 'No public API FT', 'Commercial'],
+  ['DeepSeek-Coder-V2-Instruct', '128,000', '$0 self-hosted / varies by host', '$0 self-hosted / varies by host', 'Hardware-dependent', 'Serving-stack dependent', 'No', 'Yes (self-managed)', 'Open weights'],
+  ['Qwen2.5-Coder-7B-Instruct', '131,072', '$0 self-hosted / varies by host', '$0 self-hosted / varies by host', 'Hardware-dependent', 'Serving-stack dependent', 'No', 'Yes (self-managed)', 'Open weights'],
+  ['Code Llama 70B Instruct', '16,000 (common deployment default)', '$0 self-hosted / varies by host', '$0 self-hosted / varies by host', 'Hardware-dependent', 'Serving-stack dependent', 'No', 'Yes (self-managed)', 'Open weights'],
 ];
 
-const automationCards = [
-  {
-    icon: '🧪',
-    title: 'Auto Test Generation',
-    desc: 'Generate unit tests and edge cases from existing source files and functions.',
-    snippet: 'Prompt: "Write Jest tests for auth middleware"\nResult: 24 tests including token expiry and malformed headers.',
-  },
-  {
-    icon: '🔎',
-    title: 'AI Code Review',
-    desc: 'Flag anti-patterns, missed validations, and style issues before merge.',
-    snippet: 'PR bot summary:\n- Missing null-check in payment flow\n- O(n^2) loop in ranking function',
-  },
-  {
-    icon: '📚',
-    title: 'Documentation Generation',
-    desc: 'Build API docs, setup guides, and changelog notes from code diffs.',
-    snippet: 'Generated README section:\n"POST /invoices now supports batch mode and idempotency keys."',
-  },
-  {
-    icon: '🐞',
-    title: 'Bug Detection',
-    desc: 'Scan stack traces and code paths to suggest likely failure points.',
-    snippet: 'Trace matched issue:\nRace condition in cache invalidation after async write.',
-  },
-  {
-    icon: '🚀',
-    title: 'CI/CD Automation',
-    desc: 'Create release notes, pipeline checks, and deployment guardrails.',
-    snippet: 'CI workflow update:\nAdded smoke tests + rollback trigger for 5xx spike > 2%.',
-  },
-  {
-    icon: '🛠️',
-    title: 'Auto Refactoring',
-    desc: 'Convert duplicated logic into shared modules and safer abstractions.',
-    snippet: 'Refactor agent output:\nExtracted 6 duplicate validators into /lib/validation.ts.',
-  },
+const benchmarkRows = [
+  ['OpenAI GPT-4.1', 'Not disclosed in official 4.1 post', '54.6% (SWE-bench Verified, OpenAI-reported)', 'Not disclosed in official 4.1 post', 'Not disclosed in official 4.1 post'],
+  ['Claude Sonnet 4.6', 'Not published in text benchmark table on release page', 'Not published in text benchmark table on release page', 'Not published in text benchmark table on release page', 'Not published in text benchmark table on release page'],
+  ['Gemini 2.5 Pro', 'No stable official cross-vendor number in one canonical report', 'No stable official cross-vendor number in one canonical report', 'No stable official cross-vendor number in one canonical report', 'No stable official cross-vendor number in one canonical report'],
+  ['Codestral-22B (Qwen2.5 report table)', '78.1', 'Not reported in that table', '32.9', '73.3'],
+  ['DeepSeek-Coder-V2-Instruct (DeepSeek report)', '90.2', '12.7 (SWE-Bench in DeepSeek V2 table)', '43.4', '76.2 (MBPP+)'],
+  ['Qwen2.5-Coder-7B-Instruct (Qwen report)', '88.4', 'Not reported in that table', '37.6', '83.5'],
+  ['Code Llama 70B Instruct (Mistral Codestral-2501 table)', '67.1', 'Not reported in that table', '20.0', '70.8'],
 ];
 
-const flowSteps = [
-  { title: 'Plan', desc: 'Break down task goals, files, and acceptance criteria.' },
-  { title: 'Write', desc: 'Generate initial code changes across relevant files.' },
-  { title: 'Run', desc: 'Execute code and commands to validate behavior quickly.' },
-  { title: 'Test', desc: 'Run unit/integration tests and collect failing cases.' },
-  { title: 'Fix', desc: 'Patch errors, adjust logic, and tighten edge-case handling.' },
-  { title: 'Deploy', desc: 'Ship through gated CI/CD with human checkpoints.' },
+const benchmarkChartData = [
+  { model: 'GPT-4.1', humaneval: null, swebench: 54.6, livecodebench: null, mbpp: null },
+  { model: 'Claude 4.6', humaneval: null, swebench: null, livecodebench: null, mbpp: null },
+  { model: 'Gemini 2.5 Pro', humaneval: null, swebench: null, livecodebench: null, mbpp: null },
+  { model: 'Codestral-22B', humaneval: 78.1, swebench: null, livecodebench: 32.9, mbpp: 73.3 },
+  { model: 'DeepSeek-V2', humaneval: 90.2, swebench: 12.7, livecodebench: 43.4, mbpp: 76.2 },
+  { model: 'Qwen2.5-7B', humaneval: 88.4, swebench: null, livecodebench: 37.6, mbpp: 83.5 },
+  { model: 'Code Llama 70B', humaneval: 67.1, swebench: null, livecodebench: 20.0, mbpp: 70.8 },
 ];
 
-const languageStrengths = [
-  { name: 'Python', score: 96 },
-  { name: 'JavaScript', score: 93 },
-  { name: 'TypeScript', score: 91 },
-  { name: 'Java', score: 86 },
-  { name: 'Go', score: 84 },
-  { name: 'Rust', score: 74 },
-  { name: 'C++', score: 68 },
-  { name: 'SQL', score: 88 },
+const realWorldRows = [
+  ['Code completion / autocomplete', 'Excellent', 'Excellent', 'Good', 'Excellent', 'Good', 'Good'],
+  ['Debugging and error explanation', 'Excellent', 'Excellent', 'Good', 'Good', 'Good', 'Average'],
+  ['Writing unit tests', 'Excellent', 'Excellent', 'Good', 'Good', 'Good', 'Average'],
+  ['Refactoring existing code', 'Excellent', 'Excellent', 'Good', 'Average', 'Good', 'Average'],
+  ['Explain code in plain English', 'Excellent', 'Excellent', 'Excellent', 'Good', 'Good', 'Good'],
+  ['Boilerplate/scaffolding', 'Excellent', 'Excellent', 'Good', 'Good', 'Good', 'Average'],
+  ['Large codebase multi-file work', 'Excellent', 'Excellent', 'Excellent', 'Average', 'Good', 'Average'],
 ];
 
-const promptExamples = [
-  {
-    title: 'Refactor a Function',
-    weak: 'Refactor this function.',
-    strong:
-      'Refactor this Node.js function for readability.\nKeep behavior identical.\nAdd unit tests in Jest.\nReturn patch only.',
-    outputWeak: '// vague output\nfunction f(a,b){...}',
-    outputStrong:
-      '// structured output\n- clear naming\n- extracted helpers\n- 5 Jest tests for edge cases',
-  },
-  {
-    title: 'Fix a Production Bug',
-    weak: 'Fix the bug in checkout.',
-    strong:
-      'Fix race condition in checkout service.\nUse optimistic lock.\nAdd regression test.\nExplain root cause in 4 bullets.',
-    outputWeak: 'Likely null pointer. Try adding checks.',
-    outputStrong:
-      'Root cause: concurrent writes on cart state.\nPatch: versioned update + retry.\nRegression test: parallel checkout simulation.',
-  },
-  {
-    title: 'Write SQL Safely',
-    weak: 'Give SQL for user search.',
-    strong:
-      'PostgreSQL query for user search by email.\nUse parameterized query.\nAdd index recommendation and EXPLAIN notes.',
-    outputWeak: 'SELECT * FROM users WHERE email = "...";',
-    outputStrong:
-      'SELECT id,email FROM users WHERE email = $1;\nIndex: CREATE INDEX idx_users_email ON users(email);',
-  },
-  {
-    title: 'Generate API Endpoint',
-    weak: 'Create an API endpoint.',
-    strong:
-      'Create Next.js route handler for POST /api/tickets.\nValidate payload with zod.\nReturn typed errors.\nAdd curl example.',
-    outputWeak: 'Basic route with no validation.',
-    outputStrong:
-      'Includes schema validation, error map, and sample request/response contract.',
-  },
+const languageRows = [
+  ['Python', 'GPT-4.1, Claude Sonnet 4.6, DeepSeek-Coder-V2'],
+  ['JavaScript / TypeScript', 'GPT-4.1, Claude Sonnet 4.6, Codestral'],
+  ['Java', 'GPT-4.1, Gemini 2.5 Pro, Claude Sonnet 4.6'],
+  ['C / C++', 'DeepSeek-Coder-V2, Qwen2.5-Coder, GPT-4.1'],
+  ['Rust', 'Claude Sonnet 4.6, GPT-4.1, Qwen2.5-Coder'],
+  ['Go', 'GPT-4.1, Claude Sonnet 4.6, DeepSeek-Coder-V2'],
+  ['PHP', 'GPT-4.1, Claude Sonnet 4.6, Codestral'],
+  ['Ruby', 'GPT-4.1, Claude Sonnet 4.6'],
+  ['SQL', 'GPT-4.1, Gemini 2.5 Pro, Claude Sonnet 4.6'],
+  ['Shell scripting', 'Claude Sonnet 4.6, GPT-4.1, DeepSeek-Coder-V2'],
 ];
 
-const benchmarkData = {
-  labels: ['GPT-4o', 'DeepSeek-Coder-V2', 'Claude 3 Opus', 'Gemini 1.5 Pro', 'Codestral'],
-  humaneval: [91.0, 90.2, 84.2, 83.5, 78.1],
-  swebench: [26.7, 12.7, 11.7, 19.3, 2.7],
-};
-
-const resourceColumns = [
-  {
-    title: 'Learning Resources',
-    items: [
-      { label: 'Anthropic Claude Docs', href: 'https://docs.anthropic.com' },
-      { label: 'OpenAI API Docs', href: 'https://platform.openai.com/docs' },
-      { label: 'Google AI (Gemini) Docs', href: 'https://ai.google.dev/gemini-api/docs' },
-      { label: 'Mistral Docs', href: 'https://docs.mistral.ai' },
-      { label: 'DeepSeek-Coder-V2 Repository', href: 'https://github.com/deepseek-ai/DeepSeek-Coder-V2' },
-    ],
-  },
-  {
-    title: 'Communities',
-    items: [
-      { label: 'Hugging Face Open LLM Community', href: 'https://huggingface.co/community' },
-      { label: 'r/LocalLLaMA', href: 'https://www.reddit.com/r/LocalLLaMA/' },
-      { label: 'OpenHands Discord', href: 'https://discord.gg/ESHStjSjD4' },
-      { label: 'Mistral Community', href: 'https://community.mistral.ai' },
-      { label: 'LangChain Forum', href: 'https://forum.langchain.com' },
-    ],
-  },
-  {
-    title: 'Upcoming Trends',
-    items: [
-      { label: 'Voice coding workflows with structured agents' },
-      { label: 'Self-healing code pipelines with auto rollback' },
-      { label: 'AI pair programming as default team workflow' },
-      { label: 'Policy-aware coding agents for enterprise compliance' },
-      { label: 'Hybrid local + cloud coding model routing' },
-    ],
-  },
+const integrations = [
+  ['GitHub Copilot', 'OpenAI family (vendor managed)', 'VS Code, JetBrains, Neovim'],
+  ['Cursor', 'Claude + OpenAI + others (plan dependent)', 'Cursor IDE'],
+  ['Sourcegraph Cody', 'Anthropic / OpenAI / others', 'VS Code, JetBrains, Web'],
+  ['Continue.dev', 'OpenAI, Anthropic, Google, Mistral, local OSS', 'VS Code, JetBrains'],
+  ['Tabnine', 'Tabnine + provider models', 'VS Code, JetBrains, Vim/Neovim'],
+  ['Amazon Q Developer', 'AWS-managed model stack', 'VS Code, JetBrains, AWS IDE tooling'],
 ];
 
-function StarRating({ value }) {
-  const stars = '★★★★★'.slice(0, value) + '☆☆☆☆☆'.slice(0, 5 - value);
-  return <span className={styles.stars}>{stars}</span>;
+const faq = [
+  ['Which AI model is best for coding in 2025/2026?', 'For broad production coding, GPT-4.1 and Claude Sonnet 4.6 are usually top picks; for self-hosting, DeepSeek-Coder-V2 and Qwen2.5-Coder are practical choices.'],
+  ['Is GPT-4.1 better than Claude for code?', 'It depends on workload. GPT-4.1 is very consistent in tooling/API workflows, while Claude often shines in long-context repo analysis and complex refactor sessions.'],
+  ['Can I use AI coding models for free?', 'Yes, through limited free tiers and open-weight local models. Free tiers usually have request and rate caps.'],
+  ['Which models can I run locally?', 'DeepSeek-Coder-V2, Qwen2.5-Coder, and Code Llama can be self-hosted with adequate GPU resources and inference tooling.'],
+  ['How accurate are AI coding benchmarks?', 'Useful for baseline comparison, but they do not fully capture IDE workflow fit, debugging behavior, and project-specific edge cases.'],
+  ['Does context window size matter for coding?', 'Yes, especially for multi-file tasks. But retrieval quality and long-context reasoning stability matter as much as raw token count.'],
+];
+
+function Section({ id, number, title, children }) {
+  return (
+    <section id={id} className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+      <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[var(--accent)]">
+        Section {number}
+      </div>
+      <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">{title}</h2>
+      <div className="mt-4 text-sm leading-7 text-[var(--text-main)] sm:text-base">{children}</div>
+    </section>
+  );
+}
+
+function DataTable({ headers, rows }) {
+  return (
+    <div className="mt-5 overflow-x-auto rounded-2xl border border-[var(--border-soft)] bg-white/85">
+      <table className="min-w-full text-left text-sm">
+        <thead className="bg-[var(--panel-muted)] text-xs uppercase tracking-[0.12em] text-[var(--text-faint)]">
+          <tr>
+            {headers.map((h) => (
+              <th key={h} className="px-4 py-3 font-bold">
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, idx) => (
+            <tr key={`${idx}-${row[0]}`} className="border-t border-[var(--border-soft)] odd:bg-white even:bg-[#f8fbff]">
+              {row.map((cell, cellIdx) => (
+                <td key={cellIdx} className="px-4 py-3 align-top text-[var(--text-main)]">
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function BenchmarkCharts() {
+  const chartA = benchmarkChartData.filter((item) => item.humaneval !== null || item.mbpp !== null);
+  const chartB = benchmarkChartData.filter((item) => item.swebench !== null || item.livecodebench !== null);
+
+  const BarRow = ({ label, value, color }) => (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between gap-3">
+        <span className="truncate text-xs font-semibold text-[var(--text-main)]">{label}</span>
+        <span className="text-xs font-bold text-[var(--text-strong)]">{value === null ? 'N/A' : `${value}%`}</span>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--panel-muted)]">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: value === null ? '0%' : `${value}%`, background: color }}
+        />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="mt-5 grid gap-4 lg:grid-cols-2">
+      <article className="rounded-2xl border border-[var(--border-soft)] bg-white p-4">
+        <p className="mb-3 text-sm font-bold text-[var(--text-strong)]">HumanEval and MBPP (pass@1)</p>
+        <div className="space-y-4">
+          {chartA.map((item) => (
+            <div key={`a-${item.model}`} className="rounded-xl border border-[var(--border-soft)] p-3">
+              <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--text-faint)]">{item.model}</p>
+              <div className="space-y-2">
+                <BarRow label="HumanEval" value={item.humaneval} color="#365784" />
+                <BarRow label="MBPP" value={item.mbpp} color="#7ba4d4" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </article>
+
+      <article className="rounded-2xl border border-[var(--border-soft)] bg-white p-4">
+        <p className="mb-3 text-sm font-bold text-[var(--text-strong)]">SWE-bench and LiveCodeBench</p>
+        <div className="space-y-4">
+          {chartB.map((item) => (
+            <div key={`b-${item.model}`} className="rounded-xl border border-[var(--border-soft)] p-3">
+              <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--text-faint)]">{item.model}</p>
+              <div className="space-y-2">
+                <BarRow label="SWE-bench" value={item.swebench} color="#1e3f68" />
+                <BarRow label="LiveCodeBench" value={item.livecodebench} color="#9cbfe4" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </article>
+    </div>
+  );
 }
 
 export default function CodingModelAnalysisPage() {
-  const [counter, setCounter] = useState(0);
-  const [navOpen, setNavOpen] = useState(false);
-  const counterStarted = useRef(false);
-  const chartRef = useRef(null);
-  const chartInstanceRef = useRef(null);
-
-  const benchmarkSummary = useMemo(
-    () =>
-      `HumanEval and SWE-bench values are from DeepSeek-Coder-V2 public evaluation tables (2024), retained for cross-model apples-to-apples reference in 2025 planning.`,
-    [],
-  );
-
-  useEffect(() => {
-    const revealElements = Array.from(document.querySelectorAll('[data-reveal]'));
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add(styles.revealVisible);
-            if (entry.target.id === 'hero' && !counterStarted.current) {
-              counterStarted.current = true;
-              const start = performance.now();
-              const duration = 1300;
-              const animate = (ts) => {
-                const progress = Math.min((ts - start) / duration, 1);
-                setCounter(Math.round(progress * 40));
-                if (progress < 1) requestAnimationFrame(animate);
-              };
-              requestAnimationFrame(animate);
-            }
-
-            if (entry.target.id === 'languages') {
-              document.querySelectorAll('[data-lang-score]').forEach((el) => {
-                const score = Number(el.getAttribute('data-lang-score'));
-                el.style.width = `${score}%`;
-              });
-            }
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.2 },
-    );
-
-    revealElements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!chartRef.current) return;
-
-    chartInstanceRef.current = new Chart(chartRef.current, {
-      type: 'bar',
-      data: {
-        labels: benchmarkData.labels,
-        datasets: [
-          {
-            label: 'HumanEval (%)',
-            data: benchmarkData.humaneval,
-            backgroundColor: 'rgba(124, 58, 237, 0.82)',
-            borderColor: 'rgba(124, 58, 237, 1)',
-            borderWidth: 1,
-          },
-          {
-            label: 'SWE-bench (%)',
-            data: benchmarkData.swebench,
-            backgroundColor: 'rgba(59, 130, 246, 0.82)',
-            borderColor: 'rgba(59, 130, 246, 1)',
-            borderWidth: 1,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        indexAxis: 'y',
-        scales: {
-          x: {
-            min: 0,
-            max: 100,
-            ticks: { color: '#b9c7f8' },
-            grid: { color: 'rgba(123, 148, 255, 0.12)' },
-          },
-          y: {
-            ticks: { color: '#dbe5ff' },
-            grid: { color: 'rgba(123, 148, 255, 0.08)' },
-          },
-        },
-        plugins: {
-          legend: {
-            labels: { color: '#dbe5ff' },
-          },
-          tooltip: {
-            backgroundColor: '#0f1530',
-            borderColor: 'rgba(123, 148, 255, 0.4)',
-            borderWidth: 1,
-          },
-        },
-      },
-    });
-
-    return () => {
-      if (chartInstanceRef.current) chartInstanceRef.current.destroy();
-    };
-  }, []);
-
   return (
-    <main className={styles.page}>
-      <header className={styles.nav}>
-        <div className={styles.navInner}>
-          <div className={styles.brand}>AI Coding Analysis 2025</div>
-          <button className={styles.menuBtn} onClick={() => setNavOpen((v) => !v)} aria-label="Toggle menu">
-            Menu
-          </button>
-          <nav className={`${styles.navLinks} ${navOpen ? styles.navOpen : ''}`}>
-            {navItems.map((item) => (
-              <a key={item.id} href={`#${item.id}`} onClick={() => setNavOpen(false)}>
-                {item.label}
-              </a>
-            ))}
-          </nav>
-        </div>
-      </header>
+    <main className="pb-20 pt-8 sm:pt-12">
+      <div className="shell-container grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+        <div className="space-y-8">
+          <section className="relative overflow-hidden rounded-[30px] border border-[var(--border-soft)] bg-white px-6 py-8 shadow-[0_18px_50px_rgba(48,67,95,0.08)] sm:px-10 sm:py-10">
+            <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[rgba(54,87,132,0.12)] blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-[rgba(37,99,235,0.10)] blur-3xl" />
 
-      <div className={styles.container}>
-        <section id="hero" className={`${styles.hero} ${styles.reveal}`} data-reveal>
-          <div className={styles.heroBadge}>AI Coding Report</div>
-          <h1>AI is Writing Code — Are You Using It?</h1>
-          <p className={styles.heroText}>
-            Modern coding teams now combine human architecture thinking with model-assisted implementation, review, and
-            automation. This page gives a practical snapshot of models, tools, and workflows that matter most in 2025.
-          </p>
-          <div className={styles.heroStats}>
-            <div className={styles.stat}>
-              <div className={styles.counter}>{counter}%</div>
-              <div className={styles.counterLabel}>of code is now AI-assisted</div>
-            </div>
-            <div className={styles.stat}>
-              <div className={styles.counter}>9</div>
-              <div className={styles.counterLabel}>core sections for real-world implementation</div>
-            </div>
-            <div className={styles.stat}>
-              <div className={styles.counter}>2025</div>
-              <div className={styles.counterLabel}>data-focused snapshot</div>
-            </div>
-          </div>
-        </section>
-
-        <section id="models" className={`${styles.section} ${styles.reveal}`} data-reveal>
-          <div className={styles.sectionHeader}>
-            <h2>AI Coding Models</h2>
-            <p>
-              Side-by-side coding model cards for popular choices used in product teams. Context windows and access tiers
-              are shown for practical selection.
+            <p className="section-kicker">Coding Model Analysis Hub</p>
+            <h1 className="mt-3 max-w-4xl text-3xl font-black tracking-tight text-[var(--text-strong)] sm:text-5xl">
+              AI Coding Model Comparison for Developers
+            </h1>
+            <p className="mt-4 max-w-4xl text-sm leading-7 text-[var(--text-muted)] sm:text-base">
+              One-stop reference guide for developers comparing AI coding models before selecting a model for IDE
+              autocomplete, code review, test generation, refactoring, and agent workflows. This page covers benchmarks,
+              pricing, speed, context, strengths, and real-world use cases.
             </p>
-          </div>
-          <div className={styles.modelsGrid}>
-            {models.map((model) => (
-              <article key={model.name} className={styles.card}>
-                <div className={styles.chipRow}>
-                  <div />
-                  <span className={`${styles.badge} ${model.badge.includes('Free') ? styles.badgeFree : styles.badgePaid}`}>
-                    {model.badge}
-                  </span>
-                </div>
-                <div className={styles.modelName}>{model.name}</div>
-                <div className={styles.maker}>{model.maker}</div>
-                <div className={styles.metaList}>
-                  <div className={styles.metaItem}>
-                    <span>Best Use Case</span>
-                    <strong>{model.bestUseCase}</strong>
-                  </div>
-                  <div className={styles.metaItem}>
-                    <span>Context</span>
-                    <strong>{model.contextWindow}</strong>
-                  </div>
-                  <div className={styles.metaItem}>
-                    <span>Speed</span>
-                    <StarRating value={model.speed} />
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
 
-        <section id="tools" className={`${styles.section} ${styles.reveal}`} data-reveal>
-          <div className={styles.sectionHeader}>
-            <h2>AI Coding Tools</h2>
-            <p>Grouped by where developers spend their time: editor, IDE, and terminal/agent workflows.</p>
-          </div>
-          <div className={styles.toolsGrid}>
-            {toolGroups.map((group) => (
-              <div className={styles.toolGroup} key={group.title}>
-                <h3>{group.title}</h3>
-                <div className={styles.toolCards}>
-                  {group.tools.map((tool) => (
-                    <article key={tool.name} className={styles.toolCard}>
-                      <div className={styles.toolTop}>
-                        <span className={styles.logoPh}>LOGO</span>
-                        <div className={styles.toolName}>{tool.name}</div>
-                      </div>
-                      <p className={styles.toolDesc}>{tool.desc}</p>
-                      <a className={styles.visitBtn} href={tool.url} target="_blank" rel="noopener noreferrer">
-                        Visit
-                      </a>
-                    </article>
-                  ))}
-                </div>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                <div className="flex items-center gap-2 text-[var(--accent)]"><Code2 className="h-4 w-4" /><span className="text-xs font-bold uppercase tracking-[0.12em]">Model Count</span></div>
+                <p className="mt-2 text-2xl font-black text-[var(--text-strong)]">7</p>
               </div>
-            ))}
-          </div>
-        </section>
-
-        <section id="automation" className={`${styles.section} ${styles.reveal}`} data-reveal>
-          <div className={styles.sectionHeader}>
-            <h2>Automation with AI</h2>
-            <p>Six high-impact automation patterns teams are deploying in day-to-day software delivery.</p>
-          </div>
-          <div className={styles.automationGrid}>
-            {automationCards.map((card) => (
-              <article key={card.title} className={styles.automationCard}>
-                <div className={styles.automationIcon}>{card.icon}</div>
-                <h3 className={styles.automationTitle}>{card.title}</h3>
-                <p className={styles.automationDesc}>{card.desc}</p>
-                <pre className={styles.snippet}>{card.snippet}</pre>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section id="agentic" className={`${styles.section} ${styles.reveal}`} data-reveal>
-          <div className={styles.sectionHeader}>
-            <h2>Agentic Coding</h2>
-            <p>Agents combine planning, coding, tool use, and iteration into an autonomous but monitorable workflow.</p>
-          </div>
-          <div className={styles.agentGrid}>
-            <article className={styles.agentExplain}>
-              Coding agents are systems that execute multi-step software tasks with tools: they read repository context,
-              propose changes, run checks, and revise outputs. In production, effective usage adds guardrails such as
-              constrained file scope, test gates, and human approval before deploy.
-            </article>
-            <article className={styles.flow}>
-              <div className={styles.flowList}>
-                {flowSteps.map((step, idx) => (
-                  <div className={styles.flowStep} key={step.title}>
-                    <span className={styles.flowNum}>{idx + 1}</span>
-                    <div>
-                      <div className={styles.flowTitle}>{step.title}</div>
-                      <p className={styles.flowDesc}>{step.desc}</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                <div className="flex items-center gap-2 text-[var(--accent)]"><Gauge className="h-4 w-4" /><span className="text-xs font-bold uppercase tracking-[0.12em]">Comparison Axes</span></div>
+                <p className="mt-2 text-2xl font-black text-[var(--text-strong)]">17 sections</p>
               </div>
-            </article>
-          </div>
-        </section>
-
-        <section id="languages" className={`${styles.section} ${styles.reveal}`} data-reveal>
-          <div className={styles.sectionHeader}>
-            <h2>Language Support Strength</h2>
-            <p>Relative coding assistance quality in 2025 based on common benchmark and practitioner patterns.</p>
-          </div>
-          <div className={styles.langGrid}>
-            {languageStrengths.map((lang) => (
-              <article className={styles.langCard} key={lang.name}>
-                <div className={styles.langTop}>
-                  <strong>{lang.name}</strong>
-                  <span>{lang.score}%</span>
-                </div>
-                <div className={styles.barTrack}>
-                  <div className={styles.barFill} data-lang-score={lang.score} />
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section id="prompts" className={`${styles.section} ${styles.reveal}`} data-reveal>
-          <div className={styles.sectionHeader}>
-            <h2>Prompt Engineering for Developers</h2>
-            <p>Before/after prompt examples showing why specificity, constraints, and output contracts improve code quality.</p>
-          </div>
-          <div className={styles.promptGrid}>
-            {promptExamples.map((example) => (
-              <article className={styles.promptCard} key={example.title}>
-                <h3>{example.title}</h3>
-                <div className={styles.promptSplit}>
-                  <div className={styles.codePane}>
-                    <div className={styles.codeLabel}>Weak Prompt</div>
-                    <pre className={styles.code}>
-                      <code>
-                        <span className={styles.com}># vague</span>{'\n'}
-                        <span className={styles.kw}>prompt</span>: <span className={styles.str}>"{example.weak}"</span>
-                      </code>
-                    </pre>
-                  </div>
-                  <div className={styles.codePane}>
-                    <div className={styles.codeLabel}>Strong Prompt</div>
-                    <pre className={styles.code}>
-                      <code>
-                        <span className={styles.com}># explicit constraints</span>{'\n'}
-                        <span className={styles.kw}>prompt</span>: <span className={styles.str}>"{example.strong}"</span>
-                      </code>
-                    </pre>
-                  </div>
-                  <div className={styles.codePane}>
-                    <div className={styles.codeLabel}>Output Difference</div>
-                    <pre className={styles.code}>
-                      <code>
-                        <span className={styles.kw}>weak_output</span>: <span className={styles.val}>{example.outputWeak}</span>{'\n'}
-                        <span className={styles.kw}>strong_output</span>: <span className={styles.val}>{example.outputStrong}</span>
-                      </code>
-                    </pre>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section id="benchmarks" className={`${styles.section} ${styles.reveal}`} data-reveal>
-          <div className={styles.sectionHeader}>
-            <h2>Benchmarks and Performance</h2>
-            <p>HumanEval and SWE-bench comparison for five publicly reported coding models.</p>
-          </div>
-          <div className={styles.chartWrap}>
-            <div style={{ height: '380px' }}>
-              <canvas ref={chartRef} />
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4 sm:col-span-2 lg:col-span-1">
+                <div className="flex items-center gap-2 text-[var(--accent)]"><Clock3 className="h-4 w-4" /><span className="text-xs font-bold uppercase tracking-[0.12em]">Last Updated</span></div>
+                <p className="mt-2 text-2xl font-black text-[var(--text-strong)]">{LAST_UPDATED}</p>
+              </div>
             </div>
-            <p className={styles.chartFoot}>{benchmarkSummary}</p>
-          </div>
-        </section>
+          </section>
 
-        <section id="resources" className={`${styles.section} ${styles.reveal}`} data-reveal>
-          <div className={styles.sectionHeader}>
-            <h2>Resources and Trends</h2>
-            <p>Where to keep learning, collaborate, and track what is coming next in AI-assisted software engineering.</p>
+          <Section id="section-1" number="1" title="Introduction / Purpose of the Page">
+            <p>
+              This page is built as a practical decision guide for developers and teams evaluating AI coding models. It
+              is designed to help you quickly compare benchmark quality, cost, latency, context size, privacy tradeoffs,
+              and tooling ecosystem fit before choosing a model.
+            </p>
+          </Section>
+
+          <Section id="section-2" number="2" title="What Is an AI Coding Model?">
+            <p>
+              AI coding models are large language models trained or adapted for programming tasks like completion,
+              debugging, refactoring, and code explanation. Some are general-purpose frontier models that code very well
+              (for example GPT and Claude families), while others are code-specialized models (for example DeepSeek
+              Coder, Code Llama, Qwen Coder) optimized for software engineering workflows.
+            </p>
+          </Section>
+
+          <Section id="section-3" number="3" title="List of Models Covered">
+            <p>Quick reference list including developer, version timing, openness, and access path.</p>
+            <DataTable
+              headers={['Model', 'Developer', 'Release / Version', 'Open or Closed', 'Access']}
+              rows={modelsCovered}
+            />
+          </Section>
+
+          <Section id="section-4" number="4" title="Model Comparison Table">
+            <p>
+              Core side-by-side table for context size, pricing, speed, max output, multimodality, fine-tuning, and
+              licensing.
+            </p>
+            <DataTable
+              headers={[
+                'Model',
+                'Context Window',
+                'Input Price / 1M',
+                'Output Price / 1M',
+                'Speed (tokens/sec)',
+                'Max Output',
+                'Multimodal',
+                'Fine-Tuning',
+                'License',
+              ]}
+              rows={comparisonRows}
+            />
+            <p className="mt-3 text-xs text-[var(--text-faint)]">
+              Throughput numbers are often not published as one stable value because they vary by region, queue, output
+              length, and tooling overhead.
+            </p>
+          </Section>
+
+          <Section id="section-5" number="5" title="Benchmark Scores Section">
+            <p>
+              HumanEval tests function correctness from docstrings. SWE-bench evaluates fixing real GitHub issues.
+              LiveCodeBench focuses on fresh competitive-style coding tasks to reduce contamination. MBPP measures basic
+              Python problem-solving.
+            </p>
+            <BenchmarkCharts />
+            <DataTable
+              headers={['Model', 'HumanEval (pass@1)', 'SWE-bench', 'LiveCodeBench', 'MBPP']}
+              rows={benchmarkRows}
+            />
+            <p className="mt-3 text-xs text-[var(--text-faint)]">
+              Important: these figures come from different papers/eval harnesses and are not perfectly apples-to-apples.
+            </p>
+          </Section>
+
+          <Section id="section-6" number="6" title="Real-World Coding Task Performance">
+            <p>
+              Practical rating grid for day-to-day developer workflows. Ratings are qualitative and intended as
+              directional guidance.
+            </p>
+            <DataTable
+              headers={['Task', 'GPT-4.1', 'Claude 4.6', 'Gemini 2.5 Pro', 'Codestral', 'DeepSeek V2', 'Code Llama 70B']}
+              rows={realWorldRows}
+            />
+          </Section>
+
+          <Section id="section-7" number="7" title="Language and Framework Support">
+            <DataTable headers={['Language', 'Models That Typically Perform Well']} rows={languageRows} />
+            <div className="mt-4 rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+              <p className="font-semibold text-[var(--text-strong)]">Framework notes</p>
+              <ul className="mt-2 list-disc pl-5 text-sm text-[var(--text-main)]">
+                <li>React/Next.js: GPT-4.1, Claude Sonnet 4.6, Codestral</li>
+                <li>Django/FastAPI: GPT-4.1, Claude Sonnet 4.6, DeepSeek-Coder-V2</li>
+                <li>Spring Boot: GPT-4.1, Gemini 2.5 Pro, Claude Sonnet 4.6</li>
+                <li>Node/Nest/Express: GPT-4.1, Claude Sonnet 4.6, Codestral</li>
+              </ul>
+            </div>
+          </Section>
+
+          <Section id="section-8" number="8" title="Context Window Deep Dive">
+            <p>
+              Context window is how much text (code, docs, prompts) a model can consider in one request. Rough mapping:
+              8K tokens can fit about 500-600 lines of code, while 100K+ can cover multiple files. Very large context
+              can still degrade retrieval quality when important details are buried in the middle ('lost in the
+              middle').
+            </p>
+            <p className="mt-3">
+              For production use, retrieval strategy and prompt structure often matter as much as raw context size.
+            </p>
+          </Section>
+
+          <Section id="section-9" number="9" title="Speed and Latency Analysis">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                <p className="font-bold text-[var(--text-strong)]">First Token Latency</p>
+                <p className="mt-2 text-sm">Critical for interactive coding and chat-driven debugging loops.</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                <p className="font-bold text-[var(--text-strong)]">Tokens per Second</p>
+                <p className="mt-2 text-sm">Determines how fast full patches, explanations, and generated files stream.</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                <p className="font-bold text-[var(--text-strong)]">Batch Throughput</p>
+                <p className="mt-2 text-sm">Important for offline tasks like codebase scanning and large test generation.</p>
+              </div>
+            </div>
+          </Section>
+
+          <Section id="section-10" number="10" title="Pricing and Cost Analysis">
+            <p>
+              Example estimate: 1M input tokens/day and 250K output tokens/day over 30 days.
+            </p>
+            <DataTable
+              headers={['Model', 'Approx Monthly Cost (example)', 'Typical Tier Fit']}
+              rows={[
+                ['GPT-4.1', '~$120/month', 'Medium-heavy engineering usage'],
+                ['Claude Sonnet 4.6', '~$202.5/month', 'Higher spend, high-quality workflows'],
+                ['Gemini 2.5 Pro', '~$112.5 to $187.5/month (prompt-size dependent)', 'Flexible depending on prompt size'],
+                ['Codestral 25.08', '~$15.75/month', 'Cost-sensitive coding tooling'],
+                ['Self-hosted open models', 'No per-token fee; infra cost only', 'Teams with GPU/ops control'],
+              ]}
+            />
+            <p className="mt-3 text-xs text-[var(--text-faint)]">Free tiers and enterprise discounts vary by provider and can change frequently.</p>
+          </Section>
+
+          <Section id="section-11" number="11" title="Hosting and Access Options">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4"><p className="font-bold text-[var(--text-strong)]">API Access</p><p className="mt-2 text-sm">Fastest setup, token-based billing, external processing.</p></div>
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4"><p className="font-bold text-[var(--text-strong)]">Self-Hosted</p><p className="mt-2 text-sm">No token billing, full control, requires GPU infrastructure.</p></div>
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4"><p className="font-bold text-[var(--text-strong)]">Cloud GPU Hosts</p><p className="mt-2 text-sm">Run open models without owning hardware (Together, Fireworks, Groq, Replicate, etc.).</p></div>
+            </div>
+          </Section>
+
+          <Section id="section-12" number="12" title="Privacy and Data Security">
+            <p>
+              API models process prompts on vendor infrastructure; enterprise plans may offer stricter retention controls
+              and contractual guarantees. Self-hosted open models keep code fully within your own environment, which is
+              often preferred for proprietary and regulated workloads.
+            </p>
+          </Section>
+
+          <Section id="section-13" number="13" title="IDE and Tool Integrations">
+            <DataTable headers={['Tool', 'Model Support', 'Editor Coverage']} rows={integrations} />
+          </Section>
+
+          <Section id="section-14" number="14" title="Best Model for Each Use Case">
+            <ul className="list-disc pl-5">
+              <li>Best autocomplete: Codestral (cost/speed) and GPT-4.1 (quality consistency).</li>
+              <li>Best code review/explanation: Claude Sonnet 4.6 and GPT-4.1.</li>
+              <li>Best test generation: GPT-4.1 and Claude Sonnet 4.6.</li>
+              <li>Best for large codebases: Claude Sonnet 4.6, Gemini 2.5 Pro, GPT-4.1.</li>
+              <li>Best free/open option: DeepSeek-Coder-V2 or Qwen2.5-Coder.</li>
+              <li>Best for low-latency budget pipelines: Codestral or quantized local open models.</li>
+              <li>Best for cost-sensitive projects: Codestral API or self-hosted open weights.</li>
+            </ul>
+          </Section>
+
+          <Section id="section-15" number="15" title="How to Evaluate a Model on Your Own Codebase">
+            <ol className="list-decimal pl-5">
+              <li>Select 10 real tasks from recent work.</li>
+              <li>Run identical prompts across 3-4 candidate models.</li>
+              <li>Score correctness, relevance, and explanation clarity.</li>
+              <li>Include edge cases specific to your language and framework.</li>
+              <li>Compare speed and monthly cost at your expected volume.</li>
+            </ol>
+          </Section>
+
+          <Section id="section-16" number="16" title="Frequently Asked Questions">
+            <div className="space-y-4">
+              {faq.map(([q, a]) => (
+                <article key={q} className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                  <h3 className="font-bold text-[var(--text-strong)]">{q}</h3>
+                  <p className="mt-2 text-sm text-[var(--text-main)]">{a}</p>
+                </article>
+              ))}
+            </div>
+          </Section>
+
+          <Section id="section-17" number="17" title="Sources and Last Updated Date">
+            <p className="font-semibold text-[var(--text-strong)]">Last updated: {LAST_UPDATED}</p>
+            <ul className="mt-3 list-disc pl-5">
+              <li><a className="text-[var(--accent)] underline" href="https://platform.openai.com/docs/models/gpt-4.1" target="_blank" rel="noopener noreferrer">OpenAI GPT-4.1 model page (pricing, context, max output)</a></li>
+              <li><a className="text-[var(--accent)] underline" href="https://openai.com/index/gpt-4-1/" target="_blank" rel="noopener noreferrer">OpenAI GPT-4.1 release post (SWE-bench 54.6%)</a></li>
+              <li><a className="text-[var(--accent)] underline" href="https://platform.openai.com/docs/pricing/" target="_blank" rel="noopener noreferrer">OpenAI API pricing page</a></li>
+              <li><a className="text-[var(--accent)] underline" href="https://www.anthropic.com/news/claude-sonnet-4-6" target="_blank" rel="noopener noreferrer">Anthropic Sonnet 4.6 release (context + pricing statement)</a></li>
+              <li><a className="text-[var(--accent)] underline" href="https://ai.google.dev/pricing" target="_blank" rel="noopener noreferrer">Google Gemini API pricing</a></li>
+              <li><a className="text-[var(--accent)] underline" href="https://docs.mistral.ai/models/codestral-25-08" target="_blank" rel="noopener noreferrer">Mistral Codestral 25.08 model page</a></li>
+              <li><a className="text-[var(--accent)] underline" href="https://github.com/deepseek-ai/DeepSeek-Coder-V2" target="_blank" rel="noopener noreferrer">DeepSeek-Coder-V2 official repo benchmark tables</a></li>
+              <li><a className="text-[var(--accent)] underline" href="https://ar5iv.labs.arxiv.org/html/2409.12186" target="_blank" rel="noopener noreferrer">Qwen2.5-Coder technical report (tables with HumanEval/MBPP/LiveCodeBench)</a></li>
+              <li><a className="text-[var(--accent)] underline" href="https://mistral.ai/news/codestral-2501" target="_blank" rel="noopener noreferrer">Mistral Codestral-2501 benchmark table (includes Code Llama row)</a></li>
+              <li><a className="text-[var(--accent)] underline" href="https://www.swebench.com/verified.html" target="_blank" rel="noopener noreferrer">SWE-bench official benchmark documentation</a></li>
+              <li><a className="text-[var(--accent)] underline" href="https://evalplus.github.io/leaderboard.html" target="_blank" rel="noopener noreferrer">EvalPlus leaderboard (HumanEval / MBPP methodology)</a></li>
+              <li><a className="text-[var(--accent)] underline" href="https://livecodebench.github.io/leaderboard.html" target="_blank" rel="noopener noreferrer">LiveCodeBench official leaderboard</a></li>
+            </ul>
+          </Section>
+        </div>
+
+        <aside className="hidden lg:sticky lg:top-24 lg:block">
+          <div className="editorial-panel rounded-[24px] border border-[var(--border-soft)] p-4">
+            <div className="mb-3 flex items-center gap-2 text-[var(--accent)]">
+              <Layers3 className="h-4 w-4" />
+              <p className="text-xs font-bold uppercase tracking-[0.12em]">On this page</p>
+            </div>
+            <nav className="max-h-[70vh] space-y-2 overflow-auto pr-1">
+              {sectionLinks.map((item) => (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  className="block rounded-lg px-2 py-1.5 text-xs font-semibold text-[var(--text-main)] transition hover:bg-[var(--panel-muted)] hover:text-[var(--accent)]"
+                >
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+            <div className="mt-4 space-y-2 rounded-xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-3 text-xs">
+              <div className="flex items-center gap-2"><DollarSign className="h-3.5 w-3.5 text-[var(--accent)]" /><span className="font-semibold">Pricing changes fast</span></div>
+              <div className="flex items-center gap-2"><ShieldCheck className="h-3.5 w-3.5 text-[var(--accent)]" /><span className="font-semibold">Verify privacy policy per vendor</span></div>
+            </div>
           </div>
-          <div className={styles.resourceGrid}>
-            {resourceColumns.map((column) => (
-              <article className={styles.resourceCol} key={column.title}>
-                <h3>{column.title}</h3>
-                <div className={styles.resourceList}>
-                  {column.items.map((item) =>
-                    item.href ? (
-                      <a key={item.label} href={item.href} target="_blank" rel="noopener noreferrer">
-                        {item.label}
-                      </a>
-                    ) : (
-                      <span key={item.label}>{item.label}</span>
-                    ),
-                  )}
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+        </aside>
       </div>
     </main>
   );
