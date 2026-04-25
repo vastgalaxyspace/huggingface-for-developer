@@ -1005,7 +1005,7 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
 
         {/* ══ 1. HERO ════════════════════════════════════════════════════════ */}
         <section aria-labelledby="hero-heading" className="shell-container pb-8 pt-8 sm:pt-12 lg:pt-16">
-          <div className="editorial-panel soft-grid overflow-hidden rounded-[28px] px-4 py-8 sm:rounded-[36px] sm:px-8 sm:py-12 lg:px-12 lg:py-14">
+          <div className="editorial-panel soft-grid overflow-visible rounded-[28px] px-4 py-8 sm:rounded-[36px] sm:px-8 sm:py-12 lg:px-12 lg:py-14">
             <div className="grid gap-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:items-center">
               <div className="text-center lg:text-left">
                 <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-soft)] bg-white px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-[var(--accent)] shadow-sm">
@@ -1087,7 +1087,7 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
             </div>
 
               {/* Search */}
-              <div className="mx-auto mt-8 max-w-4xl sm:mt-12" ref={searchContainerRef}>
+              <div className="relative z-[80] mx-auto mt-8 max-w-4xl sm:mt-12" ref={searchContainerRef}>
                 <div className="group relative">
                   <label htmlFor="model-search" className="sr-only">
                     Search open-source AI models
@@ -1131,7 +1131,7 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
                     <div
                       id="search-suggestions"
                       role="listbox"
-                      className="absolute top-[calc(100%+12px)] z-[60] w-full overflow-hidden rounded-[22px] border border-[var(--border-soft)] bg-white shadow-[0_24px_60px_rgba(48,67,95,0.12)]"
+                      className="absolute top-[calc(100%+12px)] z-[90] w-full overflow-hidden rounded-[22px] border border-[var(--border-soft)] bg-white shadow-[0_24px_60px_rgba(48,67,95,0.12)]"
                     >
                       {suggestions.length > 0 ? (
                         <>
