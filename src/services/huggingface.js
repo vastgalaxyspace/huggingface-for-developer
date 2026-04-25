@@ -7,8 +7,14 @@ const OPTIONAL_ASSET_ERROR_TEXT = [
   'failed to fetch',
   'load failed',
   'networkerror',
-  'network request failed'
+  'network request failed',
+  'timeout',
+  'connect timeout',
+  'terminated'
 ];
+const HF_FETCH_TIMEOUT_MS = 6000;
+const HF_OPTIONAL_FETCH_TIMEOUT_MS = 3500;
+const TRENDING_HYDRATION_LIMIT = 12;
 
 /**
  * Get headers for authenticated requests
@@ -22,6 +28,20 @@ const getHeaders = () => {
 };
 
 const isBrowser = typeof window !== 'undefined';
+
+const fetchWithTimeout = async (url, options = {}, timeoutMs = HF_FETCH_TIMEOUT_MS) => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: options.signal || controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+};
 
 const fetchModelViaProxy = async (modelId) => {
   const response = await fetch(`/api/hf-model?modelId=${encodeURIComponent(modelId)}`, {
@@ -51,9 +71,10 @@ const fetchOptionalRepoFile = async (modelId, filePath, responseType = 'json') =
 
   try {
     for (const pathType of paths) {
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `${HF_API_BASE}/${modelId}/${pathType}/main/${filePath}`,
-        { headers: getHeaders() }
+        { headers: getHeaders() },
+        HF_OPTIONAL_FETCH_TIMEOUT_MS
       );
 
       if (response.ok) {
@@ -84,9 +105,9 @@ export const fetchModelMetadata = async (modelId) => {
       return data?.metadata || null;
     }
 
-    const response = await fetch(`${HF_API_MODELS}/${modelId}`, {
+    const response = await fetchWithTimeout(`${HF_API_MODELS}/${modelId}`, {
       headers: getHeaders()
-    });
+    }, HF_FETCH_TIMEOUT_MS);
     
     if (!response.ok) {
       if (response.status === 404) {
@@ -181,9 +202,10 @@ export const searchModels = async (query, limit = 10) => {
     const isKeywordSearch = !query.includes('/');
     const filterParam = isKeywordSearch ? '&filter=text-generation' : '';
     
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `${HF_API_MODELS}?search=${encodeURIComponent(query)}&limit=${limit}&sort=downloads&direction=-1${filterParam}`,
-      { headers: getHeaders() }
+      { headers: getHeaders() },
+      HF_FETCH_TIMEOUT_MS
     );
     
     if (!response.ok) throw new Error('Search failed');
@@ -200,9 +222,10 @@ export const searchModels = async (query, limit = 10) => {
  */
 export const getTrendingModels = async (limit = 10) => {
   try {
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `${HF_API_MODELS}?sort=trendingScore&direction=-1&limit=${limit}`,
-      { next: { revalidate: 3600 } } // Refresh trending data every hour
+      { next: { revalidate: 3600 } }, // Refresh trending data every hour
+      HF_FETCH_TIMEOUT_MS
     );
     
     if (!response.ok) throw new Error('Failed to fetch trending models');
@@ -218,7 +241,8 @@ export const getTrendingModels = async (limit = 10) => {
           Number(model?.cardData?.parameters) > 0 ||
           Number(model?.transformersInfo?.num_parameters) > 0;
         return !hasNameSize && !hasMetadataParams;
-      });
+      })
+      .slice(0, TRENDING_HYDRATION_LIMIT);
 
     const hydrationEntries = await Promise.all(
       candidates.map(async (model) => {

@@ -2,10 +2,26 @@ import { NextResponse } from "next/server";
 
 const HF_BASE = "https://huggingface.co";
 const HF_MODELS = "https://huggingface.co/api/models";
+const HF_FETCH_TIMEOUT_MS = 8000;
+const HF_OPTIONAL_FETCH_TIMEOUT_MS = 3500;
 
 function getHeaders() {
   const token = process.env.NEXT_PUBLIC_HF_TOKEN || process.env.HF_TOKEN;
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = HF_FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: options.signal || controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export async function GET(request) {
@@ -17,10 +33,10 @@ export async function GET(request) {
   }
 
   try {
-    const metadataResponse = await fetch(`${HF_MODELS}/${modelId}`, {
+    const metadataResponse = await fetchWithTimeout(`${HF_MODELS}/${modelId}`, {
       headers: getHeaders(),
       cache: "no-store",
-    });
+    }, HF_FETCH_TIMEOUT_MS);
 
     if (!metadataResponse.ok) {
       const message = metadataResponse.status === 404
@@ -35,10 +51,10 @@ export async function GET(request) {
     let config_error = null;
 
     try {
-      const configResponse = await fetch(`${HF_BASE}/${modelId}/resolve/main/config.json`, {
+      const configResponse = await fetchWithTimeout(`${HF_BASE}/${modelId}/resolve/main/config.json`, {
         headers: getHeaders(),
         cache: "no-store",
-      });
+      }, HF_OPTIONAL_FETCH_TIMEOUT_MS);
 
       if (!configResponse.ok) {
         config_available = false;

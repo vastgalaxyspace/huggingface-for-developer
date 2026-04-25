@@ -1,16 +1,14 @@
 import { Cpu, Zap, Server, Cloud, Gauge, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { pageMetadata } from '../../src/lib/seo';
 
-export const metadata = {
-  title: 'AI Inference | InnoAI – Run & Deploy AI Models',
+export const metadata = pageMetadata({
+  title: 'AI Inference Deployment Guide',
   description:
-    'Explore AI inference solutions, APIs, and deployment strategies. Learn how to run AI models efficiently in production with optimized inference pipelines.',
-  openGraph: {
-    title: 'AI Inference | InnoAI',
-    description:
-      'Explore AI inference solutions, APIs, and deployment strategies for production AI workloads.',
-  },
-};
+    'Explore AI inference providers, deployment strategies, and serving tradeoffs for production AI workloads.',
+  path: '/ai-inference',
+  keywords: ['AI inference', 'AI deployment', 'inference providers', 'production model serving'],
+});
 
 const INFERENCE_PROVIDERS = [
   {
@@ -60,7 +58,7 @@ const QUICK_GUIDES = [
   },
   {
     title: 'Image Generation',
-    description: 'Generate images using Stable Diffusion, DALL-E, and other diffusion models.',
+    description: 'Generate images using Stable Diffusion and other diffusion models.',
     models: ['stabilityai/stable-diffusion-xl-base-1.0'],
     category: 'Vision',
   },
@@ -78,10 +76,24 @@ const QUICK_GUIDES = [
   },
 ];
 
+const DECISION_NOTES = [
+  {
+    title: 'Prototype fast',
+    body: 'Serverless APIs are usually the fastest path when you want to test product ideas without managing GPUs.',
+  },
+  {
+    title: 'Stabilize latency',
+    body: 'Dedicated endpoints become more attractive once request volume and user expectations are predictable.',
+  },
+  {
+    title: 'Keep control',
+    body: 'Self-hosted or Triton-style deployments make more sense when privacy, custom runtimes, or cost control dominate the decision.',
+  },
+];
+
 export default function AIInferencePage() {
   return (
     <main className="shell-container" style={{ paddingTop: '2.5rem', paddingBottom: '4rem' }}>
-      {/* Hero Section */}
       <section style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
         <div
           style={{
@@ -114,19 +126,97 @@ export default function AIInferencePage() {
         </h1>
         <p
           style={{
-            maxWidth: '640px',
+            maxWidth: '720px',
             margin: '0 auto',
             fontSize: '1.05rem',
             lineHeight: 1.7,
             color: 'var(--text-muted)',
           }}
         >
-          Discover inference providers, deployment strategies, and best practices
-          to serve AI models at scale — from free APIs to enterprise-grade solutions.
+          Discover inference providers, deployment strategies, and practical tradeoffs to serve AI models at scale,
+          from free APIs to enterprise-grade solutions. This page is built to help you choose a serving path based on
+          workload, privacy, latency, and operational complexity rather than provider hype alone.
         </p>
       </section>
 
-      {/* Inference Providers Grid */}
+      <section
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: '1.25rem',
+          marginBottom: '3rem',
+        }}
+      >
+        <article
+          style={{
+            padding: '1.5rem',
+            borderRadius: '1rem',
+            border: '1px solid var(--border-soft)',
+            background: 'white',
+          }}
+        >
+          <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-strong)' }}>How to use this page</h2>
+          <ol style={{ marginTop: '0.9rem', paddingLeft: '1rem', color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.8 }}>
+            <li>1. Choose the serving pattern that matches your current stage, not your long-term dream architecture.</li>
+            <li>2. Compare privacy, scaling, cost, and operational ownership together.</li>
+            <li>3. Validate model memory fit before committing to any infrastructure path.</li>
+            <li>4. Use this page as a deployment guide, then test final candidates on real prompts.</li>
+          </ol>
+        </article>
+
+        <article
+          style={{
+            padding: '1.5rem',
+            borderRadius: '1rem',
+            border: '1px solid var(--border-soft)',
+            background: 'white',
+          }}
+        >
+          <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-strong)' }}>What this helps decide</h2>
+          <div style={{ marginTop: '0.9rem', color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.8 }}>
+            <p>
+              This page is best for deciding between serverless APIs, dedicated endpoints, managed clouds, and
+              self-operated inference stacks.
+            </p>
+            <p style={{ marginTop: '0.6rem' }}>
+              If you already know the model and mainly need memory or hardware guidance, continue to the{' '}
+              <Link href="/gpu/tools/vram-calculator" style={{ color: 'var(--accent)', fontWeight: 700, textDecoration: 'none' }}>
+                VRAM calculator
+              </Link>{' '}
+              or{' '}
+              <Link href="/gpu/tools/gpu-picker" style={{ color: 'var(--accent)', fontWeight: 700, textDecoration: 'none' }}>
+                GPU picker
+              </Link>.
+            </p>
+          </div>
+        </article>
+      </section>
+
+      <section style={{ marginBottom: '3rem' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: '1rem',
+          }}
+        >
+          {DECISION_NOTES.map((item) => (
+            <article
+              key={item.title}
+              style={{
+                padding: '1.25rem',
+                borderRadius: '1rem',
+                border: '1px solid var(--border-soft)',
+                background: 'white',
+              }}
+            >
+              <h2 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-strong)' }}>{item.title}</h2>
+              <p style={{ marginTop: '0.7rem', fontSize: '0.9rem', lineHeight: 1.7, color: 'var(--text-muted)' }}>{item.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <section style={{ marginBottom: '3.5rem' }}>
         <h2
           style={{
@@ -221,7 +311,53 @@ export default function AIInferencePage() {
         </div>
       </section>
 
-      {/* Quick Start Guides */}
+      <section
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: '1.25rem',
+          marginBottom: '3.5rem',
+        }}
+      >
+        <article
+          style={{
+            padding: '1.5rem',
+            borderRadius: '1rem',
+            border: '1px solid var(--border-soft)',
+            background: 'white',
+          }}
+        >
+          <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-strong)' }}>What teams often miss</h2>
+          <p style={{ marginTop: '0.8rem', fontSize: '0.9rem', lineHeight: 1.7, color: 'var(--text-muted)' }}>
+            The biggest mistake is optimizing only for first-day setup speed. Real inference decisions also depend on
+            retry behavior, scaling predictability, prompt size, observability, and whether your data can leave your
+            environment at all.
+          </p>
+        </article>
+
+        <article
+          style={{
+            padding: '1.5rem',
+            borderRadius: '1rem',
+            border: '1px solid var(--border-soft)',
+            background: 'white',
+          }}
+        >
+          <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-strong)' }}>Best next step</h2>
+          <p style={{ marginTop: '0.8rem', fontSize: '0.9rem', lineHeight: 1.7, color: 'var(--text-muted)' }}>
+            After choosing a serving path, validate the actual model with the{' '}
+            <Link href="/compare" style={{ color: 'var(--accent)', fontWeight: 700, textDecoration: 'none' }}>
+              comparison workspace
+            </Link>{' '}
+            and{' '}
+            <Link href="/recommender" style={{ color: 'var(--accent)', fontWeight: 700, textDecoration: 'none' }}>
+              recommender
+            </Link>{' '}
+            so infrastructure and model quality stay aligned.
+          </p>
+        </article>
+      </section>
+
       <section style={{ marginBottom: '3.5rem' }}>
         <h2
           style={{
@@ -312,7 +448,6 @@ export default function AIInferencePage() {
         </div>
       </section>
 
-      {/* Code Example */}
       <section
         style={{
           padding: '2rem',
@@ -367,13 +502,32 @@ print(response.json())`}</code>
         </pre>
       </section>
 
-      {/* Tutorial Banner CTA */}
-      <section style={{ marginTop: '4rem', marginBottom: '1rem', padding: '2.5rem', borderRadius: '1rem', background: 'linear-gradient(135deg, var(--bg-muted), #1e293b)', border: '1px solid var(--border-soft)', textAlign: 'center' }}>
+      <section
+        style={{
+          marginTop: '4rem',
+          marginBottom: '1rem',
+          padding: '2.5rem',
+          borderRadius: '1rem',
+          background: 'linear-gradient(135deg, var(--bg-muted), #1e293b)',
+          border: '1px solid var(--border-soft)',
+          textAlign: 'center',
+        }}
+      >
         <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-strong)', marginBottom: '1rem' }}>
           Ready to learn more?
         </h2>
-        <p style={{ maxWidth: '600px', margin: '0 auto', fontSize: '1rem', lineHeight: 1.6, color: 'var(--text-muted)', marginBottom: '2rem' }}>
-          Dive into our comprehensive, chapter-by-chapter AI Inference tutorial. Learn about everything from transformer architectures and Flash Attention to hardware selection and autoscaling in production.
+        <p
+          style={{
+            maxWidth: '600px',
+            margin: '0 auto',
+            fontSize: '1rem',
+            lineHeight: 1.6,
+            color: 'var(--text-muted)',
+            marginBottom: '2rem',
+          }}
+        >
+          Dive into our chapter-by-chapter AI inference tutorial to learn about model serving, hardware selection,
+          throughput optimization, and production rollout patterns.
         </p>
         <Link
           href="/ai-inference/tutorial"

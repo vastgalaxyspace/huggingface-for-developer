@@ -36,7 +36,9 @@ export default function GpuCompatibilityGrid({ breakdown, runtimeConfig }) {
       }));
   }, [activeTab, breakdown, runtimeConfig.numGpus, runtimeConfig.parallelismStrategy]);
 
-  const visibleCards = showAll ? cards : cards.filter((gpu) => gpu.status !== "Insufficient");
+  const fittingCards = cards.filter((gpu) => gpu.status !== "Insufficient");
+  const visibleCards = showAll || fittingCards.length === 0 ? cards : fittingCards;
+  const showingInsufficientFallback = !showAll && fittingCards.length === 0 && cards.length > 0;
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -53,7 +55,7 @@ export default function GpuCompatibilityGrid({ breakdown, runtimeConfig }) {
           onClick={() => setShowAll((current) => !current)}
           className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
         >
-          {showAll ? "Hide Insufficient GPUs" : "Show All GPUs"}
+          {showAll ? "Show Only Fitting GPUs" : "Show All GPUs"}
         </button>
       </div>
 
@@ -71,6 +73,13 @@ export default function GpuCompatibilityGrid({ breakdown, runtimeConfig }) {
           </button>
         ))}
       </div>
+
+      {showingInsufficientFallback ? (
+        <div className="mt-5 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+          No GPUs in this category fit the current estimate, so all GPUs are shown with the number of cards needed.
+          Try a larger GPU category, lower precision, shorter context, or tensor parallelism.
+        </div>
+      ) : null}
 
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {visibleCards.length > 0 ? (

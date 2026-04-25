@@ -1,6 +1,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, ChartNoAxesCombined, Cpu, GitBranch, Gauge, Layers, MemoryStick, Wrench } from "lucide-react";
+import { pageMetadata } from "../../src/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "GPU Hub for AI Inference and Performance",
+  description:
+    "Learn GPU architecture, explore practical AI hardware tools, and connect model choices to VRAM, throughput, and deployment fit.",
+  path: "/gpu",
+  keywords: ["GPU hub", "AI GPU guide", "VRAM tools", "GPU performance for AI"],
+});
 
 export default function GpuPage() {
   const learningPath = [
@@ -171,6 +180,31 @@ export default function GpuPage() {
           </div>
         </section>
 
+        <section className="mt-10 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+          <article className="rounded-[20px] border border-[#d7dfe8] bg-white p-6 shadow-[0_10px_24px_rgba(45,67,92,0.05)]">
+            <h2 className="text-2xl font-extrabold tracking-[-0.01em] text-[#1a2635]">How to use this hub</h2>
+            <ol className="mt-4 space-y-3 text-sm leading-7 text-[#5a6d83]">
+              <li>1. Learn the hardware and memory basics if you are still building intuition.</li>
+              <li>2. Use the VRAM and GPU tools once you have a model or workload in mind.</li>
+              <li>3. Validate performance bottlenecks with the roofline and occupancy tools when tuning kernels or inference.</li>
+              <li>4. Move between learning pages and tools instead of treating them as separate tracks.</li>
+            </ol>
+          </article>
+
+          <article className="rounded-[20px] border border-[#d7dfe8] bg-white p-6 shadow-[0_10px_24px_rgba(45,67,92,0.05)]">
+            <h2 className="text-2xl font-extrabold tracking-[-0.01em] text-[#1a2635]">Why this matters for AI teams</h2>
+            <div className="mt-4 space-y-3 text-sm leading-7 text-[#5a6d83]">
+              <p>
+                Model choice without hardware understanding leads to expensive mistakes. This hub exists to connect
+                architecture concepts with the decisions teams actually make around VRAM, latency, throughput, and cost.
+              </p>
+              <p>
+                The goal is not to memorize GPU theory. It is to make better deployment calls with less guesswork.
+              </p>
+            </div>
+          </article>
+        </section>
+
         <section className="mt-10 rounded-[20px] border border-[#d7dfe8] bg-white p-6 md:p-8">
           <h2 className="mb-6 text-2xl font-extrabold tracking-[-0.01em] text-[#1b2737]">PRECISION TOOLS</h2>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -257,6 +291,37 @@ export default function GpuPage() {
           <QuickLink icon={Gauge} title="Execution" href="/gpu/execution" />
           <QuickLink icon={Cpu} title="Performance" href="/gpu/performance" />
           <QuickLink icon={Wrench} title="Tools" href="/gpu/tools/gpu-picker" />
+        </section>
+
+        <section className="mt-10 grid gap-5 md:grid-cols-3">
+          <article className="rounded-[20px] border border-[#d7dfe8] bg-white p-6 shadow-[0_10px_24px_rgba(45,67,92,0.05)]">
+            <h2 className="text-lg font-black tracking-tight text-[#132336]">Start here if you are new</h2>
+            <p className="mt-3 text-sm leading-7 text-[#5a6d83]">
+              Follow Physical Hardware, Memory Hierarchy, then Execution Model before jumping into tuning tools. That
+              sequence makes the later pages much easier to interpret.
+            </p>
+          </article>
+          <article className="rounded-[20px] border border-[#d7dfe8] bg-white p-6 shadow-[0_10px_24px_rgba(45,67,92,0.05)]">
+            <h2 className="text-lg font-black tracking-tight text-[#132336]">Start here if you already deploy models</h2>
+            <p className="mt-3 text-sm leading-7 text-[#5a6d83]">
+              Open the VRAM calculator and GPU picker first, then use the learning pages only where you need more
+              explanation about bottlenecks or architecture tradeoffs.
+            </p>
+          </article>
+          <article className="rounded-[20px] border border-[#d7dfe8] bg-white p-6 shadow-[0_10px_24px_rgba(45,67,92,0.05)]">
+            <h2 className="text-lg font-black tracking-tight text-[#132336]">Related decision guides</h2>
+            <p className="mt-3 text-sm leading-7 text-[#5a6d83]">
+              Pair this hub with{' '}
+              <Link href="/guides/choose-ai-model-by-gpu-budget" className="font-semibold text-[#143458] hover:text-[#102d48]">
+                the GPU and budget framework
+              </Link>{' '}
+              and{' '}
+              <Link href="/guides/best-models-low-vram" className="font-semibold text-[#143458] hover:text-[#102d48]">
+                low-VRAM model planning
+              </Link>{' '}
+              for end-to-end hardware decisions.
+            </p>
+          </article>
         </section>
       </div>
     </div>

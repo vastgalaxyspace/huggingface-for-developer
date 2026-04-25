@@ -15,6 +15,7 @@ const learningTopicRoutes = [
 const routes = [
   { path: '/', priority: 1.0, changeFrequency: 'daily' },
   { path: '/about', priority: 0.7, changeFrequency: 'monthly' },
+  { path: '/editorial-policy', priority: 0.65, changeFrequency: 'monthly' },
   { path: '/guides', priority: 0.9, changeFrequency: 'weekly' },
   { path: '/ai-updates', priority: 0.7, changeFrequency: 'weekly' },
   { path: '/ai-inference', priority: 0.8, changeFrequency: 'weekly' },

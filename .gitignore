@@ -14,7 +14,7 @@ dist-ssr
 
 # Environment variables
 .env
-
+ADSENSE_REAPPLY_CHECKLIST.md
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

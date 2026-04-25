@@ -134,32 +134,170 @@ export const guides = [
   {
     slug: 'rag-vs-fine-tuning',
     title: 'RAG vs Fine-Tuning: A Practical Decision Framework',
-    description: 'Decide whether you need retrieval, training, or a hybrid approach.',
+    description: 'A practical decision framework for choosing RAG, fine-tuning, or a hybrid architecture based on knowledge freshness, behavior control, cost, evaluation risk, and production maintenance.',
     category: 'Architecture',
-    readTime: '9 min read',
-    lastUpdated: '2026-04-12',
-    keyTakeaways: ['RAG is faster to ship.', 'Fine-tuning is for behavior consistency.', 'Hybrid works well at scale.'],
+    readTime: '18 min read',
+    lastUpdated: '2026-04-23',
+    keyTakeaways: [
+      'Use RAG when the model needs access to changing facts, private documents, citations, or source-grounded answers.',
+      'Use fine-tuning when the model already has the knowledge but fails at behavior, tone, format, classification style, or domain-specific response patterns.',
+      'Do not fine-tune to “teach” frequently changing facts. Update retrieval indexes instead.',
+      'Do not build RAG to fix weak instruction following. Improve prompting or fine-tune behavior instead.',
+      'Most teams should start with prompting plus RAG, collect failure logs, then fine-tune only when failure patterns prove it is necessary.',
+      'Hybrid RAG plus fine-tuning is powerful, but it adds evaluation, monitoring, and maintenance complexity that small teams should not adopt too early.',
+    ],
     sections: [
       {
-        heading: 'Use RAG for freshness',
+        heading: '1. The simplest decision rule',
         content:
-          'RAG is often the quickest path when knowledge changes frequently. You can update retrieval indexes without retraining model weights.',
+          'Use RAG when the model needs better information. Use fine-tuning when the model needs better behavior. This single rule prevents most architecture mistakes. If your chatbot gives outdated pricing, cannot find policy details, or needs to cite internal documents, retrieval is the right first move. If the model knows the answer but keeps responding in the wrong tone, wrong format, or inconsistent classification style, fine-tuning is more relevant.',
       },
       {
-        heading: 'Use fine-tuning for style and format',
+        heading: '2. What RAG actually changes',
         content:
-          'Fine-tuning helps when strict response style or domain behavior is required and prompting alone is inconsistent.',
+          'RAG changes what information the model sees at answer time. You keep documents, chunks, metadata, embeddings, and retrieval logic outside the model. At runtime, the app searches the knowledge base and inserts relevant context into the prompt. This is ideal for company docs, product catalogs, legal policies, support articles, research PDFs, release notes, knowledge bases, and anything that changes often. You can update content by re-indexing documents instead of training new weights.',
       },
       {
-        heading: 'Combine when product matures',
+        heading: '3. What fine-tuning actually changes',
         content:
-          'A common path is RAG first, then targeted fine-tuning after you have stable usage data and failure analysis.',
+          'Fine-tuning changes how the model behaves after learning from examples. It is useful when you have repeated input-output pairs and want the model to follow a style, classify consistently, produce structured output, or obey a domain response policy. Fine-tuning does not automatically make the model aware of your latest documents. It is a behavior-shaping tool, not a document database.',
+      },
+      {
+        heading: '4. Practical examples where RAG is the right choice',
+        content:
+          'Choose RAG for an internal HR assistant that answers from company policy PDFs, a customer support bot that must cite help-center articles, a legal research assistant that needs source references, a product search assistant that depends on live inventory, or a sales assistant that uses current pricing and feature documentation. In each case, the key problem is not that the model lacks style. The problem is that it needs access to fresh and trusted information.',
+      },
+      {
+        heading: '5. Practical examples where fine-tuning is the right choice',
+        content:
+          'Choose fine-tuning for routing support tickets into fixed categories, converting messy notes into a strict JSON schema, enforcing a brand-specific response tone, generating domain-specific short summaries, or making repeated compliance responses more consistent. In these cases, the model can usually answer from the prompt, but it does not reliably follow the exact behavior you need at scale.',
+      },
+      {
+        heading: '6. Decision matrix for real products',
+        content:
+          'If knowledge changes weekly or daily, prefer RAG. If knowledge is stable but response format is unreliable, prefer fine-tuning. If answers must include citations, prefer RAG. If the same task happens thousands of times with predictable labels or outputs, fine-tuning may reduce prompt length and improve consistency. If both fresh knowledge and strict behavior matter, use RAG first, then fine-tune later using real failure examples.',
+      },
+      {
+        heading: '7. Cost comparison that teams often miss',
+        content:
+          'RAG costs come from embedding documents, storing vectors, retrieval calls, longer prompts, and more complex orchestration. Fine-tuning costs come from dataset preparation, training runs, evaluation, retraining, and model-version maintenance. RAG can be cheaper to update because content changes do not require new training. Fine-tuning can be cheaper at high volume if it reduces very long prompts or replaces complex instruction blocks with learned behavior.',
+      },
+      {
+        heading: '8. Evaluation plan before choosing',
+        content:
+          'Build a test set of 50 to 100 real user questions before committing. Tag each failure as missing knowledge, wrong retrieval, hallucination, bad format, wrong tone, weak reasoning, or policy violation. If most failures are missing or stale facts, improve RAG. If most failures are format/tone/classification consistency, consider fine-tuning. If failures are reasoning quality, neither RAG nor fine-tuning may help enough; you may need a stronger base model or better task decomposition.',
+      },
+      {
+        heading: '9. Common RAG failure modes and fixes',
+        content:
+          'Weak RAG systems usually fail because chunks are too large, chunks are too small, metadata is missing, embeddings do not match the query style, irrelevant passages are retrieved, or the prompt does not force the model to use sources. Practical fixes include better chunking, metadata filters, reranking, query rewriting, source citations, and fallback behavior when retrieval confidence is low.',
+      },
+      {
+        heading: '10. Common fine-tuning failure modes and fixes',
+        content:
+          'Fine-tuning fails when the dataset is too small, examples are inconsistent, labels are noisy, edge cases are missing, or the team expects training to add fresh knowledge. Practical fixes include cleaning examples, adding negative examples, separating task types, validating on unseen data, and keeping a strong baseline prompt for comparison. Fine-tuning should improve a measured failure pattern, not be used because it sounds advanced.',
+      },
+      {
+        heading: '11. Recommended rollout path',
+        content:
+          'Start with a strong prompt and no training. Add RAG if answers need private or changing knowledge. Log failures for two to four weeks. Improve chunking, metadata, retrieval, and reranking. Only then consider fine-tuning if the model still fails predictable behavior patterns. For production teams, keep a fallback model and a manual review path for low-confidence responses.',
+      },
+      {
+        heading: '12. When hybrid RAG plus fine-tuning makes sense',
+        content:
+          'Hybrid is best when a product needs both grounded knowledge and consistent behavior. Examples include regulated support assistants, enterprise search copilots, insurance claim assistants, legal intake systems, and internal technical assistants. The RAG layer supplies current source material; the fine-tuned model learns response policy, structure, and domain-specific handling. Adopt this only when you have enough traffic and logs to justify the complexity.',
+      },
+      {
+        heading: '13. Architecture patterns',
+        content:
+          'A simple RAG architecture includes ingestion, chunking, embeddings, vector storage, retrieval, optional reranking, prompt assembly, generation, citations, and monitoring. A fine-tuning workflow includes dataset collection, example cleaning, train/validation split, baseline evaluation, training, regression testing, deployment, and rollback. A hybrid architecture combines both, which means you must monitor retrieval quality and tuned-model behavior separately.',
+      },
+      {
+        heading: '14. Practical recommendation by team size',
+        content:
+          'Solo developers should usually use prompting plus lightweight RAG. Startups should use RAG first and fine-tune only after repeated failures are visible in logs. Larger teams can run hybrid systems if they have evaluation infrastructure, model operations ownership, and enough usage volume to justify maintenance. Regulated teams should prioritize source-grounded answers, audit logs, and clear fallback behavior before tuning.',
+      },
+      {
+        heading: '15. Final recommendation',
+        content:
+          'Do not ask “Which is better: RAG or fine-tuning?” Ask “What kind of failure am I trying to fix?” If the failure is missing knowledge, use RAG. If the failure is inconsistent behavior, consider fine-tuning. If both are present, solve retrieval first, measure again, and then tune only the stable behavior layer. This order keeps cost lower and makes failures easier to debug.',
       },
     ],
-    checklist: ['Audit main gap: knowledge vs behavior', 'Run RAG pilot', 'Define evaluation gates'],
+    checklist: [
+      'Write down the top 20 real user questions or tasks before choosing an architecture.',
+      'Label each failure as missing knowledge, stale knowledge, wrong retrieval, hallucination, bad format, wrong tone, weak reasoning, or policy violation.',
+      'Use RAG first if the main issue is missing, private, changing, or source-dependent information.',
+      'Use fine-tuning only when the main issue is repeated behavior, tone, classification, or output-format inconsistency.',
+      'Do not fine-tune frequently changing facts into model weights.',
+      'Do not use RAG to compensate for a model that cannot follow basic instructions.',
+      'Test RAG with source citations and low-confidence fallback behavior.',
+      'Test fine-tuning against a strong prompt baseline before paying training and maintenance cost.',
+      'Keep separate metrics for retrieval quality, answer quality, format compliance, hallucination rate, and user correction rate.',
+      'Move to hybrid only after logs prove that both retrieval and behavior control are needed.',
+    ],
     faq: [
-      { q: 'Can RAG replace tuning?', a: 'For many knowledge tasks, yes. For strict style control, not always.' },
-      { q: 'What fails most in RAG?', a: 'Weak retrieval relevance and poor chunking design.' },
+      {
+        q: 'Can RAG replace fine-tuning?',
+        a: 'For many knowledge-heavy products, yes. If the problem is access to current documents, policies, sources, or private data, RAG is usually enough. But if the model repeatedly fails response format, tone, classification, or policy behavior, fine-tuning may still be useful.',
+      },
+      {
+        q: 'What fails most often in RAG systems?',
+        a: 'The most common failures are poor chunking, weak metadata, irrelevant retrieval, missing reranking, stale indexes, and prompts that allow the model to answer without using the retrieved source material.',
+      },
+      {
+        q: 'Should startups fine-tune early?',
+        a: 'Usually no. Startups should begin with a strong prompt and RAG when needed, then collect production failure logs. Fine-tune only when failures are predictable, repeated, and clearly behavioral.',
+      },
+      {
+        q: 'Is fine-tuning better for reducing hallucinations?',
+        a: 'Not usually. If hallucinations happen because the model lacks the right facts, RAG with citations and retrieval confidence checks is usually better. Fine-tuning may help behavior, but it does not guarantee factual grounding.',
+      },
+      {
+        q: 'Can I use RAG and fine-tuning together?',
+        a: 'Yes. A common hybrid pattern is to use RAG for current source material and fine-tuning for consistent response style, schema, or domain policy. The tradeoff is higher complexity and more evaluation work.',
+      },
+      {
+        q: 'How much data do I need for fine-tuning?',
+        a: 'It depends on the task. For narrow format or classification improvements, hundreds of high-quality examples may help. For broad behavior changes, you may need much more. Quality and consistency matter more than raw count.',
+      },
+      {
+        q: 'How do I know if my RAG system is good enough?',
+        a: 'Track whether the right source appears in top retrieved chunks, whether answers cite the correct source, whether users need corrections, and whether low-confidence queries fall back safely instead of hallucinating.',
+      },
+    ],
+    whatYouWillLearn: [
+      'How to separate knowledge problems from behavior problems before choosing an architecture.',
+      'When RAG, fine-tuning, or a hybrid system is the practical choice.',
+      'How to evaluate real user failures before spending time on training.',
+      'Which cost and maintenance tradeoffs matter in production.',
+      'How to design a rollout path from prompt-only to RAG to fine-tuning.',
+      'What metrics to track so architecture decisions are based on evidence.',
+    ],
+    sources: [
+      { label: 'Hugging Face RAG task docs', href: 'https://huggingface.co/docs/transformers/en/model_doc/rag' },
+      { label: 'OpenAI fine-tuning guide', href: 'https://platform.openai.com/docs/guides/fine-tuning' },
+      { label: 'Pinecone RAG overview', href: 'https://www.pinecone.io/learn/retrieval-augmented-generation/' },
+      { label: 'LangChain RAG concepts', href: 'https://python.langchain.com/docs/concepts/rag/' },
+      { label: 'LlamaIndex RAG concepts', href: 'https://docs.llamaindex.ai/en/stable/understanding/rag/' },
+      { label: 'InnoAI guide: Deploy a Small RAG App', href: '/guides/deploy-small-rag-app' },
+      { label: 'InnoAI guide: Prompt Patterns That Work', href: '/guides/prompt-patterns-that-work' },
+    ],
+    endLinks: [
+      {
+        href: '/guides/deploy-small-rag-app',
+        title: 'Deploy a Small RAG App',
+        body: 'Use this if your decision points toward retrieval, citations, document ingestion, and source-aware answers.',
+      },
+      {
+        href: '/guides/prompt-patterns-that-work',
+        title: 'Prompt Patterns That Work',
+        body: 'Use this before fine-tuning to make sure the issue is not just weak prompt structure.',
+      },
+      {
+        href: '/recommender',
+        title: 'Open the Model Recommender',
+        body: 'Shortlist models after you decide whether your architecture needs retrieval, tuning, or both.',
+      },
     ],
     related: ['deploy-small-rag-app', 'prompt-patterns-that-work'],
   },
@@ -242,32 +380,64 @@ export const guides = [
   {
     slug: 'open-vs-closed-models',
     title: 'Open vs Closed Models: Cost, Control, and Compliance',
-    description: 'Choose architecture based on lifecycle cost and governance risk.',
+    description: 'Choose between open and closed models by looking beyond benchmark quality to lifecycle cost, governance, portability, and operational ownership.',
     category: 'Strategy',
     readTime: '8 min read',
     lastUpdated: '2026-04-12',
-    keyTakeaways: ['Closed APIs reduce setup effort.', 'Open models improve control.', 'Hybrid keeps portability.'],
+    keyTakeaways: [
+      'Closed APIs usually reduce launch friction and operational overhead.',
+      'Open models improve control over latency, retention policy, and deployment environment.',
+      'Total cost depends on traffic shape, infra maturity, and staffing, not only token price.',
+      'A hybrid architecture can preserve portability while keeping time-to-launch reasonable.',
+    ],
     sections: [
       {
-        heading: 'Compare lifecycle cost',
+        heading: 'Compare lifecycle cost, not just entry price',
         content:
-          'Entry cost is only one phase. Evaluate expected traffic growth, latency constraints, and staffing overhead across 6 to 12 months.',
+          'Entry cost is only one phase of the decision. Closed models often look expensive per token but remove infrastructure work, model serving, and deployment debugging. Open models reduce vendor dependence and can lower marginal cost at scale, but only if you account for GPUs, observability, on-call effort, prompt adaptation, and model upgrades across 6 to 12 months.',
       },
       {
-        heading: 'Review governance early',
+        heading: 'Review governance and data handling before benchmark comparisons',
         content:
-          'Data residency, retention, and legal obligations can decide architecture before benchmark performance is considered.',
+          'Data residency, retention policy, auditability, and legal obligations can decide architecture before benchmark performance is even relevant. Teams handling source code, internal documents, or regulated user data often need stronger clarity around logging, training usage, and regional hosting. In those cases, open or self-hosted paths may be a requirement rather than an optimization.',
       },
       {
-        heading: 'Design for portability',
+        heading: 'Design for portability even if you start with one provider',
         content:
-          'Keep provider interfaces abstracted so you can route traffic or migrate without deep rewrites.',
+          'Keep provider interfaces abstracted so you can route traffic or migrate without deep rewrites. A thin orchestration layer for prompts, model configs, and evaluation logs makes it much easier to compare providers later. That portability is valuable whether you begin with a closed API, an open model host, or a hybrid stack.',
       },
     ],
-    checklist: ['Model long-term cost', 'Run legal review', 'Add provider abstraction layer'],
+    checklist: [
+      'Model 6 to 12 months of cost, not just first-month usage.',
+      'Review retention, residency, and compliance requirements with stakeholders.',
+      'Estimate infra and staffing cost for any open-model plan.',
+      'Add a provider abstraction layer before deep integration work.',
+      'Keep an evaluation suite ready so migration decisions are evidence-based.',
+    ],
     faq: [
-      { q: 'Is open-source always cheaper?', a: 'Not always. Operations overhead can be significant.' },
-      { q: 'Should small teams go hybrid?', a: 'Usually start simple, then add hybrid routing as scale increases.' },
+      {
+        q: 'Is open-source always cheaper than a closed API?',
+        a: 'No. For low or variable traffic, a closed API is often cheaper once you include engineering time and reliability overhead.',
+      },
+      {
+        q: 'When should a small team choose hybrid?',
+        a: 'Usually after launch, once you know which requests need premium quality and which can be routed to cheaper or self-hosted paths.',
+      },
+      {
+        q: 'What is the biggest mistake in this decision?',
+        a: 'Comparing only benchmark quality or token price while ignoring governance requirements and long-term maintenance cost.',
+      },
+    ],
+    whatYouWillLearn: [
+      'How to compare open and closed models using real lifecycle cost.',
+      'Why governance and privacy constraints can override benchmark rankings.',
+      'When a hybrid architecture is worth the additional complexity.',
+      'How to preserve portability so you are not locked into one model decision.',
+    ],
+    sources: [
+      { label: 'Hugging Face models hub', href: 'https://huggingface.co/models' },
+      { label: 'InnoAI guide: Choose an AI Model by GPU and Budget', href: '/guides/choose-ai-model-by-gpu-budget' },
+      { label: 'InnoAI guide: Fastest Models for Low-Latency Apps', href: '/guides/fastest-models-low-latency-apps' },
     ],
     related: ['choose-ai-model-by-gpu-budget', 'fastest-models-low-latency-apps'],
   },
@@ -353,192 +523,384 @@ export const guides = [
   {
     slug: 'best-models-low-vram',
     title: 'Best Models for 8GB, 16GB, and 24GB VRAM Setups',
-    description: 'Deploy useful AI experiences under strict memory constraints.',
+    description: 'Plan realistic model choices for 8GB, 16GB, and 24GB VRAM machines without overcommitting on context length, concurrency, or precision.',
     category: 'Hardware Planning',
     readTime: '8 min read',
     lastUpdated: '2026-04-12',
-    keyTakeaways: ['VRAM is the primary deployment constraint.', 'Prompt length can break memory plans.', 'Stability beats peak speed.'],
+    keyTakeaways: [
+      'VRAM is the first hard limit for local and self-hosted inference.',
+      'Context length, batch size, and concurrency can break otherwise safe-looking plans.',
+      'Quantization changes what fits, but should always be validated for quality drift.',
+      'Stable throughput and predictable fallbacks matter more than peak benchmark speed.',
+    ],
     sections: [
       {
-        heading: 'Plan by VRAM tier',
+        heading: 'Plan by VRAM tier instead of by model hype',
         content:
-          'Treat 8GB, 16GB, and 24GB as separate deployment classes with different model and precision strategies.',
+          'Treat 8GB, 16GB, and 24GB as separate deployment classes with different model and precision strategies. On 8GB cards, you are usually in the world of small or aggressively quantized models. At 16GB, you can support stronger 7B to 14B-style deployments with tighter safeguards. At 24GB, more useful context lengths and medium-size checkpoints become realistic, but only if you still budget for KV cache growth.',
       },
       {
-        heading: 'Include long-context tests',
+        heading: 'Include long-context and concurrency tests before declaring success',
         content:
-          'Sizing based on average prompt length is risky. Stress test memory using long-context and concurrent requests.',
+          'Sizing based on average prompt length is risky because real users do not send average prompts forever. Stress test memory using long-context requests, repeated sessions, and your expected concurrency pattern. Many “works on my GPU” setups fail in production because the original test was only one short prompt at a time.',
       },
       {
-        heading: 'Ship with safeguards',
+        heading: 'Ship with safeguards, not just a model that technically loads',
         content:
-          'Use conservative defaults, clear limits, and fallback behavior to maintain reliability under load.',
+          'Use conservative defaults, clear limits, and fallback behavior to maintain reliability under load. Memory headroom, token limits, model routing, and visible user constraints are part of the product design. A slightly smaller model with clear guardrails usually creates a better user experience than an unstable larger model that crashes or swaps constantly.',
       },
     ],
-    checklist: ['Select model per VRAM tier', 'Stress test context windows', 'Define fallback behavior'],
+    checklist: [
+      'Choose a target model and precision for each VRAM tier you support.',
+      'Stress test context windows beyond the average user prompt length.',
+      'Measure concurrency impact on memory and response time.',
+      'Define fallback behavior for OOM or latency spikes.',
+      'Document safe defaults for batch size, max tokens, and session limits.',
+    ],
     faq: [
-      { q: 'Can 8GB be practical?', a: 'Yes for focused use cases with quantized models.' },
-      { q: 'Is 24GB enough for production?', a: 'Often yes for medium workloads, depending on concurrency and context size.' },
+      {
+        q: 'Can an 8GB GPU be practical for AI work?',
+        a: 'Yes, especially for focused assistants, embedding workflows, and quantized small models with careful prompt and context limits.',
+      },
+      {
+        q: 'Is 24GB enough for production inference?',
+        a: 'Often yes for medium workloads, but the real answer depends on concurrency, context length, and whether you need headroom for spikes.',
+      },
+      {
+        q: 'What gets overlooked most in low-VRAM planning?',
+        a: 'KV cache growth from longer conversations. Teams often size only for weights and forget how quickly context can consume the remaining memory.',
+      },
+    ],
+    whatYouWillLearn: [
+      'What kinds of workloads are realistic on 8GB, 16GB, and 24GB VRAM systems.',
+      'Why context length and concurrency can invalidate simple sizing assumptions.',
+      'How to use quantization without hiding quality regressions.',
+      'Which safeguards improve reliability on constrained hardware.',
+    ],
+    sources: [
+      { label: 'InnoAI VRAM Calculator', href: '/gpu/tools/vram-calculator' },
+      { label: 'InnoAI guide: Precision Strategy', href: '/guides/quantization-4bit-8bit-fp16' },
+      { label: 'InnoAI guide: Build a Local AI Assistant on an 8GB GPU', href: '/guides/build-local-ai-assistant-8gb' },
     ],
     related: ['quantization-4bit-8bit-fp16', 'build-local-ai-assistant-8gb'],
   },
   {
     slug: 'best-multilingual-llms',
     title: 'Best Multilingual LLM Strategies for English and Indian Languages',
-    description: 'Build robust multilingual systems with realistic evaluation and prompt design.',
+    description: 'Build multilingual AI systems for English and Indian languages with stronger evaluation, prompt design, and language-specific feedback loops.',
     category: 'Localization',
     readTime: '8 min read',
     lastUpdated: '2026-04-12',
-    keyTakeaways: ['Language performance varies by task.', 'Use language-specific tests.', 'Track corrections per language.'],
+    keyTakeaways: [
+      'Language quality varies sharply by task, domain vocabulary, and script complexity.',
+      'Translation benchmarks alone are not enough for multilingual product decisions.',
+      'Code-switching and regional phrasing should be part of every evaluation plan.',
+      'Feedback loops should be tracked per language, not just globally.',
+    ],
     sections: [
       {
-        heading: 'Define multilingual quality dimensions',
+        heading: 'Define multilingual quality dimensions before choosing a model',
         content:
-          'Evaluate fluency, factuality, terminology consistency, and instruction following per language group.',
+          'Evaluate fluency, factuality, terminology consistency, and instruction following per language group. For English and Indian language deployments, also watch script handling, transliteration behavior, domain terminology, and whether the model stays stable when users mix languages in one prompt. Those are the failure modes that affect real usage more than leaderboard summaries.',
       },
       {
-        heading: 'Design realistic test sets',
+        heading: 'Design realistic test sets with code-switching and product context',
         content:
-          'Use real product queries and include code-switched prompts. Translation-only tests miss production failure modes.',
+          'Use real product queries and include code-switched prompts such as English plus Hindi or English plus Tamil instructions. Translation-only tests miss production failure modes because user traffic is often mixed, informal, and context-heavy. If your product serves India, customer support, finance, healthcare, and education vocabulary should each be tested explicitly.',
       },
       {
-        heading: 'Iterate with user feedback',
+        heading: 'Iterate with language-specific feedback, not one global score',
         content:
-          'Track correction rates and refine prompts and retrieval by language. Small changes can produce strong gains.',
+          'Track correction rates and refine prompts and retrieval by language. Small changes can produce strong gains when you discover that one language needs shorter instructions, better glossary support, or retrieval tuned on regional content. A single “multilingual accuracy” number can hide major weaknesses that hurt trust in one audience segment.',
       },
     ],
-    checklist: ['Create language buckets', 'Include code-switching', 'Run periodic regressions'],
+    checklist: [
+      'Create separate evaluation buckets for each language and script you support.',
+      'Include code-switching and transliterated prompts in tests.',
+      'Check terminology consistency on domain-specific phrases.',
+      'Track correction rates and escalation rates by language.',
+      'Run regular regressions after prompt, retrieval, or model changes.',
+    ],
     faq: [
-      { q: 'Are multilingual benchmarks enough?', a: 'No. Product-specific prompt sets are still required.' },
-      { q: 'One model for all languages?', a: 'Good for start; routing by language can help at scale.' },
+      {
+        q: 'Are multilingual benchmarks enough?',
+        a: 'No. They are directional signals only. You still need product-specific prompt sets, especially for code-switching and domain vocabulary.',
+      },
+      {
+        q: 'Should I use one model for every language?',
+        a: 'A single model is a good starting point, but routing by language or domain can improve both quality and cost at scale.',
+      },
+      {
+        q: 'What is the biggest hidden risk in multilingual launches?',
+        a: 'Assuming English performance transfers automatically. Many models are strong in English but inconsistent in regional phrasing, mixed-language prompts, or specialized local terminology.',
+      },
+    ],
+    whatYouWillLearn: [
+      'How to evaluate multilingual quality beyond translation benchmarks.',
+      'Why code-switching should be part of every production test set.',
+      'How to track feedback and regressions per language.',
+      'When one model is enough and when routing is worth the extra complexity.',
+    ],
+    sources: [
+      { label: 'Hugging Face multilingual models', href: 'https://huggingface.co/models?pipeline_tag=text-generation&language=multilingual' },
+      { label: 'InnoAI guide: RAG vs Fine-Tuning', href: '/guides/rag-vs-fine-tuning' },
+      { label: 'InnoAI guide: Prompt Patterns That Work', href: '/guides/prompt-patterns-that-work' },
     ],
     related: ['rag-vs-fine-tuning', 'prompt-patterns-that-work'],
   },
   {
     slug: 'fastest-models-low-latency-apps',
     title: 'Fastest Models for Low-Latency AI Applications',
-    description: 'Reduce response time using full-pipeline optimization and smart routing.',
+    description: 'Reduce response time by treating latency as a whole-system problem across model choice, prompt size, routing, and serving architecture.',
     category: 'Performance',
     readTime: '7 min read',
     lastUpdated: '2026-04-12',
-    keyTakeaways: ['Latency is end-to-end.', 'Token budget drives speed.', 'Optimize p95, not only average.'],
+    keyTakeaways: [
+      'Latency is an end-to-end system metric, not just a model benchmark.',
+      'Prompt size and retrieval payload often dominate perceived speed.',
+      'Optimize p95 and failure rate, not only average response time.',
+      'Routing simpler requests to faster models is often the highest-ROI change.',
+    ],
     sections: [
       {
-        heading: 'Break down latency components',
+        heading: 'Break down latency into measurable pipeline components',
         content:
-          'Measure queue, network, prefill, generation, and post-processing separately to identify true bottlenecks.',
+          'Measure queue time, network overhead, prefill, generation, tool calls, and post-processing separately to identify the true bottleneck. Teams often blame the model when the real issue is oversized prompts, slow retrieval, or shared infrastructure contention. You cannot optimize what you do not isolate first.',
       },
       {
-        heading: 'Cut token overhead',
+        heading: 'Cut token overhead before upgrading infrastructure',
         content:
-          'Trim unnecessary prompt instructions and retrieval context. Token reduction improves both speed and cost.',
+          'Trim unnecessary prompt instructions, duplicate examples, and oversized retrieval context before buying bigger hardware or premium models. Token reduction improves speed and cost together, which makes it one of the most efficient optimizations available. In many apps, prompt design changes beat model swaps for latency improvement.',
       },
       {
-        heading: 'Use model routing',
+        heading: 'Use routing to reserve slower models for complex requests',
         content:
-          'Route simple tasks to faster models and keep high-capability models for complex prompts.',
+          'Route simple tasks to faster models and keep high-capability models for complex prompts. This is especially effective for autocomplete, support triage, classification, and first-pass drafting. The goal is not to find one universally fastest model, but to design a latency strategy that fits different request types.',
       },
     ],
-    checklist: ['Instrument pipeline timings', 'Track p95 latency', 'Implement routing and fallback'],
+    checklist: [
+      'Instrument every major pipeline stage separately.',
+      'Track p50, p95, and timeout rate rather than average alone.',
+      'Reduce prompt and retrieval payload before scaling infrastructure.',
+      'Implement routing and fallback by request complexity.',
+      'Re-test latency after every model, prompt, or infra change.',
+    ],
     faq: [
-      { q: 'Does streaming solve latency?', a: 'It improves perception but not backend bottlenecks.' },
-      { q: 'What should I optimize first?', a: 'Start with p95 latency and failure rate.' },
+      {
+        q: 'Does streaming solve latency?',
+        a: 'It improves user perception, but it does not remove backend bottlenecks. You still need to measure full completion time and timeout behavior.',
+      },
+      {
+        q: 'What should I optimize first for a slow AI app?',
+        a: 'Start with p95 latency, prompt size, and retrieval payload. Those usually reveal faster wins than changing providers immediately.',
+      },
+      {
+        q: 'Should I always choose the smallest model for speed?',
+        a: 'Not always. If the smaller model fails more often, retries and corrections can erase the latency gains. Optimize for successful task completion speed, not raw generation speed alone.',
+      },
+    ],
+    whatYouWillLearn: [
+      'How to decompose latency into actionable measurements.',
+      'Why prompt and retrieval design affect speed as much as model choice.',
+      'When routing delivers better latency than one-model strategies.',
+      'How to avoid misleading averages by focusing on p95 behavior.',
+    ],
+    sources: [
+      { label: 'InnoAI GPU Picker', href: '/gpu/tools/gpu-picker' },
+      { label: 'InnoAI guide: Choose an AI Model by GPU and Budget', href: '/guides/choose-ai-model-by-gpu-budget' },
+      { label: 'InnoAI guide: Best Models for Low VRAM', href: '/guides/best-models-low-vram' },
     ],
     related: ['choose-ai-model-by-gpu-budget', 'best-models-low-vram'],
   },
   {
     slug: 'build-local-ai-assistant-8gb',
     title: 'Build a Local AI Assistant on an 8GB GPU',
-    description: 'Ship a constrained but useful local assistant with stable defaults.',
+    description: 'Build a practical local AI assistant on an 8GB GPU by keeping scope narrow, defaults conservative, and quality measurement honest.',
     category: 'Tutorials',
     readTime: '10 min read',
     lastUpdated: '2026-04-12',
-    keyTakeaways: ['Scope narrowly first.', 'Use conservative context limits.', 'Monitor quality after launch.'],
+    keyTakeaways: [
+      'Scope narrowly first so the assistant is useful instead of overloaded.',
+      'Use conservative context and concurrency limits on 8GB hardware.',
+      'Quantized models are viable, but quality must be checked on your actual tasks.',
+      'Logs and correction patterns matter more than first-day demo quality.',
+    ],
     sections: [
       {
-        heading: 'Start with a narrow use case',
+        heading: 'Start with one or two narrow, high-value tasks',
         content:
-          'Focus on one or two high-value tasks. This keeps memory usage predictable and improves first-release reliability.',
+          'Focus on one or two high-value tasks such as local document Q&A, coding assistance for a small repo, or a private writing helper. This keeps memory usage predictable and makes prompt design easier. A narrow assistant that works reliably is more valuable than a broad assistant that constantly runs out of memory or gives inconsistent results.',
       },
       {
-        heading: 'Configure for stability',
+        heading: 'Configure for stability before chasing maximum model size',
         content:
-          'Use quantized checkpoints, strict token limits, and low-concurrency defaults to avoid memory spikes.',
+          'Use quantized checkpoints, strict token limits, and low-concurrency defaults to avoid memory spikes. On an 8GB card, stability comes from guardrails: smaller context defaults, one-request-at-a-time policies, simple retrieval, and clear fallbacks when prompts get too large. These controls matter more than squeezing in the biggest possible model.',
       },
       {
-        heading: 'Improve using real usage logs',
+        heading: 'Improve using real logs rather than forum advice',
         content:
-          'Track corrections and latency weekly. Tune prompts and retrieval before switching model families.',
+          'Track corrections, latency, truncation events, and user satisfaction weekly. Tune prompts and retrieval before switching model families because many first-release failures are workflow problems, not model problems. Real local usage data will tell you whether you need better retrieval, a different quantization, or simply tighter task boundaries.',
       },
     ],
-    checklist: ['Define scope', 'Set limits', 'Monitor correction rate'],
+    checklist: [
+      'Define a narrow launch scope and primary success metric.',
+      'Choose a quantized model that leaves safe VRAM headroom.',
+      'Set explicit limits for context length, max tokens, and concurrency.',
+      'Log correction rate, truncation events, and slow responses.',
+      'Tune prompts and retrieval before moving to a larger model.',
+    ],
     faq: [
-      { q: 'Can this handle heavy enterprise traffic?', a: 'Usually no, but it works for focused internal and prototype workflows.' },
-      { q: 'What causes instability most?', a: 'Long prompts and uncontrolled concurrency.' },
+      {
+        q: 'Can an 8GB local assistant handle heavy enterprise traffic?',
+        a: 'Usually no, but it can be very effective for personal workflows, prototypes, internal tools, and privacy-sensitive niche use cases.',
+      },
+      {
+        q: 'What causes instability most often on 8GB systems?',
+        a: 'Long prompts, large context windows, and uncontrolled concurrency are the biggest causes of crashes and latency spikes.',
+      },
+      {
+        q: 'Should I start with RAG or a bigger model?',
+        a: 'Usually start with a smaller model plus lightweight retrieval. On constrained hardware, better context selection beats simply trying to load a larger checkpoint.',
+      },
+    ],
+    whatYouWillLearn: [
+      'What kinds of assistants are realistic on an 8GB GPU.',
+      'How to keep local inference stable with conservative defaults.',
+      'Which metrics show whether the assistant is improving.',
+      'When to tune prompts, retrieval, or model size next.',
+    ],
+    sources: [
+      { label: 'InnoAI guide: Best Models for Low VRAM', href: '/guides/best-models-low-vram' },
+      { label: 'InnoAI guide: Precision Strategy', href: '/guides/quantization-4bit-8bit-fp16' },
+      { label: 'InnoAI VRAM Calculator', href: '/gpu/tools/vram-calculator' },
     ],
     related: ['best-models-low-vram', 'quantization-4bit-8bit-fp16'],
   },
   {
     slug: 'deploy-small-rag-app',
     title: 'Deploy a Small RAG App End-to-End',
-    description: 'A practical RAG implementation flow from ingestion to monitoring.',
+    description: 'A practical end-to-end RAG deployment flow covering ingestion, retrieval tuning, answer grounding, and production monitoring.',
     category: 'Tutorials',
     readTime: '10 min read',
     lastUpdated: '2026-04-12',
-    keyTakeaways: ['Ingestion quality is foundational.', 'Retrieval tuning matters more than model swaps early.', 'Guardrails improve trust.'],
+    keyTakeaways: [
+      'Ingestion quality is the foundation of every useful RAG system.',
+      'Retrieval tuning usually matters more than model swaps in the early stages.',
+      'Grounding, citations, and low-confidence behavior improve trust quickly.',
+      'A small RAG app should be instrumented from day one so you can see failures clearly.',
+    ],
     sections: [
       {
-        heading: 'Clean ingestion pipeline',
+        heading: 'Build a clean ingestion pipeline before prompt tuning',
         content:
-          'Normalize documents and attach metadata so retrieval has consistent structure and context-rich filtering.',
+          'Normalize documents, attach metadata, and remove duplicate or low-quality text before worrying about model prompts. Retrieval quality depends heavily on document hygiene. If your source data is messy, stale, or poorly chunked, no prompt template will reliably rescue the final answer quality.',
       },
       {
-        heading: 'Tune retrieval first',
+        heading: 'Tune retrieval before changing the generation model',
         content:
-          'Iterate chunk size and reranking with real query patterns before changing generation models.',
+          'Iterate chunk size, overlap, metadata filters, and reranking with real query patterns before changing generation models. Many small RAG apps underperform because the wrong passages are retrieved, not because the model lacks intelligence. Better retrieval often produces larger gains than switching to a more expensive generator.',
       },
       {
-        heading: 'Add confidence guardrails',
+        heading: 'Add confidence guardrails and source-aware answers',
         content:
-          'Expose source snippets and low-confidence fallback behavior to reduce unsupported answers.',
+          'Expose source snippets, require answers to stay grounded in retrieved content, and define low-confidence fallback behavior. These features improve trust more than cosmetic UI changes because users can see why the system answered the way it did. When the retrieval is weak, the app should say so instead of pretending to be confident.',
       },
     ],
-    checklist: ['Normalize docs', 'Tune retrieval', 'Require source-aware outputs'],
+    checklist: [
+      'Normalize documents and attach useful metadata during ingestion.',
+      'Tune chunking and retrieval on real query logs.',
+      'Add source-aware answer formatting and low-confidence fallbacks.',
+      'Track retrieval hit quality, unsupported answers, and correction rate.',
+      'Re-run evaluations after every major source-data or prompt change.',
+    ],
     faq: [
-      { q: 'Need a large model for RAG?', a: 'Not initially. Better retrieval often gives larger gains.' },
-      { q: 'Is reranking optional?', a: 'Optional, but often very useful for precision.' },
+      {
+        q: 'Do I need a large model for a useful RAG app?',
+        a: 'Not initially. Better ingestion, chunking, and retrieval often deliver larger improvements than upgrading the generator.',
+      },
+      {
+        q: 'Is reranking optional?',
+        a: 'Yes, but it is often one of the highest-value additions for improving retrieval precision in small production systems.',
+      },
+      {
+        q: 'What should I monitor first in production?',
+        a: 'Start with unsupported answer rate, retrieval miss rate, latency, and how often users need to reformulate their question.',
+      },
+    ],
+    whatYouWillLearn: [
+      'How to build a small RAG app without overcomplicating the first version.',
+      'Why ingestion and retrieval quality determine most of the outcome.',
+      'Which trust features make a RAG app feel reliable to users.',
+      'What metrics to log before scaling traffic.',
+    ],
+    sources: [
+      { label: 'InnoAI guide: RAG vs Fine-Tuning', href: '/guides/rag-vs-fine-tuning' },
+      { label: 'InnoAI guide: Prompt Patterns That Work', href: '/guides/prompt-patterns-that-work' },
+      { label: 'InnoAI Recommender', href: '/recommender' },
     ],
     related: ['rag-vs-fine-tuning', 'prompt-patterns-that-work'],
   },
   {
     slug: 'prompt-patterns-that-work',
     title: 'Prompt Engineering Patterns That Actually Work',
-    description: 'Reusable prompt structures for reliability and maintainability.',
+    description: 'Reusable prompt structures for reliability, maintainability, and easier testing in real product workflows.',
     category: 'Prompting',
     readTime: '8 min read',
     lastUpdated: '2026-04-12',
-    keyTakeaways: ['Use role-task-format structure.', 'Define output schema clearly.', 'Version prompts like code.'],
+    keyTakeaways: [
+      'A simple role-task-constraints-format structure is still the strongest default.',
+      'Clear output schemas reduce ambiguity more than extra stylistic instructions.',
+      'Prompt changes should be versioned, reviewed, and regression tested like code.',
+      'Shorter, sharper prompts often outperform long instruction piles.',
+    ],
     sections: [
       {
-        heading: 'Use a stable structure',
+        heading: 'Use a stable prompt structure your team can reuse',
         content:
-          'Role, task, constraints, and output format is a reliable baseline that improves consistency across prompt variants.',
+          'Role, task, constraints, and output format is a reliable baseline that improves consistency across prompt variants. The real value is not only quality but maintainability: once your team uses a shared structure, debugging prompt failures becomes much easier. Consistent prompts also make model-to-model evaluations fairer.',
       },
       {
-        heading: 'Encode success criteria',
+        heading: 'Encode success criteria explicitly instead of hoping the model infers them',
         content:
-          'If output must follow JSON or section rules, define that explicitly and include concise examples.',
+          'If output must follow JSON, section rules, or citation requirements, define that explicitly and include concise examples. Hidden expectations are one of the biggest causes of prompt failure in production. A prompt should make success visible enough that another teammate can read it and understand what “good output” means.',
       },
       {
-        heading: 'Version and test prompt updates',
+        heading: 'Version and test prompt updates as operational changes',
         content:
-          'Prompt changes can regress behavior. Track revisions in source control and run regression tests before rollout.',
+          'Prompt changes can regress behavior just like code changes do. Track revisions in source control, annotate what changed, and run regression tests before rollout. This is especially important when prompts are tied to support workflows, agent actions, or structured outputs that downstream systems depend on.',
       },
     ],
-    checklist: ['Standardize template', 'Set schema rules', 'Run prompt regression tests'],
+    checklist: [
+      'Adopt a shared prompt structure across the team.',
+      'Define strict output schema and success criteria.',
+      'Store prompt versions in source control.',
+      'Run regression tests before shipping prompt changes.',
+      'Review prompts regularly for redundancy and conflicting instructions.',
+    ],
     faq: [
-      { q: 'Should prompts be very long?', a: 'Only as long as needed; avoid conflicting and redundant instructions.' },
-      { q: 'When use few-shot?', a: 'When strict format and behavior consistency is required.' },
+      {
+        q: 'Should prompts be very long?',
+        a: 'Only as long as needed. Extra instructions often add ambiguity or conflict unless every line has a clear purpose.',
+      },
+      {
+        q: 'When should I use few-shot prompting?',
+        a: 'Use it when strict format, style, or task behavior is hard to achieve with direct instructions alone.',
+      },
+      {
+        q: 'What is the most common prompt mistake?',
+        a: 'Mixing goals, constraints, and style preferences into one long block without clearly prioritizing what the model must do first.',
+      },
+    ],
+    whatYouWillLearn: [
+      'How to build prompt templates that are easier to debug and maintain.',
+      'Why output schemas and success criteria matter so much in production.',
+      'How to treat prompts as versioned operational assets.',
+      'When few-shot examples are worth the extra tokens.',
+    ],
+    sources: [
+      { label: 'InnoAI guide: Deploy a Small RAG App', href: '/guides/deploy-small-rag-app' },
+      { label: 'InnoAI guide: Llama vs Qwen vs Gemma for Coding', href: '/guides/llama-vs-qwen-vs-gemma-coding' },
+      { label: 'InnoAI guide: RAG vs Fine-Tuning', href: '/guides/rag-vs-fine-tuning' },
     ],
     related: ['deploy-small-rag-app', 'llama-vs-qwen-vs-gemma-coding'],
   },
@@ -727,8 +1089,190 @@ const inferDifficulty = (readTime = '') => {
   return 'Advanced';
 };
 
+const GUIDE_SUPPLEMENTS = {
+  'choose-ai-model-by-gpu-budget': {
+    sections: [
+      {
+        heading: '14. Budget-to-model routing examples',
+        content:
+          'A practical budget plan should route requests by difficulty instead of sending every request to the same model. Example: use a cheap fast model for autocomplete, summarization, and simple extraction; use a stronger model for architecture review, multi-file refactors, security-sensitive changes, or final answer generation. This keeps daily cost predictable while preserving quality where it matters.',
+      },
+      {
+        heading: '15. Break-even signals for self-hosting',
+        content:
+          'Self-hosting starts to make sense when API spend is predictable, usage is high enough to keep GPUs utilized, privacy requirements are strict, or latency must be controlled inside your own region. It usually does not make sense when usage is spiky, the team lacks infrastructure ownership, or model quality changes frequently enough that managed APIs save engineering time.',
+      },
+      {
+        heading: '16. Practical cost-control playbook',
+        content:
+          'Add per-feature token logging, cache repeated context, compress long documents before sending them to the model, cap maximum output length, route easy tasks to cheaper models, and set hard spend alerts. Review token usage weekly during early rollout; most cost leaks come from hidden long prompts, unbounded retries, and features that send entire files when a small excerpt would work.',
+      },
+      {
+        heading: '17. GPU buying decision checklist',
+        content:
+          'Before buying or renting GPUs, confirm model size, precision, context length, expected batch size, concurrency, framework overhead, and whether you need training or inference only. A 7B model that fits for one-user local testing can fail under production concurrency because KV cache and batch size grow memory demand quickly.',
+      },
+    ],
+    checklist: [
+      'Have you separated cheap, medium, and premium request types?',
+      'Have you estimated spend for peak days, not only average days?',
+      'Have you tested whether caching or shorter prompts reduce cost without quality loss?',
+      'Have you compared API cost against rented GPU cost at expected utilization?',
+      'Have you defined when to downgrade, retry, or fail gracefully during budget pressure?',
+    ],
+    faq: [
+      {
+        q: 'What is the safest budget strategy for a new AI product?',
+        a: 'Start with managed APIs, add usage logging from day one, then introduce cheaper models or self-hosting only after real traffic shows stable usage patterns.',
+      },
+      {
+        q: 'When should I avoid self-hosting even if it looks cheaper?',
+        a: 'Avoid it when usage is unpredictable, your team cannot maintain inference infrastructure, or model quality changes faster than your deployment process can handle.',
+      },
+    ],
+  },
+  'rag-vs-fine-tuning': {
+    sections: [
+      {
+        heading: '16. Evidence you should collect before deciding',
+        content:
+          'Before choosing RAG or fine-tuning, collect real user questions, failed answers, retrieval traces, source documents, and expected outputs. Label each failure type. Missing source facts point toward RAG. Repeated format or tone failures point toward fine-tuning. Weak reasoning often means the base model or task decomposition needs improvement first.',
+      },
+      {
+        heading: '17. RAG production checklist',
+        content:
+          'A production RAG system needs document ingestion, chunking strategy, metadata, embeddings, vector search, optional reranking, citation formatting, low-confidence fallback, and monitoring. Do not skip the monitoring layer: unsupported-answer rate and retrieval miss rate reveal whether the system is actually grounded.',
+      },
+      {
+        heading: '18. Fine-tuning production checklist',
+        content:
+          'A production fine-tuning workflow needs clean examples, consistent labels, validation data, baseline prompts, regression tests, rollback plans, and model-version tracking. Fine-tuning without evaluation creates a model that feels better in demos but may fail silently in production.',
+      },
+      {
+        heading: '19. Hybrid architecture example',
+        content:
+          'A support assistant can use RAG to retrieve current policy pages and a fine-tuned model to produce responses in the company support style. The retrieval layer supplies facts and citations. The tuned behavior layer controls tone, escalation language, JSON fields, and compliance wording.',
+      },
+    ],
+    checklist: [
+      'Have you built a labeled failure log before choosing architecture?',
+      'Have you measured retrieval hit quality separately from answer quality?',
+      'Have you compared fine-tuning against a strong prompt baseline?',
+      'Have you planned separate rollback paths for retrieval changes and model changes?',
+    ],
+    faq: [
+      {
+        q: 'Can I use both RAG and fine-tuning together?',
+        a: 'Yes. Use RAG for current source knowledge and fine-tuning for repeated behavior patterns such as tone, schema, routing, or classification.',
+      },
+      {
+        q: 'What should I build first if I am unsure?',
+        a: 'Start with prompting plus a small RAG prototype. Logs from that prototype will show whether fine-tuning is actually needed.',
+      },
+    ],
+  },
+  'prompt-patterns-that-work': {
+    sections: [
+      {
+        heading: '4. The production prompt template',
+        content:
+          'A reliable production prompt usually contains: role, task, input context, rules, output format, examples, refusal/fallback behavior, and quality checks. Keep each block short and named. This makes prompts easier to diff, review, and test when behavior changes.',
+      },
+      {
+        heading: '5. Retrieval-aware prompt pattern',
+        content:
+          'For RAG apps, explicitly tell the model to answer only from retrieved sources, cite the source title or URL, and say when the provided context is insufficient. This reduces confident unsupported answers and gives users a better trust signal.',
+      },
+      {
+        heading: '6. Structured-output prompt pattern',
+        content:
+          'When the output feeds another system, provide an exact JSON schema, field descriptions, allowed enum values, and one valid example. Tell the model not to add prose outside the JSON. Then validate the output server-side instead of trusting the model blindly.',
+      },
+      {
+        heading: '7. Prompt regression testing',
+        content:
+          'Maintain a small prompt test suite with examples that previously failed. Run it before changing prompts, switching models, or adding new retrieval context. Track correctness, format validity, refusal behavior, and latency.',
+      },
+    ],
+    checklist: [
+      'Split prompts into named blocks: role, task, context, rules, output, examples.',
+      'Add fallback instructions for missing or low-confidence context.',
+      'Validate structured outputs with code after generation.',
+      'Keep a regression set of prompts that must not break.',
+    ],
+    faq: [
+      {
+        q: 'How many examples should I include in a prompt?',
+        a: 'Use the smallest number that changes behavior reliably. One or two high-quality examples often beat five noisy examples.',
+      },
+      {
+        q: 'Should prompts include chain-of-thought instructions?',
+        a: 'For most products, ask for concise reasoning or validation notes instead of hidden chain-of-thought. Keep outputs useful and safe for users.',
+      },
+    ],
+  },
+  'deploy-small-rag-app': {
+    sections: [
+      {
+        heading: 'Step 1: Define the narrow first use case',
+        content:
+          'A small RAG app should start with one clear user problem, such as answering product docs, internal onboarding questions, or support-policy lookups. Avoid trying to ingest every company document on day one. A narrow source set makes chunking, evaluation, and trust easier.',
+      },
+      {
+        heading: 'Step 2: Build the ingestion pipeline',
+        content:
+          'Normalize files, remove duplicate boilerplate, split documents into chunks, attach metadata such as title and URL, and store original source references. Good metadata is what lets the app cite sources and filter irrelevant results later.',
+      },
+      {
+        heading: 'Step 3: Add retrieval and reranking',
+        content:
+          'Start with embeddings and vector search, then evaluate the top results against real questions. If relevant passages appear below irrelevant ones, add reranking or metadata filters before changing the generator model.',
+      },
+      {
+        heading: 'Step 4: Generate answers with citations',
+        content:
+          'The answer prompt should include retrieved chunks, source labels, user question, answer format, and fallback behavior. If the context does not contain the answer, the app should say that clearly and suggest the next action.',
+      },
+      {
+        heading: 'Step 5: Deploy, monitor, and improve',
+        content:
+          'Log question, retrieved sources, answer, latency, and user feedback. Monitor unsupported answers, retrieval misses, and slow requests. Improve ingestion and retrieval before scaling to more documents or adding fine-tuning.',
+      },
+    ],
+    checklist: [
+      'Start with one document set and one user workflow.',
+      'Keep source URLs or document IDs attached to every chunk.',
+      'Evaluate retrieval before evaluating answer style.',
+      'Show citations or source labels in the UI.',
+      'Log low-confidence answers and user corrections.',
+    ],
+    faq: [
+      {
+        q: 'What is the smallest useful RAG stack?',
+        a: 'A document parser, chunker, embedding model, vector store, retrieval function, answer prompt, and logging are enough for a first useful version.',
+      },
+      {
+        q: 'Should I fine-tune my RAG model immediately?',
+        a: 'Usually no. First fix retrieval quality, chunking, metadata, and prompting. Fine-tune later only if behavior is repeatedly wrong.',
+      },
+    ],
+  },
+};
+
+const mergeGuideSupplement = (guide) => {
+  const supplement = GUIDE_SUPPLEMENTS[guide.slug];
+  if (!supplement) return guide;
+
+  return {
+    ...guide,
+    sections: [...(guide.sections || []), ...(supplement.sections || [])],
+    checklist: [...(guide.checklist || []), ...(supplement.checklist || [])],
+    faq: [...(guide.faq || []), ...(supplement.faq || [])],
+  };
+};
+
 const enrichGuide = (guide) => ({
-  ...guide,
+  ...mergeGuideSupplement(guide),
   author: guide.author || 'InnoAI Editorial Team',
   reviewedBy: guide.reviewedBy || 'InnoAI Technical Review Board',
   publishedDate: guide.publishedDate || guide.lastUpdated || '2026-04-12',

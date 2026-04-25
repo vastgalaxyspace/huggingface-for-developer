@@ -114,10 +114,45 @@ export default function GpuPickerPage() {
             <div>
               <h1 className="text-4xl font-black tracking-tight text-gray-900 md:text-5xl">GPU Picker</h1>
               <p className="mt-4 max-w-[760px] text-sm leading-7 text-gray-600">
-                Enter a HuggingFace model ID and let the app auto-detect parameters, precision, and VRAM needs before ranking the best GPUs.
+                Enter a HuggingFace model ID and let the app auto-detect parameters, precision, and VRAM needs before
+                ranking practical GPU options for inference or deployment.
               </p>
             </div>
           </div>
+          <div className="mt-5 flex flex-wrap gap-3 text-xs font-semibold text-gray-500">
+            <span>Model-aware GPU shortlist</span>
+            <span>Budget and intent filters</span>
+            <span>Useful after model choice, before infra commitment</span>
+          </div>
+        </section>
+
+        <section className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="text-2xl font-black tracking-tight text-gray-900">How to use the picker well</h2>
+            <ol className="mt-4 space-y-3 text-sm leading-7 text-gray-600">
+              <li>1. Enter the exact model you intend to run so the hardware fit stays realistic.</li>
+              <li>2. Choose the real usage intent, because local inference and production serving are different sizing problems.</li>
+              <li>3. Apply budget honestly instead of browsing only flagship GPUs.</li>
+              <li>4. Treat the result as a shortlist, then validate latency and throughput on your own workload.</li>
+            </ol>
+          </article>
+
+          <article className="rounded-2xl border border-gray-200 bg-slate-50 p-6">
+            <h2 className="text-2xl font-black tracking-tight text-gray-900">What this tool helps prevent</h2>
+            <div className="mt-4 space-y-3 text-sm leading-7 text-gray-600">
+              <p>
+                Teams often pick GPUs based on reputation, not workload fit. That leads to overspending, low utilization,
+                or discovering too late that a model only fits under unrealistic assumptions.
+              </p>
+              <p>
+                If you still need to estimate memory behavior first, use the{' '}
+                <Link href="/gpu/tools/vram-calculator" className="font-semibold text-[#23425f] hover:text-[#18324f]">
+                  VRAM calculator
+                </Link>{' '}
+                before trusting any ranking.
+              </p>
+            </div>
+          </article>
         </section>
 
         <ModelSearchBar value={modelId} onChange={setModelId} onSubmit={fetchModel} loading={fetchState === "loading"} error={error} />
@@ -163,6 +198,36 @@ export default function GpuPickerPage() {
           <Link href="/gpu/performance" className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-5 py-4 text-xs font-bold uppercase tracking-[0.14em] text-[#23425f] hover:bg-[#f7faff]">
             Performance <Cpu className="h-4 w-4" />
           </Link>
+        </section>
+
+        <section className="grid gap-5 md:grid-cols-3">
+          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-black tracking-tight text-gray-900">Use with real traffic assumptions</h2>
+            <p className="mt-3 text-sm leading-7 text-gray-600">
+              The right GPU for one-user local testing may be the wrong GPU for concurrent production traffic. Always
+              connect the result to expected request volume and context length.
+            </p>
+          </article>
+          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-black tracking-tight text-gray-900">Pair with comparison</h2>
+            <p className="mt-3 text-sm leading-7 text-gray-600">
+              If multiple models fit your hardware budget, move back to{' '}
+              <Link href="/compare" className="font-semibold text-[#23425f] hover:text-[#18324f]">
+                compare
+              </Link>{' '}
+              and choose based on license, context, and ecosystem rather than GPU fit alone.
+            </p>
+          </article>
+          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-black tracking-tight text-gray-900">Related reading</h2>
+            <p className="mt-3 text-sm leading-7 text-gray-600">
+              Read{' '}
+              <Link href="/guides/choose-ai-model-by-gpu-budget" className="font-semibold text-[#23425f] hover:text-[#18324f]">
+                Choose an AI Model by GPU and Budget
+              </Link>{' '}
+              for the broader framework behind these recommendations.
+            </p>
+          </article>
         </section>
       </div>
     </div>

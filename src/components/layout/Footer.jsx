@@ -5,6 +5,7 @@ const Footer = () => {
 
   const footerLinks = [
     { href: '/about', label: 'About' },
+    { href: '/editorial-policy', label: 'Editorial Policy' },
     { href: '/guides', label: 'Guides' },
     { href: '/compare', label: 'Compare Models' },
     { href: '/recommender', label: 'Recommender' },
@@ -27,6 +28,10 @@ const Footer = () => {
             </div>
             <p className="mt-4 text-sm leading-7 text-[var(--text-muted)]">
               Research open-source AI models, compare LLMs, estimate VRAM, and plan GPU infrastructure with tools built for developers, researchers, and ML teams.
+            </p>
+            <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">
+              We publish original guides, practical calculators, and editorial analysis focused on real model selection
+              and deployment decisions.
             </p>
           </div>
 

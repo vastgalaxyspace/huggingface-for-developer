@@ -94,6 +94,24 @@ const integrations = [
   ['Amazon Q Developer', 'AWS-managed model stack', 'VS Code, JetBrains, AWS IDE tooling'],
 ];
 
+const decisionPaths = [
+  {
+    title: 'Fastest safe default',
+    body: 'Start with GPT-4.1 or Claude Sonnet for high-stakes coding tasks, then benchmark cheaper alternatives against your own repository.',
+    icon: ShieldCheck,
+  },
+  {
+    title: 'Cost-sensitive coding assistant',
+    body: 'Use Codestral or a smaller open coding model for autocomplete and boilerplate, reserving frontier models for review and refactors.',
+    icon: DollarSign,
+  },
+  {
+    title: 'Private codebase workflow',
+    body: 'Prefer self-hosted DeepSeek-Coder, Qwen Coder, or another open-weight model when source-code privacy is the primary constraint.',
+    icon: Layers3,
+  },
+];
+
 const faq = [
   ['Which AI model is best for coding in 2025/2026?', 'For broad production coding, GPT-4.1 and Claude Sonnet 4.6 are usually top picks; for self-hosting, DeepSeek-Coder-V2 and Qwen2.5-Coder are practical choices.'],
   ['Is GPT-4.1 better than Claude for code?', 'It depends on workload. GPT-4.1 is very consistent in tooling/API workflows, while Claude often shines in long-context repo analysis and complex refactor sessions.'],
@@ -202,7 +220,7 @@ export default function CodingModelAnalysisPage() {
   return (
     <main className="pb-20 pt-8 sm:pt-12">
       <div className="shell-container grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
-        <div className="space-y-8">
+        <div className="min-w-0 space-y-8">
           <section className="relative overflow-hidden rounded-[30px] border border-[var(--border-soft)] bg-white px-6 py-8 shadow-[0_18px_50px_rgba(48,67,95,0.08)] sm:px-10 sm:py-10">
             <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[rgba(54,87,132,0.12)] blur-3xl" />
             <div className="pointer-events-none absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-[rgba(37,99,235,0.10)] blur-3xl" />
@@ -231,6 +249,21 @@ export default function CodingModelAnalysisPage() {
                 <p className="mt-2 text-2xl font-black text-[var(--text-strong)]">{LAST_UPDATED}</p>
               </div>
             </div>
+          </section>
+
+          <section className="grid gap-4 md:grid-cols-3">
+            {decisionPaths.map((path) => {
+              const Icon = path.icon;
+              return (
+                <article key={path.title} className="rounded-[24px] border border-[var(--border-soft)] bg-white p-5 shadow-sm">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <h2 className="mt-4 text-lg font-black text-[var(--text-strong)]">{path.title}</h2>
+                  <p className="mt-3 text-sm leading-7 text-[var(--text-main)]">{path.body}</p>
+                </article>
+              );
+            })}
           </section>
 
           <Section id="section-1" number="1" title="Introduction / Purpose of the Page">

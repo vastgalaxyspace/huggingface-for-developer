@@ -10,7 +10,8 @@ export async function generateMetadata({ params }) {
 
   try {
     const rawData = await fetchCompleteModelData(modelId);
-    const author = rawData.author || 'Hugging Face';
+    const author = rawData.metadata?.author || rawData.metadata?.modelId?.split('/')?.[0] || 'Hugging Face';
+    const publishedTime = rawData.metadata?.lastModified || rawData.metadata?.createdAt || undefined;
 
     return {
       ...pageMetadata({
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }) {
           path: encodedPath,
           type: 'article',
         }).openGraph,
-        publishedTime: rawData.lastModified || undefined,
+        publishedTime,
         authors: [author],
       },
       twitter: {

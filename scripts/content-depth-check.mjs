@@ -1,4 +1,4 @@
-import { guides } from '../src/data/guidesContent.js';
+import { getAllGuides } from '../src/data/guidesContent.js';
 
 const MIN_TOTAL_WORDS = 220;
 const MIN_SECTION_COUNT = 3;
@@ -40,7 +40,7 @@ const analyzeGuide = (guide) => {
   };
 };
 
-const results = guides.map(analyzeGuide);
+const results = getAllGuides().map(analyzeGuide);
 const failed = results.filter((item) => !item.pass);
 
 console.log('\nContent Depth Check\n');

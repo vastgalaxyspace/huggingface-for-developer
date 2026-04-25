@@ -1,5 +1,6 @@
 "use client";
 import { useState } from 'react';
+import Link from 'next/link';
 import { Table, BarChart2, Plus, X, Loader2, Info } from 'lucide-react';
 import ModelSelector from '../components/ModelSelector';
 import { fetchCompleteModelData } from '../services/huggingface';
@@ -233,8 +234,13 @@ const ComparisonPage = () => {
               Model Comparison
             </h1>
             <p className="max-w-2xl text-base font-medium leading-relaxed text-[var(--text-muted)] sm:text-lg">
-              Deep analytical side-by-side benchmarking of primary Large Language Models across reasoning, throughput, and coherence metrics.
+              Compare shortlisted models side by side across context, licensing, hardware fit, community adoption, and deployment-facing operator signals.
             </p>
+            <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-[var(--text-faint)]">
+              <span>Up to 3 models at once</span>
+              <span>Context, VRAM, license, ecosystem, and heuristic benchmark view</span>
+              <span>Built for shortlist validation, not hype-based picking</span>
+            </div>
           </div>
 
           <div className="flex w-full items-center rounded-2xl border border-[var(--border-soft)] bg-[rgba(237,243,249,0.92)] p-1.5 md:w-auto">
@@ -256,6 +262,35 @@ const ComparisonPage = () => {
             </button>
           </div>
         </div>
+
+        <section className="mb-8 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+          <article className="rounded-[24px] border border-[var(--border-soft)] bg-white p-6 shadow-[0_12px_28px_rgba(48,67,95,0.06)]">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)]">How to compare models well</h2>
+            <ol className="mt-4 space-y-3 text-sm leading-7 text-[var(--text-muted)]">
+              <li>1. Start with models that solve the same task category instead of mixing unrelated architectures.</li>
+              <li>2. Check license and context window before looking at popularity numbers.</li>
+              <li>3. Use VRAM and hardware signals to remove models that do not fit your deployment reality.</li>
+              <li>4. Treat benchmark-style values as directional and validate the final shortlist on your own prompts.</li>
+            </ol>
+          </article>
+
+          <article className="rounded-[24px] border border-[var(--border-soft)] bg-[var(--panel-muted)] p-6">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)]">What this tool is best for</h2>
+            <div className="mt-4 space-y-3 text-sm leading-7 text-[var(--text-muted)]">
+              <p>
+                This page works best when you already have a shortlist and need to reduce it. It is especially useful
+                for comparing deployment tradeoffs such as VRAM, context, ecosystem support, and licensing posture.
+              </p>
+              <p>
+                If you still do not know which models to shortlist, start with the{' '}
+                <Link href="/recommender" className="font-semibold text-[var(--accent)] hover:text-[var(--accent-strong)]">
+                  recommender
+                </Link>{' '}
+                first, then come back here.
+              </p>
+            </div>
+          </article>
+        </section>
 
         {viewMode === 'table' && (
           <div className="editorial-panel mb-12 overflow-hidden rounded-[28px] text-[14px]">
@@ -386,6 +421,43 @@ const ComparisonPage = () => {
             </p>
           </div>
         )}
+
+        <section className="grid gap-5 md:grid-cols-3">
+          <article className="rounded-[24px] border border-[var(--border-soft)] bg-white p-6 shadow-[0_12px_28px_rgba(48,67,95,0.05)]">
+            <h2 className="text-lg font-black tracking-tight text-[var(--text-strong)]">Important caution</h2>
+            <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">
+              A model with better public popularity or benchmark estimates can still be the wrong production choice if
+              it breaks your latency, privacy, or infrastructure limits.
+            </p>
+          </article>
+          <article className="rounded-[24px] border border-[var(--border-soft)] bg-white p-6 shadow-[0_12px_28px_rgba(48,67,95,0.05)]">
+            <h2 className="text-lg font-black tracking-tight text-[var(--text-strong)]">Best next step</h2>
+            <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">
+              After comparing here, send the winner through the{' '}
+              <Link href="/gpu/tools/vram-calculator" className="font-semibold text-[var(--accent)] hover:text-[var(--accent-strong)]">
+                VRAM calculator
+              </Link>{' '}
+              and{' '}
+              <Link href="/gpu/tools/gpu-picker" className="font-semibold text-[var(--accent)] hover:text-[var(--accent-strong)]">
+                GPU picker
+              </Link>{' '}
+              so the recommendation stays grounded in hardware reality.
+            </p>
+          </article>
+          <article className="rounded-[24px] border border-[var(--border-soft)] bg-white p-6 shadow-[0_12px_28px_rgba(48,67,95,0.05)]">
+            <h2 className="text-lg font-black tracking-tight text-[var(--text-strong)]">Related reading</h2>
+            <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">
+              For deeper decision guidance, read{' '}
+              <Link href="/guides/model-selection-mistakes" className="font-semibold text-[var(--accent)] hover:text-[var(--accent-strong)]">
+                Selection Pitfalls
+              </Link>{' '}
+              and{' '}
+              <Link href="/guides/choose-ai-model-by-gpu-budget" className="font-semibold text-[var(--accent)] hover:text-[var(--accent-strong)]">
+                the GPU and budget framework
+              </Link>.
+            </p>
+          </article>
+        </section>
       </div>
     </div>
   );

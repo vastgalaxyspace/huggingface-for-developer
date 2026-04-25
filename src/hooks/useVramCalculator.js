@@ -30,6 +30,21 @@ function safeNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function inferParametersFromText(...values) {
+  const text = values.filter(Boolean).join(" ").toLowerCase();
+  const match = text.match(/(?:^|[^a-z0-9])(\d+(?:\.\d+)?)\s*([btm])(?:[^a-z0-9]|$)/i);
+  if (!match) return null;
+
+  const amount = Number(match[1]);
+  if (!Number.isFinite(amount)) return null;
+
+  const unit = match[2].toLowerCase();
+  if (unit === "t") return amount * 1e12;
+  if (unit === "b") return amount * 1e9;
+  if (unit === "m") return amount * 1e6;
+  return null;
+}
+
 function detectPrecision({ tags, files, quantizationConfig }) {
   const normalizedTags = (tags || []).map((tag) => String(tag).toLowerCase());
   const filenames = (files || []).map((name) => String(name).toLowerCase());
@@ -50,6 +65,19 @@ function detectPrecision({ tags, files, quantizationConfig }) {
 function parseModelPayload(metadata, config) {
   const tags = metadata?.tags || [];
   const files = (metadata?.siblings || []).map((item) => item.rfilename || item.path || item);
+  const modelId = metadata?.modelId || metadata?.id || null;
+  const inferredParameters = inferParametersFromText(
+    modelId,
+    metadata?.id,
+    metadata?.cardData?.base_model,
+    metadata?.cardData?.model_name
+  );
+  const parameters =
+    safeNumber(metadata?.safetensors?.total) ??
+    safeNumber(metadata?.cardData?.model_params) ??
+    safeNumber(metadata?.cardData?.parameters) ??
+    safeNumber(metadata?.transformersInfo?.num_parameters) ??
+    inferredParameters;
   const numAttentionHeads = safeNumber(config?.num_attention_heads ?? config?.n_head);
   const hiddenSize = safeNumber(config?.hidden_size ?? config?.d_model ?? config?.n_embd);
   const numLayers = safeNumber(config?.num_hidden_layers ?? config?.n_layer ?? config?.num_layers);
@@ -68,8 +96,8 @@ function parseModelPayload(metadata, config) {
   });
 
   return {
-    modelId: metadata?.modelId || null,
-    parameters: safeNumber(metadata?.safetensors?.total),
+    modelId,
+    parameters,
     tags,
     library: metadata?.library_name || (tags.includes("gguf") ? "gguf" : "transformers"),
     architecture: config?.model_type || "unknown",
@@ -83,7 +111,7 @@ function parseModelPayload(metadata, config) {
     precision,
     quantizationConfig: config?.quantization_config || null,
     missingConfigFields: {
-      parameters: !safeNumber(metadata?.safetensors?.total),
+      parameters: !parameters,
       layers: !numLayers,
       attentionHeads: !numAttentionHeads,
       hiddenSize: !hiddenSize,
@@ -157,25 +185,17 @@ export function useVramCalculator() {
     setError("");
 
     try {
-      const metadataResponse = await fetch(`https://huggingface.co/api/models/${modelId}`);
+      const metadataResponse = await fetch(`/api/hf-model?modelId=${encodeURIComponent(modelId)}`);
 
       if (!metadataResponse.ok) {
         throw new Error("Model not found on Hugging Face.");
       }
 
-      const metadata = await metadataResponse.json();
-      let config = null;
+      const payload = await metadataResponse.json();
+      const metadata = payload.metadata;
+      const config = payload.config;
 
-      try {
-        const configResponse = await fetch(`https://huggingface.co/${modelId}/resolve/main/config.json`);
-        if (configResponse.ok) {
-          config = await configResponse.json();
-        }
-      } catch {
-        config = null;
-      }
-
-      if (!metadata?.modelId) {
+      if (!metadata?.modelId && !metadata?.id) {
         throw new Error("The selected model could not be validated.");
       }
 
@@ -196,6 +216,7 @@ export function useVramCalculator() {
         precision: parsed.precision,
         sequenceLength: clamp(current.sequenceLength, 512, maxSequenceLength)
       }));
+      setInputValue(modelId);
     } catch (fetchError) {
       setError(fetchError.message || "Unable to fetch model data from Hugging Face.");
       setModelData(null);

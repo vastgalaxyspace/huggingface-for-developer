@@ -84,6 +84,14 @@ export default function TermsPage() {
               after changes indicates acceptance of the revised terms.
             </p>
           </section>
+
+          <section>
+            <h2 className="text-xl font-bold text-[var(--text-strong)]">9. Contact</h2>
+            <p className="mt-2">
+              For questions about these terms, use the contact details on the Contact page and include the relevant
+              page URL or feature name so we can respond efficiently.
+            </p>
+          </section>
         </div>
       </div>
     </div>

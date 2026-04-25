@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   ArrowLeft, Database, Cpu, Shield, Server, Puzzle, Code,
   DollarSign, Settings, Star, Download, Calendar, ExternalLink,
@@ -495,6 +496,40 @@ const ModelDetailPage = ({
                           );
                         })}
                       </div>
+                    </div>
+
+                    <div className="mt-8 grid gap-4 lg:grid-cols-3">
+                      <article className="rounded-[20px] border border-[var(--border-soft)] bg-white p-5 shadow-[0_2px_12px_rgba(59,83,114,0.04)]">
+                        <h3 className="text-sm font-black uppercase tracking-[0.14em] text-[var(--text-strong)]">How to read this page</h3>
+                        <p className="mt-3 text-[13px] leading-7 text-[var(--text-muted)]">
+                          Start with license, VRAM, and deployment score before going deeper into architecture details.
+                          Those three signals usually decide whether a model deserves more evaluation time.
+                        </p>
+                      </article>
+
+                      <article className="rounded-[20px] border border-[var(--border-soft)] bg-white p-5 shadow-[0_2px_12px_rgba(59,83,114,0.04)]">
+                        <h3 className="text-sm font-black uppercase tracking-[0.14em] text-[var(--text-strong)]">What this page helps decide</h3>
+                        <p className="mt-3 text-[13px] leading-7 text-[var(--text-muted)]">
+                          This page is best for deciding whether a specific model is deployable in your environment. It
+                          is not just a profile page. Use it to validate memory fit, hosting implications, license risk,
+                          and compatibility before adopting the model.
+                        </p>
+                      </article>
+
+                      <article className="rounded-[20px] border border-[var(--border-soft)] bg-white p-5 shadow-[0_2px_12px_rgba(59,83,114,0.04)]">
+                        <h3 className="text-sm font-black uppercase tracking-[0.14em] text-[var(--text-strong)]">Best next step</h3>
+                        <p className="mt-3 text-[13px] leading-7 text-[var(--text-muted)]">
+                          If this model still looks promising, take it into{' '}
+                          <Link href="/compare" className="font-semibold text-[var(--accent)] hover:text-[var(--accent-strong)]">
+                            compare
+                          </Link>{' '}
+                          against your alternatives, or use the{' '}
+                          <Link href="/gpu/tools/gpu-picker" className="font-semibold text-[var(--accent)] hover:text-[var(--accent-strong)]">
+                            GPU picker
+                          </Link>{' '}
+                          to validate real hardware options.
+                        </p>
+                      </article>
                     </div>
                   </div>
                 </section>

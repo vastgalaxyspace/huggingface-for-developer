@@ -42,7 +42,7 @@ function SelectionPitfallsLayout({ guide }) {
   return (
     <div className="shell-container py-10">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
-        <div className="space-y-8">
+        <div className="min-w-0 space-y-8">
           <section className="relative overflow-hidden rounded-[30px] border border-[var(--border-soft)] bg-white px-6 py-8 shadow-[0_18px_50px_rgba(48,67,95,0.08)] sm:px-10 sm:py-10">
             <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[rgba(54,87,132,0.12)] blur-3xl" />
             <div className="pointer-events-none absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-[rgba(37,99,235,0.10)] blur-3xl" />
@@ -265,7 +265,7 @@ function BudgetFrameworkLayout({ guide }) {
   return (
     <div className="shell-container py-10">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
-        <div className="space-y-8">
+        <div className="min-w-0 space-y-8">
           <section className="relative overflow-hidden rounded-[30px] border border-[var(--border-soft)] bg-white px-6 py-8 shadow-[0_18px_50px_rgba(48,67,95,0.08)] sm:px-10 sm:py-10">
             <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[rgba(54,87,132,0.12)] blur-3xl" />
             <div className="pointer-events-none absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-[rgba(37,99,235,0.10)] blur-3xl" />
@@ -399,6 +399,269 @@ function BudgetFrameworkLayout({ guide }) {
   );
 }
 
+function RagVsFineTuningLayout({ guide }) {
+  const decisionMatrix = [
+    { signal: 'Knowledge changes often', rag: 'Strong fit', tuning: 'Weak fit', hybrid: 'Possible later', note: 'Use retrieval when facts, docs, pricing, or policies change frequently.' },
+    { signal: 'Need strict JSON / schema', rag: 'Limited help', tuning: 'Strong fit', hybrid: 'Strong fit', note: 'Behavior and output consistency usually point toward fine-tuning.' },
+    { signal: 'Need source citations', rag: 'Strong fit', tuning: 'Weak fit', hybrid: 'Strong fit', note: 'Citations are naturally handled by retrieval plus source-grounded prompting.' },
+    { signal: 'Need branded tone', rag: 'Limited help', tuning: 'Strong fit', hybrid: 'Strong fit', note: 'Retrieval does not reliably change tone by itself.' },
+    { signal: 'Private internal documents', rag: 'Strong fit', tuning: 'Weak fit', hybrid: 'Possible later', note: 'Keep documents external to the model and refresh indexes as content changes.' },
+    { signal: 'High-volume repeated classification', rag: 'Maybe', tuning: 'Strong fit', hybrid: 'Maybe', note: 'Repeated, stable tasks often justify dataset-driven tuning.' },
+  ];
+
+  const failureMap = [
+    { problem: 'Model gives outdated answers', likelyFix: 'RAG', why: 'The issue is missing or stale knowledge, not behavior.' },
+    { problem: 'Model ignores exact response format', likelyFix: 'Fine-tuning', why: 'This is a behavior consistency issue.' },
+    { problem: 'Answer lacks citations or references', likelyFix: 'RAG', why: 'Retrieved source snippets should be supplied at runtime.' },
+    { problem: 'Support tone feels inconsistent', likelyFix: 'Fine-tuning', why: 'Training on approved examples improves style stability.' },
+    { problem: 'Retrieved docs are wrong or noisy', likelyFix: 'Improve RAG pipeline', why: 'The retrieval layer is failing before generation even starts.' },
+    { problem: 'Need current docs plus strict output policy', likelyFix: 'Hybrid', why: 'One layer supplies knowledge, the other shapes behavior.' },
+  ];
+
+  const sevenDayPilot = [
+    { day: 'Day 1', action: 'Collect 30 to 50 real user prompts and tag each by task type.' },
+    { day: 'Day 2', action: 'Run a prompt-only baseline and log failures.' },
+    { day: 'Day 3', action: 'Add basic RAG with source chunks and compare failure categories.' },
+    { day: 'Day 4', action: 'Improve chunking, metadata filters, and reranking if retrieval is weak.' },
+    { day: 'Day 5', action: 'List the failures RAG did not fix and isolate behavior-only issues.' },
+    { day: 'Day 6', action: 'Decide whether a small fine-tuning dataset is justified.' },
+    { day: 'Day 7', action: 'Choose: prompt-only, RAG, or RAG plus fine-tuning, then define rollout metrics.' },
+  ];
+
+  const sectionLinks = [
+    { id: 'rag-learn', label: 'What You Will Learn' },
+    { id: 'rag-matrix', label: 'Decision Matrix' },
+    { id: 'rag-failure-map', label: 'Failure Map' },
+    { id: 'rag-pilot', label: '7-Day Pilot' },
+    ...guide.sections.map((section, index) => ({
+      id: `rag-section-${index + 1}`,
+      label: section.heading,
+    })),
+  ];
+
+  return (
+    <div className="shell-container py-10">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+        <div className="min-w-0 space-y-8">
+          <section className="relative overflow-hidden rounded-[30px] border border-[var(--border-soft)] bg-white px-6 py-8 shadow-[0_18px_50px_rgba(48,67,95,0.08)] sm:px-10 sm:py-10">
+            <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[rgba(54,87,132,0.12)] blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-[rgba(37,99,235,0.10)] blur-3xl" />
+
+            <p className="section-kicker">{guide.category}</p>
+            <h1 className="mt-3 max-w-4xl text-3xl font-black tracking-tight text-[var(--text-strong)] sm:text-5xl">
+              {guide.title}
+            </h1>
+            <p className="mt-4 max-w-4xl text-sm leading-7 text-[var(--text-muted)] sm:text-base">
+              {guide.description}
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                <div className="flex items-center gap-2 text-[var(--accent)]">
+                  <ListChecks className="h-4 w-4" />
+                  <span className="text-xs font-bold uppercase tracking-[0.12em]">Decision Focus</span>
+                </div>
+                <p className="mt-2 text-2xl font-black text-[var(--text-strong)]">RAG vs Tune</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                <div className="flex items-center gap-2 text-[var(--accent)]">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span className="text-xs font-bold uppercase tracking-[0.12em]">Main Risk</span>
+                </div>
+                <p className="mt-2 text-2xl font-black text-[var(--text-strong)]">Wrong Fix</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4 sm:col-span-2 lg:col-span-1">
+                <div className="flex items-center gap-2 text-[var(--accent)]">
+                  <Users className="h-4 w-4" />
+                  <span className="text-xs font-bold uppercase tracking-[0.12em]">Best For</span>
+                </div>
+                <p className="mt-2 text-2xl font-black text-[var(--text-strong)]">Builders</p>
+              </div>
+            </div>
+          </section>
+
+          {Array.isArray(guide.whatYouWillLearn) && guide.whatYouWillLearn.length > 0 && (
+            <section id="rag-learn" className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+              <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+                What You Will Learn
+              </h2>
+              <ul className="mt-4 space-y-2 text-sm leading-7 text-[var(--text-main)] sm:text-base">
+                {guide.whatYouWillLearn.map((point) => (
+                  <li key={point}>- {point}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <section id="rag-matrix" className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+              1) Practical Decision Matrix
+            </h2>
+            <div className="mt-5 overflow-x-auto rounded-2xl border border-[var(--border-soft)] bg-white/85">
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-[var(--panel-muted)] text-xs uppercase tracking-[0.12em] text-[var(--text-faint)]">
+                  <tr>
+                    <th className="px-4 py-3 font-bold">Signal</th>
+                    <th className="px-4 py-3 font-bold">RAG</th>
+                    <th className="px-4 py-3 font-bold">Fine-Tuning</th>
+                    <th className="px-4 py-3 font-bold">Hybrid</th>
+                    <th className="px-4 py-3 font-bold">Interpretation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {decisionMatrix.map((row) => (
+                    <tr key={row.signal} className="border-t border-[var(--border-soft)] odd:bg-white even:bg-[#f8fbff]">
+                      <td className="px-4 py-3 font-semibold text-[var(--text-strong)]">{row.signal}</td>
+                      <td className="px-4 py-3 text-[var(--text-main)]">{row.rag}</td>
+                      <td className="px-4 py-3 text-[var(--text-main)]">{row.tuning}</td>
+                      <td className="px-4 py-3 text-[var(--text-main)]">{row.hybrid}</td>
+                      <td className="px-4 py-3 text-[var(--text-main)]">{row.note}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="rag-failure-map" className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+              2) Failure-to-Fix Map
+            </h2>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {failureMap.map((item) => (
+                <article key={item.problem} className="rounded-xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                  <p className="text-sm font-black text-[var(--text-strong)]">{item.problem}</p>
+                  <p className="mt-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--accent)]">
+                    Best first fix: {item.likelyFix}
+                  </p>
+                  <p className="mt-2 text-sm text-[var(--text-main)]">{item.why}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section id="rag-pilot" className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+              3) 7-Day Practical Pilot Plan
+            </h2>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {sevenDayPilot.map((item) => (
+                <article key={item.day} className="rounded-xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                  <p className="text-sm font-black text-[var(--text-strong)]">{item.day}</p>
+                  <p className="mt-1 text-sm text-[var(--text-main)]">{item.action}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          {guide.sections.map((section, index) => (
+            <section
+              id={`rag-section-${index + 1}`}
+              key={section.heading}
+              className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8"
+            >
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[var(--accent)]">
+                Section {index + 1}
+              </div>
+              <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+                {section.heading}
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-[var(--text-main)] sm:text-base">{section.content}</p>
+            </section>
+          ))}
+
+          <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+              Implementation Checklist
+            </h2>
+            <ul className="mt-4 space-y-2 text-sm leading-7 text-[var(--text-main)] sm:text-base">
+              {guide.checklist.map((item) => (
+                <li key={item}>- {item}</li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">FAQ</h2>
+            <div className="mt-4 space-y-4">
+              {guide.faq.map((entry) => (
+                <article key={entry.q} className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4">
+                  <h3 className="font-bold text-[var(--text-strong)]">{entry.q}</h3>
+                  <p className="mt-2 text-sm leading-7 text-[var(--text-main)]">{entry.a}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          {Array.isArray(guide.endLinks) && guide.endLinks.length > 0 && (
+            <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+              <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+                Continue with Decision Resources
+              </h2>
+              <div className="mt-4 grid gap-4 md:grid-cols-3">
+                {guide.endLinks.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="rounded-xl border border-[var(--border-soft)] bg-[var(--panel-muted)] p-4 transition-colors hover:border-[var(--border-strong)] hover:bg-white"
+                  >
+                    <h3 className="text-sm font-black tracking-tight text-[var(--text-strong)]">{item.title}</h3>
+                    <p className="mt-2 text-xs leading-6 text-[var(--text-muted)]">{item.body}</p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="editorial-panel rounded-[26px] border border-[var(--border-soft)] p-6 sm:p-8">
+            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
+              Sources and Last Updated Date
+            </h2>
+            <p className="mt-3 text-sm text-[var(--text-main)]">Last updated: {guide.lastUpdated}</p>
+            <ul className="mt-4 space-y-2 text-sm leading-7 text-[var(--text-main)]">
+              {guide.sources.map((source) =>
+                source.href.startsWith('http') ? (
+                  <li key={source.href}>
+                    <a href={source.href} target="_blank" rel="noopener noreferrer" className="font-semibold text-[var(--accent)] hover:text-[var(--accent-strong)]">
+                      {source.label}
+                    </a>
+                  </li>
+                ) : (
+                  <li key={source.href}>
+                    <Link href={source.href} className="font-semibold text-[var(--accent)] hover:text-[var(--accent-strong)]">
+                      {source.label}
+                    </Link>
+                  </li>
+                ),
+              )}
+            </ul>
+          </section>
+        </div>
+
+        <aside className="hidden lg:sticky lg:top-24 lg:block">
+          <div className="editorial-panel rounded-[24px] border border-[var(--border-soft)] p-4">
+            <div className="mb-3 flex items-center gap-2 text-[var(--accent)]">
+              <Layers3 className="h-4 w-4" />
+              <p className="text-xs font-bold uppercase tracking-[0.12em]">On this page</p>
+            </div>
+            <nav className="max-h-[70vh] space-y-2 overflow-auto pr-1">
+              {sectionLinks.map((item) => (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  className="block rounded-lg px-2 py-1.5 text-xs font-semibold text-[var(--text-main)] transition hover:bg-[var(--panel-muted)] hover:text-[var(--accent)]"
+                >
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
 function PrecisionStrategyLayout({ guide }) {
   const sectionLinks = [
     { id: 'precision-families', label: 'Precision Families' },
@@ -419,7 +682,7 @@ function PrecisionStrategyLayout({ guide }) {
   return (
     <div className="shell-container py-10">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
-        <div className="space-y-8">
+        <div className="min-w-0 space-y-8">
           <section className="relative overflow-hidden rounded-[30px] border border-[var(--border-soft)] bg-white px-6 py-8 shadow-[0_18px_50px_rgba(48,67,95,0.08)] sm:px-10 sm:py-10">
             <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[rgba(54,87,132,0.12)] blur-3xl" />
             <div className="pointer-events-none absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-[rgba(37,99,235,0.10)] blur-3xl" />
@@ -644,6 +907,8 @@ export default async function GuideDetailPage({ params }) {
         <SelectionPitfallsLayout guide={guide} />
       ) : guide.slug === 'choose-ai-model-by-gpu-budget' ? (
         <BudgetFrameworkLayout guide={guide} />
+      ) : guide.slug === 'rag-vs-fine-tuning' ? (
+        <RagVsFineTuningLayout guide={guide} />
       ) : guide.slug === 'quantization-4bit-8bit-fp16' ? (
         <PrecisionStrategyLayout guide={guide} />
       ) : (

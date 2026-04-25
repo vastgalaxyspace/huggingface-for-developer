@@ -150,6 +150,7 @@ const NAV_ITEMS = [
   { href: '/', label: 'Home' },
   { href: '/guides', label: 'Guides' },
   { href: '/ai-updates', label: 'AI Updates' },
+  { href: '/editorial-policy', label: 'Editorial Policy' },
   { href: '/about', label: 'About Us' },
 ];
 
@@ -319,6 +320,18 @@ const Header = () => {
                   </div>
                 );
               })}
+
+              <Link
+                href="/ai-updates"
+                prefetch={false}
+                className={`flex h-full items-center border-b-[3px] pt-[3px] transition-colors ${
+                  isActive('/ai-updates')
+                    ? 'border-[var(--text-strong)] text-[var(--text-strong)]'
+                    : 'border-transparent hover:text-[var(--text-strong)]'
+                }`}
+              >
+                AI Updates
+              </Link>
 
             </nav>
           </div>

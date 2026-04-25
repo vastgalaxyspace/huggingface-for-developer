@@ -17,9 +17,24 @@ export default function GpuHardwarePage() {
     { title: 'Memory Hierarchy', body: 'Registers, shared memory, L2, and HBM/GDDR bandwidth shape achievable performance.' },
   ];
 
+  const decisions = [
+    {
+      title: 'Why hardware knowledge matters',
+      body: 'AI teams often jump straight to model benchmarks, but hardware limits are what decide whether a model can actually run, how much it costs, and where latency problems show up.',
+    },
+    {
+      title: 'What this page helps decide',
+      body: 'Use this page to build intuition around the blocks that determine throughput, memory pressure, and deployment feasibility before moving into execution or performance tuning.',
+    },
+    {
+      title: 'Best next step',
+      body: 'After this overview, continue to Execution for warp behavior or Performance for roofline reasoning. If you already have a workload, jump to the VRAM calculator and GPU picker.',
+    },
+  ];
+
   return (
     <div className="min-h-[calc(100vh-78px)] bg-[#f2f6fb] py-8 md:py-12">
-      <div className="shell-container">
+      <div className="shell-container space-y-10">
         <section className="overflow-hidden rounded-[20px] border border-[#d7dfe8] bg-white shadow-[0_12px_30px_rgba(31,45,61,0.08)]">
           <div className="gpu-grid-light px-6 py-8 md:px-10 md:py-10">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#71859b]">Hardware / Architecture</p>
@@ -30,6 +45,15 @@ export default function GpuHardwarePage() {
               The SM is the main architectural unit in modern GPUs. This page summarizes the key hardware blocks that matter most for AI and inference performance tuning.
             </p>
           </div>
+        </section>
+
+        <section className="grid gap-5 md:grid-cols-3">
+          {decisions.map((item) => (
+            <article key={item.title} className="rounded-[20px] border border-[#d7dfe8] bg-white p-6 shadow-[0_10px_24px_rgba(45,67,92,0.05)]">
+              <h2 className="text-lg font-black tracking-tight text-[#1c3148]">{item.title}</h2>
+              <p className="mt-3 text-sm leading-7 text-[#5f758d]">{item.body}</p>
+            </article>
+          ))}
         </section>
 
         <section className="mt-10 grid gap-4 md:grid-cols-3">
@@ -59,6 +83,26 @@ export default function GpuHardwarePage() {
                 <NavLink href="/gpu/performance" label="Go to Performance" />
                 <NavLink href="/gpu/tools/gpu-picker" label="Go to Tools" />
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[20px] border border-[#d7dfe8] bg-white p-6 md:p-8">
+          <h2 className="text-2xl font-extrabold tracking-[-0.01em] text-[#1a2635]">How to read GPU hardware pages</h2>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className="rounded-[18px] border border-[#dbe3ed] bg-[#f8fbff] p-5">
+              <p className="text-sm font-black uppercase tracking-[0.14em] text-[#1c3148]">Start with blocks</p>
+              <p className="mt-3 text-sm leading-7 text-[#5f758d]">
+                Focus first on what each hardware block does: scheduling, matrix math, caches, and memory transport.
+                That foundation makes later performance discussions much easier to understand.
+              </p>
+            </div>
+            <div className="rounded-[18px] border border-[#dbe3ed] bg-[#f8fbff] p-5">
+              <p className="text-sm font-black uppercase tracking-[0.14em] text-[#1c3148]">Then connect to workload</p>
+              <p className="mt-3 text-sm leading-7 text-[#5f758d]">
+                The useful question is always: which of these blocks is likely limiting my model, kernel, or serving
+                pattern? This page is meant to build that habit.
+              </p>
             </div>
           </div>
         </section>

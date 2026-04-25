@@ -13,6 +13,7 @@ import {
   Code2,
   Cpu,
   FlaskConical,
+  Gauge,
   Heart,
   Image as ImageIcon,
   MessageSquare,
@@ -231,6 +232,13 @@ const audienceGroups = [
   },
 ];
 
+const workflowMetrics = [
+  { label: 'Task fit', value: 'Use case', icon: Workflow },
+  { label: 'Memory plan', value: 'VRAM', icon: Cpu },
+  { label: 'License check', value: 'Risk', icon: ShieldCheck },
+  { label: 'Serving plan', value: 'Latency', icon: Gauge },
+];
+
 const faqItems = [
   {
     question: 'How much VRAM do I need for a 7B model?',
@@ -266,10 +274,10 @@ const JSON_LD_WEBSITE = {
   name: 'InnoAI — Hugging Face Model Explorer',
   description:
     'Search 500,000+ open-source AI models with technical metadata. Compare LLMs, estimate VRAM, and plan GPU deployment.',
-  url: 'https://www.innoai.com',
+  url: 'https://innoai.space',
   potentialAction: {
     '@type': 'SearchAction',
-    target: 'https://www.innoai.com/?q={search_term_string}',
+    target: 'https://innoai.space/?q={search_term_string}',
     'query-input': 'required name=search_term_string',
   },
 };
@@ -347,6 +355,70 @@ const StepCard = ({ number, title, body }) => (
     </div>
     <h3 className="mt-5 text-xl font-black tracking-tight text-[var(--text-strong)]">{title}</h3>
     <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">{body}</p>
+  </div>
+);
+
+const WorkflowVisual = () => (
+  <div className="mx-auto mt-8 max-w-5xl rounded-[26px] border border-[var(--border-soft)] bg-white/88 p-4 text-left shadow-[0_16px_42px_rgba(48,67,95,0.08)] sm:mt-10 sm:p-5">
+    <div className="grid gap-3 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-center">
+      {[
+        {
+          title: 'Discover',
+          body: 'Search by model family, task, popularity, license, and hardware limits.',
+          icon: Search,
+        },
+        {
+          title: 'Compare',
+          body: 'Review context, parameters, downloads, license posture, and deployment signals.',
+          icon: BarChart3,
+        },
+        {
+          title: 'Deploy',
+          body: 'Estimate VRAM, choose GPUs, and validate fit before production work starts.',
+          icon: Cpu,
+        },
+      ].map((item, index) => {
+        const Icon = item.icon;
+        return (
+          <div key={item.title} className="rounded-[20px] border border-[var(--border-soft)] bg-[var(--panel-muted)] p-5">
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[var(--accent)] shadow-sm">
+                <Icon className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-faint)]">
+                  Step {index + 1}
+                </p>
+                <h3 className="text-lg font-black text-[var(--text-strong)]">{item.title}</h3>
+              </div>
+            </div>
+            <p className="mt-4 text-sm leading-7 text-[var(--text-muted)]">{item.body}</p>
+          </div>
+        );
+      }).flatMap((node, index, nodes) =>
+        index < nodes.length - 1
+          ? [
+              node,
+              <div key={`connector-${index}`} className="hidden h-px w-8 bg-[var(--border-strong)] lg:block" />,
+            ]
+          : [node]
+      )}
+    </div>
+
+    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {workflowMetrics.map((metric) => {
+        const Icon = metric.icon;
+        return (
+          <div key={metric.label} className="flex items-center gap-3 rounded-2xl border border-[var(--border-soft)] bg-white px-4 py-3">
+            <Icon className="h-4 w-4 text-[var(--accent)]" />
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--text-faint)]">{metric.label}</p>
+              <p className="text-sm font-black text-[var(--text-strong)]">{metric.value}</p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   </div>
 );
 
@@ -932,19 +1004,24 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
       <div className="min-h-screen">
 
         {/* ══ 1. HERO ════════════════════════════════════════════════════════ */}
-        <section aria-labelledby="hero-heading" className="shell-container pb-8 pt-8 text-center sm:pt-12 lg:pt-20">
-          <div className="editorial-panel soft-grid rounded-[28px] px-4 py-10 sm:rounded-[36px] sm:px-8 sm:py-14 lg:px-16 lg:py-24">
-            <div className="mx-auto max-w-5xl">
-              <h1
-                id="hero-heading"
-                className="mx-auto max-w-4xl text-3xl font-black tracking-tight text-[var(--text-strong)] sm:text-5xl lg:text-[4.9rem] lg:leading-[1]"
-              >
-                The Architect&apos;s Workspace for LLMs
-              </h1>
-              <p className="mx-auto mt-4 max-w-3xl text-base font-medium leading-relaxed text-[var(--text-muted)] sm:mt-6 sm:text-xl lg:text-[2rem] lg:leading-[1.35]">
-                Search across 500,000+ open-source models with high-precision technical metadata.
-              </p>
-              <p className="mx-auto mt-4 max-w-4xl text-sm leading-7 text-[var(--text-muted)] sm:mt-5 sm:text-lg sm:leading-8">
+        <section aria-labelledby="hero-heading" className="shell-container pb-8 pt-8 sm:pt-12 lg:pt-16">
+          <div className="editorial-panel soft-grid overflow-hidden rounded-[28px] px-4 py-8 sm:rounded-[36px] sm:px-8 sm:py-12 lg:px-12 lg:py-14">
+            <div className="grid gap-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:items-center">
+              <div className="text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-soft)] bg-white px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-[var(--accent)] shadow-sm">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Model discovery, comparison, and GPU planning
+                </div>
+                <h1
+                  id="hero-heading"
+                  className="mx-auto mt-5 max-w-4xl text-3xl font-black tracking-tight text-[var(--text-strong)] sm:text-5xl lg:mx-0 lg:text-[4.6rem] lg:leading-[1]"
+                >
+                  Choose AI models with confidence before you deploy
+                </h1>
+                <p className="mx-auto mt-4 max-w-3xl text-base font-medium leading-relaxed text-[var(--text-muted)] sm:mt-6 sm:text-xl lg:mx-0 lg:text-[1.6rem] lg:leading-[1.35]">
+                  Search 500,000+ open-source models, compare deployment tradeoffs, estimate VRAM, and plan GPUs from one calm workspace.
+                </p>
+                <p className="mx-auto mt-4 max-w-4xl text-sm leading-7 text-[var(--text-muted)] sm:mt-5 sm:text-lg sm:leading-8 lg:mx-0">
                 InnoAI is a{' '}
                 <strong className="text-[var(--text-strong)]">Hugging Face model explorer</strong> built for faster{' '}
                 <strong className="text-[var(--text-strong)]">LLM comparison</strong>, accurate{' '}
@@ -952,6 +1029,62 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
                 <strong className="text-[var(--text-strong)]">AI model recommender</strong> workflows, and practical{' '}
                 <strong className="text-[var(--text-strong)]">GPU sizing</strong> for deployment.
               </p>
+
+                <div className="mt-6 grid gap-3 text-left sm:grid-cols-3">
+                  {[
+                    ['Compare', 'Shortlist models by specs, license, and use case.'],
+                    ['Size', 'Estimate memory and GPU fit before spending.'],
+                    ['Decide', 'Move from research to a practical deployment plan.'],
+                  ].map(([title, body]) => (
+                    <div key={title} className="rounded-2xl border border-[var(--border-soft)] bg-white/88 p-4 shadow-sm">
+                      <p className="text-sm font-black text-[var(--text-strong)]">{title}</p>
+                      <p className="mt-1 text-xs leading-6 text-[var(--text-muted)]">{body}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-[28px] border border-[var(--border-soft)] bg-white/90 p-5 shadow-[0_18px_48px_rgba(48,67,95,0.1)]">
+                <div className="flex items-center justify-between gap-4 border-b border-[var(--border-soft)] pb-4">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-faint)]">Decision snapshot</p>
+                    <h2 className="mt-1 text-xl font-black text-[var(--text-strong)]">From model to hardware</h2>
+                  </div>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]">
+                    <Workflow className="h-5 w-5" />
+                  </div>
+                </div>
+                <div className="mt-5 space-y-4">
+                  {[
+                    ['Model fit', 'Task, context, quality target', '88%'],
+                    ['Hardware fit', 'VRAM, batch size, concurrency', '74%'],
+                    ['Production fit', 'License, latency, cost controls', '81%'],
+                  ].map(([label, detail, width]) => (
+                    <div key={label}>
+                      <div className="flex items-center justify-between gap-3 text-sm">
+                        <span className="font-bold text-[var(--text-strong)]">{label}</span>
+                        <span className="text-xs font-semibold text-[var(--text-muted)]">{detail}</span>
+                      </div>
+                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--panel-muted)]">
+                        <div className="h-full rounded-full bg-[var(--accent)]" style={{ width }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-5 grid grid-cols-3 gap-2 text-center">
+                  {[
+                    ['500K+', 'Models'],
+                    ['12', 'Guides'],
+                    ['7', 'Tools'],
+                  ].map(([value, label]) => (
+                    <div key={label} className="rounded-2xl bg-[var(--panel-muted)] px-3 py-4">
+                      <p className="text-lg font-black text-[var(--text-strong)]">{value}</p>
+                      <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--text-faint)]">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
 
               {/* Search */}
               <div className="mx-auto mt-8 max-w-4xl sm:mt-12" ref={searchContainerRef}>
@@ -1072,7 +1205,6 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
                   )}
                 </div>
               </div>
-            </div>
           </div>
         </section>
 
@@ -1087,6 +1219,16 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
         </div>
 
         {/* ══ 3. MODEL EXPLORER (MAIN FEATURE — above the fold on desktop) ══ */}
+        <section aria-labelledby="workflow-visual-heading" className="shell-container py-10 sm:py-14">
+          <SectionHeading
+            id="workflow-visual-heading"
+            kicker="Decision Flow"
+            title="A smoother path from browsing to deployment"
+            body="The interface is organized around the questions users actually ask: what model fits the task, what hardware it needs, and what risks matter before launch."
+          />
+          <WorkflowVisual />
+        </section>
+
         <section aria-labelledby="explorer-heading" className="shell-container py-10 sm:py-14">
           <div className="mb-7">
             <SectionHeading
