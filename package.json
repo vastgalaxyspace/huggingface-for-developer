@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint app src --ext .js,.jsx",
-    "content:check": "node scripts/content-depth-check.mjs"
+    "content:check": "node scripts/content-depth-check.mjs",
+    "indexing:check": "node scripts/model-indexing-check.mjs"
   },
   "dependencies": {
     "chart.js": "^4.5.1",

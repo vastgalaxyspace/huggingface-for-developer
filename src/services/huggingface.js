@@ -4,6 +4,7 @@ const HF_API_BASE = 'https://huggingface.co';
 const HF_API_MODELS = 'https://huggingface.co/api/models';
 const HF_TOKEN = process.env.NEXT_PUBLIC_HF_TOKEN;
 const OPTIONAL_ASSET_ERROR_TEXT = [
+  'abort',
   'failed to fetch',
   'load failed',
   'networkerror',
@@ -13,7 +14,8 @@ const OPTIONAL_ASSET_ERROR_TEXT = [
   'terminated'
 ];
 const HF_FETCH_TIMEOUT_MS = 6000;
-const HF_OPTIONAL_FETCH_TIMEOUT_MS = 3500;
+const HF_OPTIONAL_FETCH_TIMEOUT_MS = 1500;
+const HF_TRENDING_HYDRATION_TIMEOUT_MS = 1500;
 const TRENDING_HYDRATION_LIMIT = 12;
 
 /**
@@ -32,20 +34,30 @@ const isBrowser = typeof window !== 'undefined';
 const fetchWithTimeout = async (url, options = {}, timeoutMs = HF_FETCH_TIMEOUT_MS) => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const externalSignal = options.signal;
+  const abortFromExternalSignal = () => controller.abort();
+
+  if (externalSignal?.aborted) {
+    controller.abort();
+  } else {
+    externalSignal?.addEventListener('abort', abortFromExternalSignal, { once: true });
+  }
 
   try {
     return await fetch(url, {
       ...options,
-      signal: options.signal || controller.signal,
+      signal: controller.signal,
     });
   } finally {
     clearTimeout(timeout);
+    externalSignal?.removeEventListener('abort', abortFromExternalSignal);
   }
 };
 
-const fetchModelViaProxy = async (modelId) => {
+const fetchModelViaProxy = async (modelId, options = {}) => {
   const response = await fetch(`/api/hf-model?modelId=${encodeURIComponent(modelId)}`, {
     cache: 'no-store',
+    signal: options.signal,
   });
 
   if (!response.ok) {
@@ -62,19 +74,21 @@ const isRestrictedStatus = (status) => status === 401 || status === 403;
 
 const isLikelyNetworkFetchError = (error) => {
   if (!error) return false;
+  if (error.name === 'AbortError' || error.code === 20) return true;
   const message = String(error.message || '').toLowerCase();
   return OPTIONAL_ASSET_ERROR_TEXT.some((text) => message.includes(text));
 };
 
-const fetchOptionalRepoFile = async (modelId, filePath, responseType = 'json') => {
-  const paths = ['raw', 'resolve'];
+const fetchOptionalRepoFile = async (modelId, filePath, responseType = 'json', options = {}) => {
+  const paths = options.paths || ['resolve'];
+  const timeoutMs = options.timeoutMs || HF_OPTIONAL_FETCH_TIMEOUT_MS;
 
   try {
     for (const pathType of paths) {
       const response = await fetchWithTimeout(
         `${HF_API_BASE}/${modelId}/${pathType}/main/${filePath}`,
-        { headers: getHeaders() },
-        HF_OPTIONAL_FETCH_TIMEOUT_MS
+        { headers: getHeaders(), signal: options.signal },
+        timeoutMs
       );
 
       if (response.ok) {
@@ -88,7 +102,7 @@ const fetchOptionalRepoFile = async (modelId, filePath, responseType = 'json') =
 
     return null;
   } catch (error) {
-    if (!isLikelyNetworkFetchError(error)) {
+    if (!options.silent && !isLikelyNetworkFetchError(error)) {
       console.warn(`Optional Hugging Face asset unavailable for ${modelId}/${filePath}:`, error);
     }
     return null;
@@ -98,15 +112,16 @@ const fetchOptionalRepoFile = async (modelId, filePath, responseType = 'json') =
 /**
  * Fetch model metadata
  */
-export const fetchModelMetadata = async (modelId) => {
+export const fetchModelMetadata = async (modelId, options = {}) => {
   try {
     if (isBrowser) {
-      const data = await fetchModelViaProxy(modelId);
+      const data = await fetchModelViaProxy(modelId, options);
       return data?.metadata || null;
     }
 
     const response = await fetchWithTimeout(`${HF_API_MODELS}/${modelId}`, {
-      headers: getHeaders()
+      headers: getHeaders(),
+      signal: options.signal,
     }, HF_FETCH_TIMEOUT_MS);
     
     if (!response.ok) {
@@ -122,7 +137,9 @@ export const fetchModelMetadata = async (modelId) => {
     
     return await response.json();
   } catch (error) {
-    console.error('Error fetching model metadata:', error);
+    if (!options.silent && !isLikelyNetworkFetchError(error)) {
+      console.error('Error fetching model metadata:', error);
+    }
     throw error;
   }
 };
@@ -130,22 +147,26 @@ export const fetchModelMetadata = async (modelId) => {
 /**
  * Fetch model config.json
  */
-export const fetchModelConfig = async (modelId) => {
-  return fetchOptionalRepoFile(modelId, 'config.json');
+export const fetchModelConfig = async (modelId, options = {}) => {
+  return fetchOptionalRepoFile(modelId, 'config.json', 'json', options);
 };
 
 /**
  * Fetch model README
  */
-export const fetchModelReadme = async (modelId) => {
-  return fetchOptionalRepoFile(modelId, 'README.md', 'text');
+export const fetchModelReadme = async (modelId, options = {}) => {
+  return fetchOptionalRepoFile(modelId, 'README.md', 'text', {
+    ...options,
+    paths: ['raw'],
+    timeoutMs: options.timeoutMs || HF_OPTIONAL_FETCH_TIMEOUT_MS,
+  });
 };
 
 /**
  * Fetch tokenizer config
  */
-export const fetchTokenizerConfig = async (modelId) => {
-  return fetchOptionalRepoFile(modelId, 'tokenizer_config.json');
+export const fetchTokenizerConfig = async (modelId, options = {}) => {
+  return fetchOptionalRepoFile(modelId, 'tokenizer_config.json', 'json', options);
 };
 
 /**
@@ -244,15 +265,18 @@ export const getTrendingModels = async (limit = 10) => {
       })
       .slice(0, TRENDING_HYDRATION_LIMIT);
 
+    const hydrationController = new AbortController();
+    const hydrationTimeout = setTimeout(() => hydrationController.abort(), HF_TRENDING_HYDRATION_TIMEOUT_MS);
     const hydrationEntries = await Promise.all(
       candidates.map(async (model) => {
+        const requestOptions = { silent: true, signal: hydrationController.signal };
         const [metadata, config] = await Promise.all([
-          fetchModelMetadata(model.id).catch(() => null),
-          fetchModelConfig(model.id),
+          fetchModelMetadata(model.id, requestOptions).catch(() => null),
+          fetchModelConfig(model.id, requestOptions),
         ]);
         return [model.id, { metadata, config }];
       })
-    );
+    ).finally(() => clearTimeout(hydrationTimeout));
     const hydrationMap = new Map(hydrationEntries);
 
     return models.map((model) =>

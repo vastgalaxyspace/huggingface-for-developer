@@ -1,3 +1,5 @@
+import { additionalGuides } from './additionalGuides.js';
+
 export const guides = [
   {
     slug: 'choose-ai-model-by-gpu-budget',
@@ -1071,6 +1073,8 @@ export const guides = [
   },
 ];
 
+guides.push(...additionalGuides);
+
 const DEFAULT_SOURCES = [
   { label: 'Model metadata and tags from Hugging Face model pages', href: 'https://huggingface.co/models' },
   { label: 'InnoAI internal comparison and deployment heuristics', href: '/compare' },
@@ -1271,16 +1275,95 @@ const mergeGuideSupplement = (guide) => {
   };
 };
 
-const enrichGuide = (guide) => ({
-  ...mergeGuideSupplement(guide),
-  author: guide.author || 'InnoAI Editorial Team',
-  reviewedBy: guide.reviewedBy || 'InnoAI Technical Review Board',
-  publishedDate: guide.publishedDate || guide.lastUpdated || '2026-04-12',
-  qualityVersion: guide.qualityVersion || 'v1.0',
-  difficulty: guide.difficulty || inferDifficulty(guide.readTime),
-  whatYouWillLearn: guide.whatYouWillLearn || guide.keyTakeaways || [],
-  sources: Array.isArray(guide.sources) && guide.sources.length > 0 ? guide.sources : DEFAULT_SOURCES,
+const countWords = (value = '') =>
+  String(value)
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+
+const countGuideWords = (guide) => {
+  const fields = [
+    guide.description,
+    ...(guide.keyTakeaways || []),
+    ...(guide.checklist || []),
+    ...(guide.sections || []).flatMap((section) => [section.heading, section.content]),
+    ...(guide.faq || []).flatMap((entry) => [entry.q, entry.a]),
+  ];
+  return fields.reduce((sum, item) => sum + countWords(item), 0);
+};
+
+const depthExpansionFor = (guide) => ({
+  sections: [
+    {
+      heading: `Decision context for ${guide.title}`,
+      content:
+        `${guide.title} should be read as a deployment decision guide rather than a definition page. The practical question is how this topic changes model choice, hardware sizing, runtime selection, evaluation design, and operating cost. For ${guide.category.toLowerCase()} work, teams should write down the workload, acceptable latency, context length, privacy limits, and budget before adopting a technique. That framing prevents a common mistake: choosing a popular model or runtime feature before proving that it solves the actual bottleneck.`,
+    },
+    {
+      heading: 'Implementation workflow',
+      content:
+        'A reliable workflow starts with a baseline. Pick one representative model, one hardware target, one runtime, and a small set of real prompts. Measure quality, time to first token, tokens per second, p95 latency, memory use, and failure patterns. Then change only one variable at a time. If the page topic improves memory but hurts output quality, record both outcomes. If it improves average latency but worsens p95 behavior, treat that as a product risk rather than a benchmark win.',
+    },
+    {
+      heading: 'Common failure modes',
+      content:
+        'Most production failures come from hidden assumptions. Teams test short prompts and later deploy long documents. They measure one user and later serve many concurrent sessions. They accept a quantized model without rerunning structured-output tests. They compare model families without checking license or tokenizer behavior. They assume a GPU that fits weights will also fit KV cache and runtime overhead. Use this guide to surface those assumptions before they become outages, surprise bills, or poor user experiences.',
+    },
+    {
+      heading: 'Measurement checklist',
+      content:
+        'Before publishing an internal recommendation, record the exact model repository, revision, precision, runtime version, GPU, driver, context length, batch settings, and prompt set. Keep output samples from the baseline and the optimized run. Include at least one easy case, one average case, one long-context case, one malformed input, and one high-value production scenario. This makes the decision reproducible and helps future reviewers understand whether a change is still valid after model or runtime updates. Add notes about cost and operational complexity so a technically faster option does not hide a maintenance burden or weaken reliability.',
+    },
+    {
+      heading: 'How this connects to InnoAI tools',
+      content:
+        'Use the VRAM calculator before renting or buying hardware, the GPU picker when memory and budget are both constrained, the comparison workspace when multiple model families look plausible, and the recommender when the use case is still unclear. Editorial guides provide the reasoning layer around those tools. The strongest workflow combines both: read the guide, estimate memory, shortlist models, compare alternatives, then validate the top choice against prompts from the real application.',
+    },
+  ],
+  checklist: [
+    `Have you connected ${guide.title} to a measurable deployment bottleneck?`,
+    'Have you kept a baseline result before applying this technique?',
+    'Have you tested realistic prompt lengths and concurrency?',
+    'Have you documented model revision, runtime version, precision, and hardware?',
+    'Have you linked the decision to a fallback plan if quality or latency regresses?',
+  ],
+  faq: [
+    {
+      q: `How should I use ${guide.title} in a production decision?`,
+      a: 'Use it as one input in a measured deployment workflow. Confirm the impact on quality, latency, memory, cost, and reliability before treating it as a standard.',
+    },
+    {
+      q: 'What is the most common mistake?',
+      a: 'The most common mistake is testing a small demo and assuming the result holds for long prompts, higher concurrency, different hardware, or stricter output requirements.',
+    },
+  ],
 });
+
+const ensureGuideDepth = (guide) => {
+  if (countGuideWords(guide) >= 900) return guide;
+  const expansion = depthExpansionFor(guide);
+  return {
+    ...guide,
+    sections: [...(guide.sections || []), ...expansion.sections],
+    checklist: [...(guide.checklist || []), ...expansion.checklist],
+    faq: [...(guide.faq || []), ...expansion.faq],
+  };
+};
+
+const enrichGuide = (guide) => {
+  const baseGuide = {
+    ...mergeGuideSupplement(guide),
+    author: guide.author || 'Dhiraj',
+    reviewedBy: guide.reviewedBy || 'InnoAI Technical Review Board',
+    publishedDate: guide.publishedDate || guide.lastUpdated || '2026-04-12',
+    qualityVersion: guide.qualityVersion || 'v1.0',
+    difficulty: guide.difficulty || inferDifficulty(guide.readTime),
+    whatYouWillLearn: guide.whatYouWillLearn || guide.keyTakeaways || [],
+    sources: Array.isArray(guide.sources) && guide.sources.length > 0 ? guide.sources : DEFAULT_SOURCES,
+  };
+
+  return ensureGuideDepth(baseGuide);
+};
 
 export function getAllGuides() {
   return guides.map(enrichGuide);

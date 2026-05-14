@@ -18,17 +18,18 @@ import { getParametersByCategory } from '../../utils/parameterExplanations';
 import { getDeploymentRecommendation, formatLicenseDisplay } from '../../utils/licenseChecker';
 import { useMemo } from 'react';
 
-export default function ModelDetailClient({ modelId }) {
+export default function ModelDetailClient({ modelId, initialModelData = null }) {
   const router = useRouter();
   const decodedModelId = decodeURIComponent(modelId);
   
-  const { data: modelData, loading, error, refetch } = useModelData(decodedModelId);
+  const { data: fetchedModelData, loading, error, refetch } = useModelData(initialModelData ? null : decodedModelId);
   const { addToComparison, removeFromComparison, isInComparison, canAddMore } = useComparison();
   const { toggleFavorite, isFavorite } = useFavorites();
   const db = useModelDatabase();
+  const modelData = initialModelData || fetchedModelData;
 
   const handleBack = () => router.push('/');
-  const handleRetry = () => refetch();
+  const handleRetry = () => refetch?.();
 
   const enrichedProps = useMemo(() => {
     if (!modelData) return null;

@@ -1,6 +1,6 @@
 import { absoluteUrl } from '../src/lib/seo';
-import { getTrendingModels } from '../src/services/huggingface';
 import { getAllGuides } from '../src/data/guidesContent';
+import { getIndexableModelIds, modelPath } from '../src/lib/modelIndexing';
 
 const learningTopicRoutes = [
   '/gpu/learning/physical-hardware',
@@ -15,6 +15,7 @@ const learningTopicRoutes = [
 const routes = [
   { path: '/', priority: 1.0, changeFrequency: 'daily' },
   { path: '/about', priority: 0.7, changeFrequency: 'monthly' },
+  { path: '/authors/dhiraj', priority: 0.65, changeFrequency: 'monthly' },
   { path: '/editorial-policy', priority: 0.65, changeFrequency: 'monthly' },
   { path: '/guides', priority: 0.9, changeFrequency: 'weekly' },
   { path: '/ai-updates', priority: 0.7, changeFrequency: 'weekly' },
@@ -59,17 +60,12 @@ export default async function sitemap() {
     priority: 0.75,
   }));
 
-  try {
-    const trending = await getTrendingModels(150);
-    const modelRoutes = trending.map((model) => ({
-      url: absoluteUrl(`/model/${model.id}`),
-      lastModified: new Date(model.lastModified || lastModified),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    }));
-    return [...staticSitemap, ...guideRoutes, ...modelRoutes];
-  } catch (error) {
-    console.warn("Failed to fetch dynamic models for sitemap", error);
-    return [...staticSitemap, ...guideRoutes];
-  }
+  const modelRoutes = getIndexableModelIds().map((modelId) => ({
+    url: absoluteUrl(modelPath(modelId)),
+    lastModified,
+    changeFrequency: 'weekly',
+    priority: 0.8,
+  }));
+
+  return [...staticSitemap, ...guideRoutes, ...modelRoutes];
 }

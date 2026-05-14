@@ -1,5 +1,4 @@
-"use client";
-
+﻿
 function getStyles(state, accent) {
   if (state === "active" && accent === "orange") {
     return "border-orange-300 bg-orange-50 text-orange-700";

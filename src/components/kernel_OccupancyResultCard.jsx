@@ -1,5 +1,4 @@
-"use client";
-
+﻿
 import { formatKbFromBytes, formatPercent, getExecutionTerms, getOccupancyTone, sectionLabelClassName } from "./kernel_utils";
 
 function StatCard({ label, value }) {
