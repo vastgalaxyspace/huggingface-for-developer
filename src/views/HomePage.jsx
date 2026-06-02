@@ -1008,7 +1008,7 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD_FAQ) }}
       />
 
-      <div className="min-h-screen">
+      <div>
 
         {/* ══ 1. HERO ════════════════════════════════════════════════════════ */}
         <section aria-labelledby="hero-heading" className="shell-container pb-8 pt-8 sm:pt-12 lg:pt-16">

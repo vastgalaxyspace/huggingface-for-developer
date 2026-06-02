@@ -12,7 +12,7 @@ export const metadata = pageMetadata({
 
 export default function Page() {
   return (
-    <div className="min-h-[calc(100vh-78px)] bg-slate-100 py-8 md:py-12">
+    <div className="bg-slate-100 py-8 md:py-12">
       <div className="shell-container space-y-6">
         <section className="rounded-[24px] border border-[var(--border-soft)] bg-white px-6 py-8 shadow-[0_12px_30px_rgba(31,45,61,0.08)] sm:px-10">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-faint)]">Execution / Warp Behavior</p>

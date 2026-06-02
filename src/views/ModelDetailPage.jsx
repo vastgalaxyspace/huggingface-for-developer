@@ -181,7 +181,7 @@ const ModelDetailPage = ({
   }
 
   return (
-    <div className="min-h-screen">
+    <div>
       <div className="shell-container">
 
         {/* ── TOP BAR ── */}
@@ -218,7 +218,7 @@ const ModelDetailPage = ({
 
         {/* ── MAIN LAYOUT ── */}
         <div className="editorial-panel overflow-hidden rounded-[28px]">
-          <div className="relative flex min-h-[calc(100vh-200px)]">
+          <div className="relative flex">
 
             {/* Mobile overlay */}
             {isMobile && sidebarOpen && (

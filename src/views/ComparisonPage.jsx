@@ -225,7 +225,7 @@ const ComparisonPage = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-78px)] py-8 sm:py-12">
+    <div className="py-8 sm:py-12">
       <div className="shell-container relative">
         <div className="relative z-10 mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-start">
           <div className="max-w-3xl">

@@ -153,10 +153,20 @@ export default function RootLayout({ children }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
+        <Script
+          id="adsterra-popunder"
+          src="https://pl29621189.effectivecpmnetwork.com/35/08/e7/3508e7a0de742003db429d1cb5b14c8b.js"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="adsterra-social-bar"
+          src="https://pl29621192.effectivecpmnetwork.com/9f/66/3c/9f663cdf8ba4671f3beefdba0b7582db.js"
+          strategy="afterInteractive"
+        />
         <AppProviders>
-          <div className="min-h-screen text-slate-800">
+          <div className="flex min-h-screen flex-col text-slate-800">
             <Header />
-            <main className="min-h-screen pb-24">{children}</main>
+            <main>{children}</main>
             <Footer />
           </div>
         </AppProviders>

@@ -103,7 +103,7 @@ export default function GpuPage() {
   ];
 
   return (
-    <div className="min-h-[calc(100vh-78px)] bg-[#f2f6fb] py-6 md:py-12">
+    <div className="bg-[#f2f6fb] py-6 md:py-12">
       <div className="shell-container">
         <section className="overflow-hidden rounded-[22px] border border-[#d7e0ea] bg-white shadow-[0_12px_30px_rgba(31,45,61,0.08)]">
           <div className="border-b border-[#d7e0ea] bg-[#f8fbff] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f8298] sm:px-6 sm:text-[11px] sm:tracking-[0.22em]">

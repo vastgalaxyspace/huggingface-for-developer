@@ -11,7 +11,7 @@ export const metadata = pageMetadata({
 
 export default function ValidationLabPage() {
   return (
-    <div className="min-h-[calc(100vh-78px)] bg-gray-100 py-8 md:py-12">
+    <div className="bg-gray-100 py-8 md:py-12">
       <div className="shell-container">
         <ModelValidationLab />
       </div>

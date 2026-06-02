@@ -4,7 +4,7 @@ import SmartWizard from "../components/SmartWizard";
 
 export default function RecommenderPage() {
   return (
-    <div className="min-h-[calc(100vh-78px)] py-8 sm:py-12">
+    <div className="py-8 sm:py-12">
       <div className="shell-container space-y-8">
         <section className="editorial-panel rounded-[28px] px-6 py-8 sm:px-10 sm:py-10">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]">Decision Wizard</p>
