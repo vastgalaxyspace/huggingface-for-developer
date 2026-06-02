@@ -821,8 +821,9 @@ export default async function GuideDetailPage({ params }) {
     datePublished: publishedIso,
     dateModified: updatedIso,
     author: {
-      '@type': 'Organization',
+      '@type': 'Person',
       name: guide.author,
+      url: absoluteUrl('/authors/dhiraj'),
     },
     publisher: {
       '@type': 'Organization',
@@ -929,7 +930,7 @@ export default async function GuideDetailPage({ params }) {
             </span>
           </div>
           <div className="mt-4 flex flex-wrap gap-4 text-xs font-semibold text-[var(--text-faint)]">
-            <span>Author: {guide.author}</span>
+            <Link href="/authors/dhiraj" className="text-[var(--accent)] hover:text-[var(--accent-strong)]">Author: {guide.author}</Link>
             <span>Reviewed by: {guide.reviewedBy}</span>
             <span>{guide.readTime}</span>
             <span>Published: {guide.publishedDate}</span>
@@ -949,7 +950,12 @@ export default async function GuideDetailPage({ params }) {
         <section className="mt-8 rounded-2xl border border-[var(--border-soft)] bg-white p-6">
           <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)]">Author and Review</h2>
           <div className="mt-4 space-y-3 text-sm leading-7 text-[var(--text-muted)]">
-            <p>Author: {guide.author}</p>
+            <p>
+              Author:{' '}
+              <Link href="/authors/dhiraj" className="font-semibold text-[var(--accent)] hover:text-[var(--accent-strong)]">
+                {guide.author}
+              </Link>
+            </p>
             <p>Technical review: {guide.reviewedBy}</p>
             <p>
               Review process: Content is reviewed for technical clarity, deployment realism, and consistency with

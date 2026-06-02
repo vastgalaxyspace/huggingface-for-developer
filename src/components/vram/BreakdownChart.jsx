@@ -1,5 +1,4 @@
-﻿"use client";
-
+﻿
 import { formatGb } from "./utils";
 
 const SEGMENTS = [

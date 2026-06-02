@@ -1,5 +1,4 @@
-"use client";
-
+﻿
 import { formatBytes, formatInteger, getExecutionTerms, sectionLabelClassName } from "./kernel_utils";
 
 function SpecCell({ label, value, highlight = false }) {

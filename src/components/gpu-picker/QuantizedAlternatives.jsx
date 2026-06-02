@@ -1,5 +1,4 @@
-"use client";
-
+﻿
 export default function QuantizedAlternatives({ alternatives, profile }) {
   if (!alternatives.length) return null;
 

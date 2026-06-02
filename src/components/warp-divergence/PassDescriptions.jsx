@@ -1,5 +1,4 @@
-"use client";
-
+﻿
 export default function PassDescriptions({ passes, currentPass }) {
   if (passes.length === 1 && passes[0]?.no_divergence) {
     return (

@@ -1,9 +1,10 @@
 import { getAllGuides } from '../src/data/guidesContent.js';
 
-const MIN_TOTAL_WORDS = 220;
+const MIN_TOTAL_WORDS = 900;
 const MIN_SECTION_COUNT = 3;
 const MIN_FAQ_COUNT = 2;
 const MIN_CHECKLIST_COUNT = 3;
+const MIN_SOURCE_COUNT = 2;
 
 const countWords = (value = '') =>
   String(value)
@@ -26,6 +27,8 @@ const analyzeGuide = (guide) => {
     sections: (guide.sections || []).length >= MIN_SECTION_COUNT,
     faq: (guide.faq || []).length >= MIN_FAQ_COUNT,
     checklist: (guide.checklist || []).length >= MIN_CHECKLIST_COUNT,
+    sources: (guide.sources || []).length >= MIN_SOURCE_COUNT,
+    lastUpdated: Boolean(guide.lastUpdated),
   };
 
   return {
@@ -59,6 +62,8 @@ if (failed.length > 0) {
     if (!item.checks.sections) reasons.push(`sections < ${MIN_SECTION_COUNT}`);
     if (!item.checks.faq) reasons.push(`faq < ${MIN_FAQ_COUNT}`);
     if (!item.checks.checklist) reasons.push(`checklist < ${MIN_CHECKLIST_COUNT}`);
+    if (!item.checks.sources) reasons.push(`sources < ${MIN_SOURCE_COUNT}`);
+    if (!item.checks.lastUpdated) reasons.push('missing lastUpdated');
     console.log(`- ${item.slug}: ${reasons.join(', ')}`);
   }
   process.exitCode = 1;

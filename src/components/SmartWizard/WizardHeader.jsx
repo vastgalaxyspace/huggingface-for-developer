@@ -1,5 +1,4 @@
-"use client";
-
+﻿
 import { BrainCircuit } from "lucide-react";
 import StepIndicator from "./StepIndicator";
 

@@ -35,9 +35,34 @@ const principles = [
 const reviewFlow = [
   'Define the user problem the page should help solve.',
   'Collect model, tooling, or infrastructure inputs from primary sources.',
+  'Separate upstream metadata from InnoAI interpretation so readers can see what is sourced and what is analysis.',
   'Add practical interpretation, checklists, and decision guidance.',
+  'Check generated model pages against indexing rules so low-content pages stay noindex until improved.',
   'Review for clarity, internal consistency, and product usefulness.',
   'Update timestamps, sources, and related internal links before publishing.',
+];
+
+const methodology = [
+  {
+    title: 'Model metadata',
+    body:
+      'We use Hugging Face model metadata, config files, tokenizer information, model cards, tags, license fields, and public adoption signals as inputs. These fields can be incomplete, so pages identify missing values instead of pretending every model has complete documentation.',
+  },
+  {
+    title: 'Deterministic analysis',
+    body:
+      'VRAM estimates, deployment notes, and indexed-model eligibility are generated from deterministic rules and visible metadata. We do not treat generated copy as a substitute for testing on real prompts, hardware, and production traffic.',
+  },
+  {
+    title: 'Limitations',
+    body:
+      'Benchmarks, download counts, and model-card claims are directional signals. Real deployment quality depends on prompts, context length, runtime, quantization, GPU, batching, and safety requirements.',
+  },
+  {
+    title: 'Update cadence',
+    body:
+      'High-impact guides and indexed model pages are reviewed when model families, runtime capabilities, or license terms materially change. Lower-value programmatic pages may remain accessible but noindex until they receive stronger editorial treatment.',
+  },
 ];
 
 const notAdvice = [
@@ -85,6 +110,15 @@ export default function EditorialPolicyPage() {
               </li>
             ))}
           </ol>
+        </section>
+
+        <section className="grid gap-5 md:grid-cols-2">
+          {methodology.map((item) => (
+            <article key={item.title} className="rounded-2xl border border-[var(--border-soft)] bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-black tracking-tight text-[var(--text-strong)]">{item.title}</h2>
+              <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">{item.body}</p>
+            </article>
+          ))}
         </section>
 
         <section className="grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)]">

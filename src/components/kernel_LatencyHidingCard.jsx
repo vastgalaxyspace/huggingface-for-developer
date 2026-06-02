@@ -1,5 +1,4 @@
-"use client";
-
+﻿
 import { formatPercent, getOccupancyTone, sectionLabelClassName } from "./kernel_utils";
 
 function getExplanation(status, occupancy) {

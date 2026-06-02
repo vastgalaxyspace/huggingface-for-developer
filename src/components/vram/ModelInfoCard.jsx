@@ -1,5 +1,4 @@
-﻿"use client";
-
+﻿
 import { formatNumber, formatParams, getPrecisionBadgeClasses, toTitleCase } from "./utils";
 
 const Field = ({ label, value, badgeClassName }) => (
