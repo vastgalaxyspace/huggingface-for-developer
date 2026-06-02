@@ -22,7 +22,10 @@ const PRECISION_BYTES = {
 };
 
 export default function GpuPickerPage() {
-  const [modelId, setModelId] = useState("");
+  const [modelId, setModelId] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("model") || "";
+  });
   const [fetchState, setFetchState] = useState("idle");
   const [error, setError] = useState("");
   const [rawModelData, setRawModelData] = useState(null);

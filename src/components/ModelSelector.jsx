@@ -3,7 +3,7 @@ import { Search, X, Cpu, TrendingUp, Heart } from 'lucide-react';
 import { searchModels } from '../services/huggingface';
 import { parseModelSize, formatNumber } from '../utils/modelUtils';
 
-const ModelSelector = ({ onSelect, onCancel }) => {
+const ModelSelector = ({ onSelect, onCancel, placeholder = 'Search models to compare...' }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -121,7 +121,7 @@ const ModelSelector = ({ onSelect, onCancel }) => {
           onKeyDown={handleKeyDown}
           autoFocus
           className="w-full rounded-xl border border-[var(--border-strong)] bg-white px-10 py-3 text-sm font-medium text-[var(--text-main)] shadow-sm outline-none transition-all placeholder:text-[var(--text-faint)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[rgba(53,87,132,0.1)]"
-          placeholder="Search models to compare..."
+          placeholder={placeholder}
         />
         
         {searchQuery && (

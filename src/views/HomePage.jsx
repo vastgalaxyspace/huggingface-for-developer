@@ -166,6 +166,13 @@ const coreTools = [
     cta: 'Compare Models',
   },
   {
+    href: '/validation-lab',
+    icon: FlaskConical,
+    title: 'Model Validation Lab',
+    body: 'Generate prompt tests, runtime snippets, VRAM warnings, and notes before committing to a model.',
+    cta: 'Validate Models',
+  },
+  {
     href: '/recommender',
     icon: Sparkles,
     title: 'AI Model Recommender',
