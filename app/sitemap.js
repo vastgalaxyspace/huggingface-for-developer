@@ -18,6 +18,8 @@ const routes = [
   { path: '/authors/dhiraj', priority: 0.65, changeFrequency: 'monthly' },
   { path: '/editorial-policy', priority: 0.65, changeFrequency: 'monthly' },
   { path: '/guides', priority: 0.9, changeFrequency: 'weekly' },
+  { path: '/ai-tutorials', priority: 0.85, changeFrequency: 'weekly' },
+  { path: '/ai-tutorials/rag', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/ai-updates', priority: 0.7, changeFrequency: 'weekly' },
   { path: '/ai-inference', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/ai-inference/tutorial', priority: 0.8, changeFrequency: 'monthly' },
