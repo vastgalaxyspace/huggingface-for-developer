@@ -1,8 +1,9 @@
 "use client";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Settings, BookOpen, ChevronLeft, ArrowLeft, Menu, X } from 'lucide-react';
 import { TUTORIAL_CHAPTERS } from '../../data/inference-tutorial-data';
+import { getTutorialFromFirestore } from '../../lib/tutorialsFirestore';
 
 /* ── tiny markdown-ish renderer ── */
 function renderContent(text) {
@@ -119,10 +120,32 @@ export default function TutorialPage() {
   const [activeChapter, setActiveChapter] = useState(0);
   const [activeSection, setActiveSection] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [tutorial, setTutorial] = useState({
+    title: 'AI Inference Tutorial',
+    chapters: TUTORIAL_CHAPTERS,
+  });
+
+  useEffect(() => {
+    async function fetchTutorial() {
+      const remoteTutorial = await getTutorialFromFirestore('ai-inference');
+      if (Array.isArray(remoteTutorial?.chapters) && remoteTutorial.chapters.length > 0) {
+        setTutorial({
+          title: remoteTutorial.title || 'AI Inference Tutorial',
+          chapters: remoteTutorial.chapters,
+        });
+        setActiveChapter(0);
+        setActiveSection(0);
+      }
+    }
+
+    fetchTutorial();
+  }, []);
 
   // Derive the active objects
-  const chapter = TUTORIAL_CHAPTERS[activeChapter];
-  const section = chapter?.sections[activeSection];
+  const chapters = tutorial.chapters;
+  const chapter = chapters[activeChapter];
+  const chapterSections = chapter?.sections || [];
+  const section = chapterSections[activeSection];
 
   // Auto-close sidebar on mobile after selection
   const handleSelectSection = (cIdx, sIdx) => {
@@ -169,17 +192,17 @@ export default function TutorialPage() {
 
         <div className="p-4 pb-20">
           <div className="flex items-center gap-3 mb-8 pl-2">
-            <h2 className="font-bold text-[var(--text-strong)] text-[1.1rem] tracking-tight">AI Inference <span className="text-[var(--text-muted)] font-normal ml-0.5">Tutorial</span></h2>
+            <h2 className="font-bold text-[var(--text-strong)] text-[1.1rem] tracking-tight">{tutorial.title}</h2>
           </div>
 
           <nav className="flex flex-col gap-6">
-            {TUTORIAL_CHAPTERS.map((ch, cIndex) => (
+            {chapters.map((ch, cIndex) => (
               <div key={ch.id}>
                 <div className="text-xs font-bold text-[var(--text-faint)] uppercase tracking-widest mb-3 pl-2">
                   {ch.number}. {ch.title}
                 </div>
                 <div className="flex flex-col gap-1">
-                  {ch.sections.map((sec, sIndex) => {
+                  {(ch.sections || []).map((sec, sIndex) => {
                     const isActive = activeChapter === cIndex && activeSection === sIndex;
                     return (
                       <button
@@ -229,7 +252,7 @@ export default function TutorialPage() {
                         handleSelectSection(activeChapter, activeSection - 1);
                       } else {
                         const prevChap = activeChapter - 1;
-                        handleSelectSection(prevChap, TUTORIAL_CHAPTERS[prevChap].sections.length - 1);
+                        handleSelectSection(prevChap, (chapters[prevChap].sections || []).length - 1);
                       }
                     }}
                     className="flex flex-col items-start p-4 hover:bg-[var(--panel-muted)] rounded-xl transition-colors min-w-[120px] border border-transparent hover:border-[var(--border-soft)]"
@@ -239,8 +262,8 @@ export default function TutorialPage() {
                     </span>
                     <span className="text-[var(--text-strong)] font-medium text-sm text-left line-clamp-1">
                       {activeSection > 0 
-                        ? TUTORIAL_CHAPTERS[activeChapter].sections[activeSection - 1].title
-                        : TUTORIAL_CHAPTERS[activeChapter - 1].sections[TUTORIAL_CHAPTERS[activeChapter - 1].sections.length - 1].title}
+                        ? chapters[activeChapter].sections[activeSection - 1].title
+                        : chapters[activeChapter - 1].sections[(chapters[activeChapter - 1].sections || []).length - 1].title}
                     </span>
                   </button>
                 ) : (
@@ -248,10 +271,10 @@ export default function TutorialPage() {
                 )}
 
                 {/* Next Button */}
-                {(activeSection < chapter.sections.length - 1) || (activeChapter < TUTORIAL_CHAPTERS.length - 1) ? (
+                {(activeSection < chapterSections.length - 1) || (activeChapter < chapters.length - 1) ? (
                   <button
                     onClick={() => {
-                      if (activeSection < chapter.sections.length - 1) {
+                      if (activeSection < chapterSections.length - 1) {
                         handleSelectSection(activeChapter, activeSection + 1);
                       } else {
                         handleSelectSection(activeChapter + 1, 0);
@@ -263,9 +286,9 @@ export default function TutorialPage() {
                       NEXT <ChevronRight className="w-3 h-3" />
                     </span>
                     <span className="text-[var(--accent)] font-semibold text-sm text-right line-clamp-1">
-                      {activeSection < chapter.sections.length - 1
-                        ? chapter.sections[activeSection + 1].title
-                        : TUTORIAL_CHAPTERS[activeChapter + 1].sections[0].title}
+                      {activeSection < chapterSections.length - 1
+                        ? chapterSections[activeSection + 1].title
+                        : chapters[activeChapter + 1].sections[0].title}
                     </span>
                   </button>
                 ) : (

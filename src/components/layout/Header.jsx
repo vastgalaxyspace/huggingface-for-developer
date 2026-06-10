@@ -151,6 +151,36 @@ const PRIMARY_NAV_ITEMS = [
       },
     ],
   },
+  {
+    href: '/ai-tutorials',
+    label: 'AI Tutorials',
+    items: [
+      {
+        href: '/ai-tutorials',
+        title: 'Tutorial Hub',
+        description: 'Browse practical AI tutorials in one place',
+        icon: BookOpen,
+      },
+      {
+        href: '/ai-inference/tutorial',
+        title: 'Inference Tutorial',
+        description: 'Learn serving, runtimes, hardware, and production basics',
+        icon: Cloud,
+      },
+      {
+        href: '/ai-tutorials/rag',
+        title: 'RAG Tutorial',
+        description: 'Build retrieval-augmented AI apps step by step',
+        icon: Layers,
+      },
+      {
+        href: '/gpu',
+        title: 'GPU Tutorial',
+        description: 'Learn GPU architecture for AI workloads',
+        icon: Cpu,
+      },
+    ],
+  },
 ];
 
 const NAV_ITEMS = [
@@ -230,7 +260,7 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-[200] border-b border-[var(--border-soft)] bg-white">
       <div className="shell-container flex min-h-[72px] items-center justify-between gap-4 py-3 md:min-h-[78px]">
-        <div className="flex min-w-0 items-center gap-4 lg:gap-12">
+        <div className="flex min-w-0 items-center gap-4 lg:gap-8 xl:gap-12">
           <Link href="/" prefetch={false} className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center sm:h-12 sm:w-12">
               <Image
@@ -252,7 +282,7 @@ const Header = () => {
           </Link>
 
           <div className="hidden h-full items-center lg:flex">
-            <nav className="flex h-full items-center gap-8 text-[15px] font-medium text-[var(--text-muted)]">
+            <nav className="flex h-full items-center gap-5 text-[14px] font-medium text-[var(--text-muted)] xl:gap-8 xl:text-[15px]">
               <Link
                 href="/"
                 prefetch={false}
@@ -264,8 +294,9 @@ const Header = () => {
               >
                 Home
               </Link>
-              {PRIMARY_NAV_ITEMS.map((item) => {
+              {PRIMARY_NAV_ITEMS.map((item, itemIndex) => {
                 const dropdownOpen = openDesktopMenu === item.href;
+                const alignDropdownRight = itemIndex >= PRIMARY_NAV_ITEMS.length - 2;
                 return (
                   <div
                     key={item.href}
@@ -290,13 +321,15 @@ const Header = () => {
 
                     {dropdownOpen && (
                       <div
-                        className="absolute left-0 top-full z-[260] w-[420px] pt-2"
+                        className={`absolute top-full z-[260] w-[420px] pt-2 ${
+                          alignDropdownRight ? 'right-0' : 'left-0'
+                        }`}
                         onMouseEnter={cancelCloseMenu}
                         onMouseLeave={scheduleCloseMenu}
                       >
                         <div className="rounded-2xl border border-[var(--border-soft)] bg-white p-3 shadow-[0_18px_48px_rgba(24,39,75,0.16)]">
                           <div className="space-y-1.5">
-                          {(Array.isArray(item.items) ? item.items : []).slice(0, 4).map((subItem, index) => {
+                          {(Array.isArray(item.items) ? item.items : []).slice(0, 5).map((subItem, index) => {
                             const Icon = subItem.icon;
                             return (
                               <Link
