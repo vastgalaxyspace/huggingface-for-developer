@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useFavorites as useFavoritesOriginal } from '../../hooks/useFavoritesBase';
 import { useComparison as useComparisonOriginal } from '../../hooks/useComparisonBase';
 import { useModelDatabase as useModelDatabaseOriginal } from '../../hooks/useModelDatabaseBase';
+import { useAuth } from '../../hooks/useAuth';
 import { AppContext } from './AppContext';
 import ToastHost from '../common/ToastHost';
 
@@ -15,9 +16,10 @@ export function AppProviders({ children }) {
   const favorites = useFavoritesOriginal();
   const comparison = useComparisonOriginal();
   const db = useModelDatabaseOriginal(shouldLoadDatabase);
+  const auth = useAuth();
 
   return (
-    <AppContext.Provider value={{ favorites, comparison, db }}>
+    <AppContext.Provider value={{ favorites, comparison, db, auth }}>
       {children}
       <ToastHost />
     </AppContext.Provider>

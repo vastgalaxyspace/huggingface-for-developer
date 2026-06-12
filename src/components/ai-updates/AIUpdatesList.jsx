@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 
 const FILTER_OPTIONS = [
@@ -98,7 +98,7 @@ export default function AIUpdatesList() {
       }
 
       try {
-        const q = query(collection(db, "ai_updates"), orderBy("createdAt", "desc"));
+        const q = query(collection(db, "ai_updates"), where("published", "==", true), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);
         const fetchedUpdates = mapUpdateDocs(querySnapshot);
         setUpdates(fetchedUpdates);
@@ -106,7 +106,7 @@ export default function AIUpdatesList() {
         console.warn("Ordered AI updates query failed; retrying without orderBy.", err);
 
         try {
-          const querySnapshot = await getDocs(collection(db, "ai_updates"));
+          const querySnapshot = await getDocs(query(collection(db, "ai_updates"), where("published", "==", true)));
           const fetchedUpdates = mapUpdateDocs(querySnapshot).sort(
             (a, b) => toMillis(b.createdAt || b.date) - toMillis(a.createdAt || a.date)
           );

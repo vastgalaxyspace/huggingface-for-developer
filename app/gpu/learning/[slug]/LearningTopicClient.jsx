@@ -1,194 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
-import { PHYSICAL_HARDWARE_THEORY } from "../../../../src/data/physicalHardwareTheory";
-import { MEMORY_HIERARCHY_THEORY } from "../../../../src/data/memoryHierarchyTheory";
-import { EXECUTION_MODEL_THEORY } from "../../../../src/data/executionModelTheory";
-import { COMPILATION_PIPELINE_THEORY } from "../../../../src/data/compilationPipelineTheory";
-import { CUDA_PROGRAMMING_THEORY } from "../../../../src/data/cudaProgrammingTheory";
-import { DRIVER_STACK_THEORY } from "../../../../src/data/driverStackTheory";
-import { LIBRARIES_FRAMEWORKS_THEORY } from "../../../../src/data/librariesFrameworksTheory";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowRight, CheckCircle, Sparkles } from "lucide-react";
 import PhysicalHardwareVisuals from "../../../../src/components/gpu/visuals/PhysicalHardwareVisuals";
 import LearningTopicVisuals from "../../../../src/components/gpu/visuals/LearningTopicVisuals";
+import { AppContext } from "../../../../src/components/providers/AppContext";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../src/components/ui/card";
+import { getTutorialFromFirestore } from "../../../../src/lib/tutorialsFirestore";
+import { getTutorialProgress, saveTutorialProgress } from "../../../../src/lib/tutorialProgress";
 
-const TOPICS = {
-  "physical-hardware": {
-    id: "01",
-    title: "Physical Hardware",
-    subtitle: "GPU chip structure, SM internals, and compute building blocks.",
-    learning: [
-      "GPU hierarchy: GPC -> TPC -> SM",
-      "SM internals across generations",
-      "CUDA cores, Tensor cores, and SFU roles",
-      "Warp scheduler behavior and switching",
-      "TMA overview for Hopper+",
-    ],
-    visuals: [
-      "Clickable SM diagram",
-      "Hierarchy tree: GPU -> GPC -> TPC -> SM",
-      "CUDA core vs Tensor core race simulation",
-      "Generation comparison slider",
-    ],
-    tools: [
-      "FLOP counter for matrix operations",
-      "Compute capability lookup",
-      "Peak TFLOP calculator",
-      "Architecture timeline explorer",
-    ],
-  },
-  "memory-hierarchy": {
-    id: "02",
-    title: "Memory Hierarchy",
-    subtitle: "Data movement from registers to VRAM and bottlenecks.",
-    learning: [
-      "Register file - fastest storage, 65536 per SM, and spill behavior",
-      "Shared memory / L1 cache - scratchpad model, programmer control, and H100 sizing",
-      "L2 cache - shared across SMs between L1 and VRAM",
-      "GPU RAM (VRAM / global memory) - HBM2e/HBM3 and model-state placement",
-      "HBM vs GDDR - bandwidth and data-center trade-offs",
-      "Memory banks and bank conflicts - 32-bank mapping and serialization",
-      "Memory coalescing - consecutive vs strided transaction behavior",
-      "Tensor memory (Blackwell) - dedicated memory path for Tensor cores",
-    ],
-    visuals: [
-      "Latency animation: registers -> shared -> L2 -> VRAM",
-      "Memory pyramid with speed/size levels",
-      "Coalescing visualizer with 32 threads",
-      "Bank conflict detector",
-    ],
-    tools: [
-      "VRAM calculator",
-      "Register pressure checker",
-      "Effective bandwidth calculator",
-      "Shared memory usage estimator",
-    ],
-  },
-  "execution-model": {
-    id: "03",
-    title: "Execution Model",
-    subtitle: "Threads, warps, occupancy, and scheduler behavior.",
-    learning: [
-      "Thread - smallest unit with private PC and registers",
-      "Warp - 32 threads and scheduler issue unit",
-      "Thread Block (CTA) - shared memory and synchronization",
-      "Grid - full kernel launch of independent blocks",
-      "SIMT - one instruction across many threads",
-      "Warp divergence - masking, predication, and cost",
-      "Latency hiding - switching warps to cover memory wait",
-      "Occupancy - active warps versus theoretical maximum",
-      "Warpgroup (Hopper+) - 4-warps wgmma execution",
-      "Thread Block Cluster (Hopper+) - inter-block cooperation",
-      "Warp execution states - active, eligible, selected, stalled",
-      "Scoreboard stalls - short versus long latency dependencies",
-    ],
-    visuals: [
-      "Warp execution stepper",
-      "Divergence simulator",
-      "Latency hiding timeline",
-      "Thread -> warp -> block -> grid builder",
-    ],
-    tools: [
-      "Occupancy calculator",
-      "Warp count estimator",
-      "Divergence cost estimator",
-      "Concurrent threads counter",
-    ],
-  },
-  "compilation-pipeline": {
-    id: "04",
-    title: "Compilation Pipeline",
-    subtitle: "From CUDA source to PTX/SASS and architecture execution.",
-    learning: [
-      "CUDA C++ -> PTX -> SASS -> Binary pipeline",
-      "PTX portability and virtual ISA",
-      "SASS architecture-specific instruction layer",
-      "nvcc flow and compute capability mapping",
-    ],
-    visuals: [
-      "Pipeline walkthrough side-by-side",
-      "PTX vs SASS diff explorer",
-      "SM feature matrix by capability",
-    ],
-    tools: [
-      "Compute capability lookup",
-      "CUDA toolkit compatibility checker",
-      "Architecture version reference table",
-    ],
-  },
-  "cuda-programming": {
-    id: "05",
-    title: "CUDA Programming",
-    subtitle: "Kernel design, memory access, and runtime optimization.",
-    learning: [
-      "CUDA keywords and memory qualifiers",
-      "Kernel launch dimensions and mapping",
-      "cudaMalloc / cudaMemcpy / cudaFree fundamentals",
-      "Shared memory tiling and synchronization",
-      "Streams and CUDA graphs",
-    ],
-    visuals: [
-      "Kernel launch configurator",
-      "Memory access pattern visualizer",
-      "Shared memory tiling animation",
-      "Stream overlap timeline",
-    ],
-    tools: [
-      "Kernel config optimizer",
-      "Tiling calculator",
-      "cudaMemcpy time estimator",
-    ],
-  },
-  "driver-stack": {
-    id: "06",
-    title: "Driver Stack",
-    subtitle: "Runtime, driver, and system-level GPU software flow.",
-    learning: [
-      "NVIDIA driver module responsibilities",
-      "Driver API vs Runtime API",
-      "NVML and nvidia-smi metric semantics",
-      "CUPTI role for profiling",
-      "Full app-to-hardware software stack",
-    ],
-    visuals: [
-      "Layer diagram from framework to silicon",
-      "Kernel launch flow animation",
-      "Annotated nvidia-smi output guide",
-    ],
-    tools: [
-      "nvidia-smi metric explainer",
-      "Driver vs Runtime API mapping table",
-      "GPU util vs SM util explainer",
-    ],
-  },
-  "libraries-frameworks": {
-    id: "07",
-    title: "Libraries & Frameworks",
-    subtitle: "cuBLAS/cuDNN/Triton/PyTorch and profiling workflow.",
-    learning: [
-      "cuBLAS GEMM and Tensor Core usage",
-      "cuDNN operator acceleration",
-      "Triton custom kernel workflow",
-      "PyTorch runtime integration",
-      "Nsight and binary inspection tooling",
-    ],
-    visuals: [
-      "Library call chain visualization",
-      "Nsight timeline reader",
-      "cuBLAS vs naive GEMM simulation",
-      "Roofline map for common operations",
-    ],
-    tools: [
-      "Roofline plotter",
-      "Batch-size bound transition tool",
-      "Arithmetic intensity reference",
-      "torch.compile impact estimator",
-    ],
-  },
-};
+const GPU_TUTORIAL_ID = "gpu";
+const FINAL_TOPIC_SLUG = "libraries-frameworks";
 
 const TABS = [
   { key: "learning", label: "Learning" },
@@ -207,72 +31,213 @@ const TOPIC_THEME = {
   "h-vram": { header: "bg-[#eaf2ff]", badge: "bg-[#1d4ed8]" },
 };
 
-export default function LearningTopicClient({ slug }) {
-  const topic = TOPICS[slug];
-  const [activeTab, setActiveTab] = useState("learning");
-  const [selectedTopicIndex, setSelectedTopicIndex] = useState(0);
-
-  if (!topic) {
-    notFound();
+const getLearningItems = (topic) => {
+  if (Array.isArray(topic?.theory) && topic.theory.length > 0) {
+    return topic.theory.map((item) => item.title);
   }
 
-  const items = useMemo(() => topic[activeTab], [topic, activeTab]);
-  const isPhysicalLearning = slug === "physical-hardware" && activeTab === "learning";
-  const isMemoryLearning = slug === "memory-hierarchy" && activeTab === "learning";
-  const isExecutionLearning = slug === "execution-model" && activeTab === "learning";
-  const isCompilationLearning = slug === "compilation-pipeline" && activeTab === "learning";
-  const isCudaProgrammingLearning = slug === "cuda-programming" && activeTab === "learning";
-  const isDriverStackLearning = slug === "driver-stack" && activeTab === "learning";
-  const isLibrariesFrameworksLearning = slug === "libraries-frameworks" && activeTab === "learning";
+  return Array.isArray(topic?.learning) ? topic.learning : [];
+};
+
+const getVisualItems = (topic) => (Array.isArray(topic?.visuals) ? topic.visuals : []);
+
+const getTrackItemKey = (topicSlug, tab, index) => `${topicSlug}:${tab}:${index}`;
+
+const getAllTrackKeys = (topics = {}) =>
+  Object.entries(topics).flatMap(([topicSlug, topicValue]) => [
+    ...getLearningItems(topicValue).map((_, index) => getTrackItemKey(topicSlug, "learning", index)),
+    ...getVisualItems(topicValue).map((_, index) => getTrackItemKey(topicSlug, "visuals", index)),
+  ]);
+
+export default function LearningTopicClient({ slug }) {
+  const router = useRouter();
+  const { auth } = useContext(AppContext);
+  const [activeTab, setActiveTab] = useState("learning");
+  const [selectedTopicIndex, setSelectedTopicIndex] = useState(0);
+  const [tutorial, setTutorial] = useState(null);
+  const [topic, setTopic] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [progressLoading, setProgressLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [progressError, setProgressError] = useState("");
+  const [readItems, setReadItems] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchTopic() {
+      setIsLoading(true);
+      setLoadError("");
+      setSelectedTopicIndex(0);
+      setActiveTab("learning");
+
+      const remoteTutorial = await getTutorialFromFirestore(GPU_TUTORIAL_ID);
+      if (!isMounted) return;
+
+      const remoteTopic = remoteTutorial?.topics?.[slug];
+      if (remoteTopic) {
+        setTutorial(remoteTutorial);
+        setTopic(remoteTopic);
+      } else {
+        setTutorial(remoteTutorial || null);
+        setTopic(null);
+        setLoadError("This GPU tutorial topic is not available in Firestore yet.");
+      }
+
+      setIsLoading(false);
+    }
+
+    fetchTopic();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [slug]);
+
+  useEffect(() => {
+    if (auth.loading || !auth.user) return;
+
+    let isMounted = true;
+
+    async function fetchProgress() {
+      setProgressLoading(true);
+      const savedProgress = await getTutorialProgress(auth.user.uid, GPU_TUTORIAL_ID);
+      if (!isMounted) return;
+
+      setReadItems(Array.isArray(savedProgress?.readItems) ? savedProgress.readItems : []);
+      setProgressLoading(false);
+    }
+
+    fetchProgress();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [auth.loading, auth.user]);
+
+  const items = useMemo(() => topic?.[activeTab] || [], [topic, activeTab]);
+  const theoryItems = useMemo(() => topic?.theory || [], [topic]);
+  const isLearning = activeTab === "learning";
   const isPhysicalVisuals = slug === "physical-hardware" && activeTab === "visuals";
   const hasDedicatedVisuals = activeTab === "visuals" && slug !== "physical-hardware";
   const sidebarTopics = useMemo(
-    () =>
-      isPhysicalLearning
-        ? PHYSICAL_HARDWARE_THEORY.map((item) => item.title)
-        : isMemoryLearning
-          ? MEMORY_HIERARCHY_THEORY.map((item) => item.title)
-          : isExecutionLearning
-            ? EXECUTION_MODEL_THEORY.map((item) => item.title)
-            : isCompilationLearning
-              ? COMPILATION_PIPELINE_THEORY.map((item) => item.title)
-              : isCudaProgrammingLearning
-                ? CUDA_PROGRAMMING_THEORY.map((item) => item.title)
-                : isDriverStackLearning
-                  ? DRIVER_STACK_THEORY.map((item) => item.title)
-                  : isLibrariesFrameworksLearning
-                    ? LIBRARIES_FRAMEWORKS_THEORY.map((item) => item.title)
-                    : items,
-    [
-      isPhysicalLearning,
-      isMemoryLearning,
-      isExecutionLearning,
-      isCompilationLearning,
-      isCudaProgrammingLearning,
-      isDriverStackLearning,
-      isLibrariesFrameworksLearning,
-      items,
-    ]
+    () => (isLearning && theoryItems.length > 0 ? theoryItems.map((item) => item.title) : items),
+    [isLearning, items, theoryItems]
   );
 
   const safeIndex = Math.min(selectedTopicIndex, Math.max(sidebarTopics.length - 1, 0));
-  const selectedPhysicalTopic = isPhysicalLearning ? PHYSICAL_HARDWARE_THEORY[safeIndex] : null;
-  const selectedMemoryTopic = isMemoryLearning ? MEMORY_HIERARCHY_THEORY[safeIndex] : null;
-  const selectedExecutionTopic = isExecutionLearning ? EXECUTION_MODEL_THEORY[safeIndex] : null;
-  const selectedCompilationTopic = isCompilationLearning ? COMPILATION_PIPELINE_THEORY[safeIndex] : null;
-  const selectedCudaProgrammingTopic = isCudaProgrammingLearning ? CUDA_PROGRAMMING_THEORY[safeIndex] : null;
-  const selectedDriverStackTopic = isDriverStackLearning ? DRIVER_STACK_THEORY[safeIndex] : null;
-  const selectedLibrariesFrameworksTopic = isLibrariesFrameworksLearning ? LIBRARIES_FRAMEWORKS_THEORY[safeIndex] : null;
-  const selectedListTopic =
-    !isPhysicalLearning &&
-    !isMemoryLearning &&
-    !isExecutionLearning &&
-    !isCompilationLearning &&
-    !isCudaProgrammingLearning &&
-    !isDriverStackLearning &&
-    !isLibrariesFrameworksLearning
-      ? items[safeIndex]
-      : null;
+  const selectedTheoryTopic = isLearning ? theoryItems[safeIndex] : null;
+  const selectedListTopic = !selectedTheoryTopic ? items[safeIndex] : null;
+  const allTrackKeys = useMemo(() => getAllTrackKeys(tutorial?.topics || {}), [tutorial]);
+  const allTrackKeySet = useMemo(() => new Set(allTrackKeys), [allTrackKeys]);
+  const validReadCount = useMemo(
+    () => readItems.filter((itemKey) => allTrackKeySet.has(itemKey)).length,
+    [allTrackKeySet, readItems]
+  );
+  const totalTrackItems = allTrackKeys.length;
+  const progressPercent = totalTrackItems > 0 ? Math.round((validReadCount / totalTrackItems) * 100) : 0;
+  const isFinalTopic = slug === FINAL_TOPIC_SLUG;
+
+  const markTrackItemRead = useCallback((targetSlug, targetTab, targetIndex) => {
+    if (!auth.user || targetIndex < 0) return;
+
+    const itemKey = getTrackItemKey(targetSlug, targetTab, targetIndex);
+    if (!allTrackKeySet.has(itemKey) || readItems.includes(itemKey)) return;
+
+    const nextReadItems = [...readItems, itemKey];
+    setReadItems(nextReadItems);
+    setProgressError("");
+
+    const nextValidReadCount = nextReadItems.filter((key) => allTrackKeySet.has(key)).length;
+
+    saveTutorialProgress(auth.user.uid, GPU_TUTORIAL_ID, {
+      tutorialId: GPU_TUTORIAL_ID,
+      tutorialTitle: tutorial?.title || "GPU Tutorial for AI Developers",
+      readItems: nextReadItems,
+      totalItems: totalTrackItems,
+      progressPercent: totalTrackItems > 0 ? Math.round((nextValidReadCount / totalTrackItems) * 100) : 0,
+      lastTopicSlug: targetSlug,
+      lastTab: targetTab,
+      lastItemIndex: targetIndex,
+      startedAt: readItems.length === 0 ? new Date().toISOString() : undefined,
+    }).catch((err) => {
+      console.error("Error saving GPU tutorial progress:", err);
+      setProgressError("Progress could not be saved right now.");
+    });
+  }, [allTrackKeySet, auth.user, readItems, totalTrackItems, tutorial?.title]);
+
+  useEffect(() => {
+    if (progressLoading || sidebarTopics.length === 0) return;
+
+    const timeout = window.setTimeout(() => {
+      markTrackItemRead(slug, activeTab, safeIndex);
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
+  }, [activeTab, markTrackItemRead, progressLoading, safeIndex, sidebarTopics.length, slug]);
+
+  if (auth.loading) {
+    return (
+      <div className="flex min-h-[calc(100vh-78px)] items-center justify-center bg-[#f2f6fb] px-6 text-center">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#4e6883]">GPU Learning Path</p>
+          <h1 className="mt-3 text-2xl font-black tracking-tight text-[#152a40]">Checking your account...</h1>
+        </div>
+      </div>
+    );
+  }
+
+  if (!auth.user) {
+    return (
+      <div className="flex min-h-[calc(100vh-78px)] items-center justify-center bg-[#f2f6fb] px-6 text-center">
+        <div className="max-w-md rounded-[22px] border border-[#d7e5f4] bg-white p-8 shadow-[0_12px_30px_rgba(31,45,61,0.08)]">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#4e6883]">GPU Learning Path</p>
+          <h1 className="mt-3 text-2xl font-black tracking-tight text-[#152a40]">Sign in to start the GPU tutorial</h1>
+          <p className="mt-3 text-sm leading-7 text-[#4e6883]">
+            Your learning progress, final test result, and certificate are saved to your account.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push(`/login?next=/gpu/learning/${slug}`)}
+            className="mt-6 inline-flex rounded-xl bg-[#18324f] px-5 py-3 text-sm font-bold text-white hover:bg-[#11253b]"
+          >
+            Sign in to continue
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading || progressLoading) {
+    return (
+      <div className="flex min-h-[calc(100vh-78px)] items-center justify-center bg-[#f2f6fb] px-6 text-center">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#4e6883]">GPU Learning Path</p>
+          <h1 className="mt-3 text-2xl font-black tracking-tight text-[#152a40]">Loading GPU tutorial...</h1>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError || !topic) {
+    return (
+      <div className="flex min-h-[calc(100vh-78px)] items-center justify-center bg-[#f2f6fb] px-6 text-center">
+        <div className="max-w-lg">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#4e6883]">GPU Learning Path</p>
+          <h1 className="mt-3 text-2xl font-black tracking-tight text-[#152a40]">GPU tutorial unavailable</h1>
+          <p className="mt-3 text-sm leading-7 text-[#4e6883]">
+            {loadError || "No GPU tutorial topic was found in Firestore."}
+          </p>
+          <Link
+            href="/gpu"
+            className="mt-6 inline-flex rounded-xl bg-[#18324f] px-5 py-3 text-sm font-bold text-white hover:bg-[#11253b]"
+          >
+            Back to GPU Hub
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-78px)] bg-[#f2f6fb] py-8 md:py-12">
@@ -291,6 +256,24 @@ export default function LearningTopicClient({ slug }) {
               <p className="mb-2 px-1 text-xs font-black uppercase tracking-[0.16em] text-[#4e6883]">
                 Main Sections
               </p>
+              <div className="mb-4 rounded border border-[#d7e5f4] bg-white p-3">
+                <div className="flex items-center justify-between text-xs font-black uppercase tracking-[0.14em] text-[#4e6883]">
+                  <span>Progress</span>
+                  <span>{progressPercent}%</span>
+                </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#edf5ff]">
+                  <div
+                    className="h-full rounded-full bg-[#18324f] transition-all"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+                <p className="mt-3 text-xs font-semibold leading-5 text-[#4e6883]">
+                  {validReadCount} of {totalTrackItems} learning + visual items visited
+                </p>
+                {progressError ? (
+                  <p className="mt-2 text-xs font-semibold text-red-700">{progressError}</p>
+                ) : null}
+              </div>
               <div className="space-y-1">
                 {TABS.map((tab) => (
                   <div key={tab.key}>
@@ -317,20 +300,26 @@ export default function LearningTopicClient({ slug }) {
                           Sub Topics
                         </p>
                         <div className="space-y-1">
-                          {sidebarTopics.map((item, index) => (
-                            <button
-                              key={`${item}-${index}`}
-                              type="button"
-                              onClick={() => setSelectedTopicIndex(index)}
-                              className={`w-full rounded text-left text-sm leading-6 font-semibold tracking-[0.01em] ${
-                                safeIndex === index
-                                  ? "border border-[#bed3e8] bg-white px-2.5 py-2.5 text-[#163a5d]"
-                                  : "border border-transparent px-2.5 py-2.5 text-[#34506c] hover:bg-white"
-                              }`}
-                            >
-                              {String(index + 1).padStart(2, "0")} - {item}
-                            </button>
-                          ))}
+                          {sidebarTopics.map((item, index) => {
+                            const itemKey = getTrackItemKey(slug, activeTab, index);
+                            const isRead = readItems.includes(itemKey);
+
+                            return (
+                              <button
+                                key={`${item}-${index}`}
+                                type="button"
+                                onClick={() => setSelectedTopicIndex(index)}
+                                className={`flex w-full items-center justify-between gap-2 rounded text-left text-sm leading-6 font-semibold tracking-[0.01em] ${
+                                  safeIndex === index
+                                    ? "border border-[#bed3e8] bg-white px-2.5 py-2.5 text-[#163a5d]"
+                                    : "border border-transparent px-2.5 py-2.5 text-[#34506c] hover:bg-white"
+                                }`}
+                              >
+                                <span>{String(index + 1).padStart(2, "0")} - {item}</span>
+                                {isRead ? <CheckCircle className="h-3.5 w-3.5 shrink-0 text-green-700" /> : null}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     ) : null}
@@ -340,20 +329,8 @@ export default function LearningTopicClient({ slug }) {
             </Card>
 
             <div className="space-y-3">
-              {isPhysicalLearning && selectedPhysicalTopic ? (
-                <PhysicalHardwareTopic topic={selectedPhysicalTopic} />
-              ) : isMemoryLearning && selectedMemoryTopic ? (
-                <PhysicalHardwareTopic topic={selectedMemoryTopic} />
-              ) : isExecutionLearning && selectedExecutionTopic ? (
-                <PhysicalHardwareTopic topic={selectedExecutionTopic} />
-              ) : isCompilationLearning && selectedCompilationTopic ? (
-                <PhysicalHardwareTopic topic={selectedCompilationTopic} />
-              ) : isCudaProgrammingLearning && selectedCudaProgrammingTopic ? (
-                <PhysicalHardwareTopic topic={selectedCudaProgrammingTopic} />
-              ) : isDriverStackLearning && selectedDriverStackTopic ? (
-                <PhysicalHardwareTopic topic={selectedDriverStackTopic} />
-              ) : isLibrariesFrameworksLearning && selectedLibrariesFrameworksTopic ? (
-                <PhysicalHardwareTopic topic={selectedLibrariesFrameworksTopic} />
+              {selectedTheoryTopic ? (
+                <PhysicalHardwareTopic topic={selectedTheoryTopic} />
               ) : isPhysicalVisuals ? (
                 <PhysicalHardwareVisuals selectedIndex={safeIndex} />
               ) : hasDedicatedVisuals ? (
@@ -370,6 +347,22 @@ export default function LearningTopicClient({ slug }) {
                 currentIndex={safeIndex}
                 onSelect={setSelectedTopicIndex}
               />
+
+              {isFinalTopic ? (
+                <Card className="rounded-xl border-[#d7e5f4] bg-white p-5 md:p-6">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#4e6883]">Final test</p>
+                  <h2 className="mt-2 text-2xl font-black tracking-tight text-[#152a40]">GPU Tutorial MCQ</h2>
+                  <p className="mt-3 text-sm leading-7 text-[#4e6883]">
+                    The final test is now on a separate page with 10 MCQ questions. Your current progress is {progressPercent}%.
+                  </p>
+                  <Link
+                    href="/gpu/test"
+                    className="mt-5 inline-flex rounded-xl bg-[#18324f] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#11253b]"
+                  >
+                    Open final test
+                  </Link>
+                </Card>
+              ) : null}
             </div>
           </div>
         </Card>
@@ -505,7 +498,7 @@ function RenderSection({ section }) {
           <tbody>
             {section.rows.map((row, rowIndex) => (
               <tr key={rowIndex} className="border-b border-[#edf2f7] last:border-b-0">
-                {row.map((cell, cellIndex) => (
+                {(Array.isArray(row) ? row : row.cells || []).map((cell, cellIndex) => (
                   <td key={cellIndex} className="whitespace-pre-wrap px-3 py-2.5 text-sm leading-7 text-[#2f4a64]">
                     {cell}
                   </td>

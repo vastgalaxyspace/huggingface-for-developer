@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, orderBy, query } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, orderBy, query, where } from 'firebase/firestore';
 import { db } from './firebase';
 
 export const TUTORIALS_COLLECTION =
@@ -47,14 +47,20 @@ export async function getTutorialsFromFirestore({ publishedOnly = true } = {}) {
   if (!db) return [];
 
   try {
-    const querySnapshot = await getDocs(query(collection(db, TUTORIALS_COLLECTION), orderBy('order', 'asc')));
+    const tutorialsQuery = publishedOnly
+      ? query(collection(db, TUTORIALS_COLLECTION), where('published', '==', true), orderBy('order', 'asc'))
+      : query(collection(db, TUTORIALS_COLLECTION), orderBy('order', 'asc'));
+    const querySnapshot = await getDocs(tutorialsQuery);
     const tutorials = querySnapshot.docs.map(normalizeTutorial);
     return sortTutorials(publishedOnly ? tutorials.filter((tutorial) => tutorial.published) : tutorials);
   } catch (err) {
     console.warn('Ordered tutorial query failed; retrying without orderBy.', err);
 
     try {
-      const querySnapshot = await getDocs(collection(db, TUTORIALS_COLLECTION));
+      const fallbackQuery = publishedOnly
+        ? query(collection(db, TUTORIALS_COLLECTION), where('published', '==', true))
+        : collection(db, TUTORIALS_COLLECTION);
+      const querySnapshot = await getDocs(fallbackQuery);
       const tutorials = querySnapshot.docs.map(normalizeTutorial);
       return sortTutorials(publishedOnly ? tutorials.filter((tutorial) => tutorial.published) : tutorials);
     } catch (fallbackErr) {
@@ -63,4 +69,3 @@ export async function getTutorialsFromFirestore({ publishedOnly = true } = {}) {
     }
   }
 }
-

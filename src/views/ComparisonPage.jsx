@@ -263,35 +263,6 @@ const ComparisonPage = () => {
           </div>
         </div>
 
-        <section className="mb-8 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-          <article className="rounded-[24px] border border-[var(--border-soft)] bg-white p-6 shadow-[0_12px_28px_rgba(48,67,95,0.06)]">
-            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)]">How to compare models well</h2>
-            <ol className="mt-4 space-y-3 text-sm leading-7 text-[var(--text-muted)]">
-              <li>1. Start with models that solve the same task category instead of mixing unrelated architectures.</li>
-              <li>2. Check license and context window before looking at popularity numbers.</li>
-              <li>3. Use VRAM and hardware signals to remove models that do not fit your deployment reality.</li>
-              <li>4. Treat benchmark-style values as directional and validate the final shortlist on your own prompts.</li>
-            </ol>
-          </article>
-
-          <article className="rounded-[24px] border border-[var(--border-soft)] bg-[var(--panel-muted)] p-6">
-            <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)]">What this tool is best for</h2>
-            <div className="mt-4 space-y-3 text-sm leading-7 text-[var(--text-muted)]">
-              <p>
-                This page works best when you already have a shortlist and need to reduce it. It is especially useful
-                for comparing deployment tradeoffs such as VRAM, context, ecosystem support, and licensing posture.
-              </p>
-              <p>
-                If you still do not know which models to shortlist, start with the{' '}
-                <Link href="/recommender" className="font-semibold text-[var(--accent)] hover:text-[var(--accent-strong)]">
-                  recommender
-                </Link>{' '}
-                first, then come back here.
-              </p>
-            </div>
-          </article>
-        </section>
-
         {viewMode === 'table' && (
           <div className="editorial-panel mb-12 overflow-hidden rounded-[28px] text-[14px]">
             <div className={`hidden grid-cols-[minmax(0,1.2fr)_repeat(3,minmax(0,1fr))] border-b border-[var(--border-soft)] bg-[var(--panel-muted)] text-[11px] font-bold tracking-[0.24em] text-[var(--text-muted)] md:grid`}>

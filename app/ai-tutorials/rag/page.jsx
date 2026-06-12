@@ -1,18 +1,23 @@
+import { notFound } from "next/navigation";
 import RagTutorialContent from "../../../src/components/rag-tutorial/RagTutorialContent";
 import { pageMetadata } from "../../../src/lib/seo";
+import { getTutorialFromFirestore } from "../../../src/lib/tutorialsFirestore";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = pageMetadata({
-  title: "RAG Tutorial for AI Apps",
+  title: "Complete RAG Tutorial for Developers",
   description:
-    "Learn how to build a retrieval-augmented generation app with document ingestion, chunking, embeddings, retrieval, grounded prompts, citations, and evaluation.",
+    "Learn retrieval-augmented generation from beginner concepts to production: chunking, embeddings, vector databases, retrieval, prompts, citations, code examples, RAGAS evaluation, and deployment.",
   path: "/ai-tutorials/rag",
-  keywords: ["RAG tutorial", "retrieval augmented generation", "AI app tutorial", "vector database", "LLM retrieval"],
+  keywords: ["RAG tutorial", "retrieval augmented generation", "vector database", "LLM retrieval", "RAGAS evaluation"],
 });
 
-export default function RagTutorialPage() {
-  return (
-    <div className="shell-container py-10">
-      <RagTutorialContent />
-    </div>
-  );
+export default async function RagTutorialPage() {
+  const tutorial = await getTutorialFromFirestore("rag");
+  const hasChapters = Array.isArray(tutorial?.chapters) && tutorial.chapters.length > 0;
+
+  if (!tutorial || tutorial.published === false || !hasChapters) notFound();
+
+  return <RagTutorialContent tutorial={tutorial} />;
 }
