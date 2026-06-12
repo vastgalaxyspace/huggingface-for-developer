@@ -1,318 +1,279 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  BookOpen,
-  CheckCircle,
-  Database,
-  FileText,
-  Layers,
-  ListChecks,
-  Search,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
-import { getTutorialFromFirestore } from "../../lib/tutorialsFirestore";
+import { ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
-const ICONS = {
-  arrowRight: ArrowRight,
-  bookOpen: BookOpen,
-  checkCircle: CheckCircle,
-  database: Database,
-  fileText: FileText,
-  layers: Layers,
-  listChecks: ListChecks,
-  search: Search,
-  shieldCheck: ShieldCheck,
-  sparkles: Sparkles,
-};
+function getTextFromNode(node) {
+  if (typeof node === "string") return node;
+  if (Array.isArray(node)) return node.map(getTextFromNode).join("");
+  if (node?.props?.children) return getTextFromNode(node.props.children);
+  return "";
+}
 
-const FALLBACK_TUTORIAL = {
-  eyebrow: "RAG Tutorial",
-  title: "Build a retrieval-augmented AI app",
-  description:
-    "RAG, or retrieval-augmented generation, lets an AI app answer using your documents instead of relying only on model memory. This tutorial walks through the practical pipeline: clean documents, chunk content, create embeddings, retrieve context, prompt the model, cite sources, and measure quality.",
-  badges: ["Beginner friendly", "Works with any LLM provider", "Focused on production habits"],
-  cards: [
-    {
-      title: "What you will build",
-      body: "A question-answering flow that searches your documents, passes the best chunks to a model, and returns an answer with source citations.",
-      icon: "bookOpen",
-    },
-    {
-      title: "Core pieces",
-      body: "You need documents, a chunking strategy, an embedding model, a vector store, retrieval logic, an LLM, and a small evaluation set.",
-      icon: "database",
-    },
-    {
-      title: "Success metric",
-      body: "A good RAG app retrieves the right source first, answers only from that source, and admits when the answer is not present.",
-      icon: "listChecks",
-    },
-  ],
-  pipeline: {
-    eyebrow: "Pipeline",
-    title: "The RAG workflow, step by step",
-    steps: [
-      {
-        title: "Collect and clean documents",
-        body: "Start with a small, trusted document set. Remove duplicated boilerplate, stale pages, navigation text, empty sections, and content that should never be used in answers.",
-        icon: "fileText",
-      },
-      {
-        title: "Chunk the content",
-        body: "Split documents into chunks that preserve meaning. Good chunks are large enough to answer a question, but small enough that retrieval stays precise.",
-        icon: "layers",
-      },
-      {
-        title: "Create embeddings",
-        body: "Convert each chunk into an embedding vector. Store the vector with source metadata such as title, URL, section, date, and access level.",
-        icon: "database",
-      },
-      {
-        title: "Retrieve relevant context",
-        body: "Embed the user question, search for nearby chunks, apply filters, and optionally rerank results before sending them to the model.",
-        icon: "search",
-      },
-      {
-        title: "Generate grounded answers",
-        body: "Give the model the retrieved context and ask it to answer only from that context. Include citations so users can inspect the source.",
-        icon: "sparkles",
-      },
-      {
-        title: "Evaluate and monitor",
-        body: "Track retrieval misses, unsupported answers, citation quality, latency, and user corrections. Improve the pipeline from real failures.",
-        icon: "shieldCheck",
-      },
-    ],
-  },
-  chunking: {
-    eyebrow: "Chunking rules",
-    title: "Chunk for meaning, not just size",
-    rules: [
-      "Keep headings with the body text they explain.",
-      "Avoid chunks that mix unrelated topics just because they are near each other.",
-      "Use overlap when a concept often spans paragraph boundaries.",
-      "Chunk tables and code examples carefully so structure is not destroyed.",
-    ],
-  },
-  prompt: {
-    eyebrow: "Prompt pattern",
-    title: "Use a grounded answer prompt",
-    snippet: `You are answering from the provided context only.
+function countSections(chapters) {
+  return chapters.reduce((total, chapter) => total + (chapter.sections?.length || 0), 0);
+}
 
-Question:
-{user_question}
+function getSectionKey(chapter, section) {
+  if (!chapter || !section) return "";
+  return `${chapter.id}:${section.id}`;
+}
 
-Context:
-{retrieved_chunks}
+function CodeBlock({ children }) {
+  const [copied, setCopied] = useState(false);
+  const code = getTextFromNode(children);
 
-Rules:
-- Answer only when the context supports it.
-- If the context is insufficient, say what is missing.
-- Cite the source title or URL for each important claim.
-- Keep the answer concise and practical.`,
-  },
-  checklist: {
-    eyebrow: "Build checklist",
-    title: "Before you launch a RAG app",
-    items: [
-      "Use a narrow first document collection instead of indexing everything at once.",
-      "Store source metadata with every chunk so answers can cite where they came from.",
-      "Test retrieval separately before judging the final generated answer.",
-      "Add a low-confidence response when retrieved context is weak or missing.",
-      "Measure latency across embedding, retrieval, reranking, and generation steps.",
-      "Keep an evaluation set of real questions and expected source documents.",
-    ],
-  },
-  nextSteps: {
-    eyebrow: "Next steps",
-    title: "Continue learning",
-    links: [
-      { label: "RAG vs Fine-Tuning", href: "/guides/rag-vs-fine-tuning" },
-      { label: "Deploy Small RAG", href: "/guides/deploy-small-rag-app" },
-    ],
-  },
-};
-
-const mergeTutorialData = (remoteData) => ({
-  ...FALLBACK_TUTORIAL,
-  ...remoteData,
-  pipeline: {
-    ...FALLBACK_TUTORIAL.pipeline,
-    ...(remoteData?.pipeline || {}),
-  },
-  chunking: {
-    ...FALLBACK_TUTORIAL.chunking,
-    ...(remoteData?.chunking || {}),
-  },
-  prompt: {
-    ...FALLBACK_TUTORIAL.prompt,
-    ...(remoteData?.prompt || {}),
-  },
-  checklist: {
-    ...FALLBACK_TUTORIAL.checklist,
-    ...(remoteData?.checklist || {}),
-  },
-  nextSteps: {
-    ...FALLBACK_TUTORIAL.nextSteps,
-    ...(remoteData?.nextSteps || {}),
-  },
-});
-
-const getIcon = (name, fallback = "sparkles") => ICONS[name] || ICONS[fallback];
-
-export default function RagTutorialContent() {
-  const [tutorial, setTutorial] = useState(FALLBACK_TUTORIAL);
-
-  useEffect(() => {
-    async function fetchTutorial() {
-      const remoteTutorial = await getTutorialFromFirestore("rag");
-      if (remoteTutorial) {
-        setTutorial(mergeTutorialData(remoteTutorial));
-      }
-    }
-
-    fetchTutorial();
-  }, []);
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(code);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  };
 
   return (
-    <div className="space-y-8">
-      <section className="editorial-panel overflow-hidden rounded-[24px] px-6 py-8 sm:px-10">
-        <div className="max-w-4xl">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]">{tutorial.eyebrow}</p>
-          <h1 className="mt-3 text-4xl font-black tracking-tight text-[var(--text-strong)] sm:text-5xl">
-            {tutorial.title}
-          </h1>
-          <p className="mt-4 max-w-3xl text-[15px] leading-8 text-[var(--text-muted)]">{tutorial.description}</p>
-          <div className="mt-6 flex flex-wrap gap-3 text-xs font-semibold text-[var(--text-faint)]">
-            {(tutorial.badges || []).map((badge) => (
-              <span key={badge}>{badge}</span>
-            ))}
-          </div>
+    <div className="relative mt-6 overflow-hidden rounded-xl border border-[var(--border-soft)] bg-[#101828] shadow-sm">
+      <div className="flex h-10 items-center justify-between border-b border-white/10 bg-[#182235] px-4">
+        <div className="flex gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-slate-500" />
+          <span className="h-2.5 w-2.5 rounded-full bg-slate-500" />
+          <span className="h-2.5 w-2.5 rounded-full bg-slate-500" />
         </div>
-      </section>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="text-xs font-bold uppercase tracking-[0.12em] text-slate-300 hover:text-white"
+        >
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+      <pre className="overflow-x-auto p-5 text-xs leading-6 text-slate-100">{children}</pre>
+    </div>
+  );
+}
 
-      <section className="grid gap-5 md:grid-cols-3">
-        {(tutorial.cards || []).map((card) => {
-          const Icon = getIcon(card.icon, "bookOpen");
-          return (
-            <article key={card.title} className="rounded-2xl border border-[var(--border-soft)] bg-white p-6 shadow-sm">
-              <Icon className="h-6 w-6 text-[var(--accent)]" />
-              <h2 className="mt-4 text-lg font-black text-[var(--text-strong)]">{card.title}</h2>
-              <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">{card.body}</p>
-            </article>
-          );
-        })}
-      </section>
+const markdownComponents = {
+  h3: ({ children }) => <h3 className="mt-8 text-xl font-black text-[var(--text-strong)]">{children}</h3>,
+  p: ({ children }) => <p className="mt-4 text-[15px] leading-8 text-[var(--text-muted)]">{children}</p>,
+  ul: ({ children }) => (
+    <ul className="mt-4 list-disc space-y-2 pl-6 text-[15px] leading-8 text-[var(--text-muted)]">{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="mt-4 list-decimal space-y-2 pl-6 text-[15px] leading-8 text-[var(--text-muted)]">{children}</ol>
+  ),
+  li: ({ children }) => <li>{children}</li>,
+  table: ({ children }) => (
+    <div className="mt-5 overflow-x-auto rounded-xl border border-[var(--border-soft)]">
+      <table className="min-w-full divide-y divide-[var(--border-soft)] text-left text-sm">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-[var(--panel-muted)] text-[var(--text-strong)]">{children}</thead>,
+  th: ({ children }) => <th className="px-4 py-3 font-black">{children}</th>,
+  td: ({ children }) => (
+    <td className="border-t border-[var(--border-soft)] px-4 py-3 align-top text-[var(--text-muted)]">{children}</td>
+  ),
+  pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
+  code: ({ inline, children }) =>
+    inline ? (
+      <code className="rounded bg-[var(--panel-muted)] px-1.5 py-0.5 text-[0.9em] font-semibold text-[var(--text-strong)]">
+        {children}
+      </code>
+    ) : (
+      <code>{children}</code>
+    ),
+  strong: ({ children }) => <strong className="font-black text-[var(--text-strong)]">{children}</strong>,
+};
 
-      <section className="rounded-2xl border border-[var(--border-soft)] bg-white p-6 shadow-sm">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-faint)]">
-            {tutorial.pipeline.eyebrow}
-          </p>
-          <h2 className="mt-2 text-2xl font-black tracking-tight text-[var(--text-strong)]">
-            {tutorial.pipeline.title}
+export default function RagTutorialContent({ tutorial }) {
+  const chapters = useMemo(() => tutorial.chapters || [], [tutorial]);
+  const initialSectionKey = getSectionKey(chapters[0], chapters[0]?.sections?.[0]);
+  const [activeChapter, setActiveChapter] = useState(0);
+  const [activeSection, setActiveSection] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [readSections, setReadSections] = useState(() => (initialSectionKey ? [initialSectionKey] : []));
+
+  const chapter = chapters[activeChapter];
+  const section = chapter?.sections?.[activeSection];
+  const totalSections = countSections(chapters);
+  const progressPercent = totalSections > 0 ? Math.round((readSections.length / totalSections) * 100) : 0;
+  const flatSections = chapters.flatMap((item, chapterIndex) =>
+    (item.sections || []).map((entry, sectionIndex) => ({
+      chapterIndex,
+      sectionIndex,
+      chapter: item,
+      section: entry,
+    }))
+  );
+  const flatIndex = flatSections.findIndex(
+    (item) => item.chapterIndex === activeChapter && item.sectionIndex === activeSection
+  );
+  const previous = flatSections[flatIndex - 1];
+  const next = flatSections[flatIndex + 1];
+
+  const handleSelectSection = (chapterIndex, sectionIndex) => {
+    const targetChapter = chapters[chapterIndex];
+    const targetSection = targetChapter?.sections?.[sectionIndex];
+    if (!targetChapter || !targetSection) return;
+
+    setActiveChapter(chapterIndex);
+    setActiveSection(sectionIndex);
+    setReadSections((current) => {
+      const key = getSectionKey(targetChapter, targetSection);
+      return current.includes(key) ? current : [...current, key];
+    });
+    setSidebarOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  return (
+    <div className="min-h-screen bg-[var(--page-bg)] text-[var(--text-main)] md:flex">
+      <div className="sticky top-0 z-50 flex items-center justify-between border-b border-[var(--border-soft)] bg-white p-4 md:hidden">
+        <Link href="/ai-tutorials" className="flex items-center gap-2 text-sm font-bold text-[var(--text-muted)]">
+          <ArrowLeft className="h-4 w-4" />
+          Tutorials
+        </Link>
+        <p className="max-w-[190px] truncate text-sm font-black text-[var(--text-strong)]">{chapter?.title}</p>
+        <button
+          type="button"
+          onClick={() => setSidebarOpen((open) => !open)}
+          className="rounded-lg border border-[var(--border-soft)] p-2 text-[var(--text-strong)]"
+          aria-label="Toggle tutorial sections"
+        >
+          {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
+      </div>
+
+      <aside
+        className={`fixed left-0 top-0 z-40 flex h-screen w-full flex-col overflow-y-auto border-r border-[var(--border-soft)] bg-[var(--panel-bg)] transition-transform duration-300 md:sticky md:w-[310px] md:translate-x-0 lg:w-[340px] ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="sticky top-0 z-10 border-b border-[var(--border-soft)] bg-[var(--panel-bg)] p-4">
+          <Link
+            href="/ai-tutorials"
+            className="inline-flex items-center gap-2 text-sm font-bold text-[var(--text-muted)] hover:text-[var(--accent)]"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            AI Tutorials
+          </Link>
+          <h2 className="mt-4 text-xl font-black tracking-tight text-[var(--text-strong)]">
+            {tutorial.shortTitle || tutorial.title}
           </h2>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">{tutorial.sidebarDescription}</p>
         </div>
-        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {(tutorial.pipeline.steps || []).map((step, index) => {
-            const Icon = getIcon(step.icon);
-            return (
-              <article key={step.title} className="rounded-2xl bg-[var(--panel-muted)] p-5">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[var(--accent)]">
-                    <Icon className="h-4.5 w-4.5" />
-                  </span>
-                  <span className="text-xs font-black uppercase tracking-[0.18em] text-[var(--text-faint)]">
-                    Step {index + 1}
-                  </span>
+
+        <div className="p-4 pb-20">
+          <div className="mb-6 rounded-xl border border-[var(--border-soft)] bg-white p-4">
+            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-[0.14em] text-[var(--text-faint)]">
+              <span>Progress</span>
+              <span>{progressPercent}%</span>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--panel-muted)]">
+              <div className="h-full rounded-full bg-[var(--accent)] transition-all" style={{ width: `${progressPercent}%` }} />
+            </div>
+            <p className="mt-3 text-xs font-semibold leading-5 text-[var(--text-muted)]">
+              {readSections.length} of {totalSections} sections opened
+            </p>
+          </div>
+
+          <nav className="flex flex-col gap-6">
+            {chapters.map((item, chapterIndex) => (
+              <div key={item.id}>
+                <p className="px-2 text-xs font-black uppercase tracking-[0.16em] text-[var(--text-faint)]">
+                  {item.number}. {item.title}
+                </p>
+                <p className="px-2 pb-2 pt-1 text-xs leading-5 text-[var(--text-muted)]">{item.description}</p>
+                <div className="space-y-1">
+                  {(item.sections || []).map((entry, sectionIndex) => {
+                    const isActive = activeChapter === chapterIndex && activeSection === sectionIndex;
+                    const isRead = readSections.includes(getSectionKey(item, entry));
+
+                    return (
+                      <button
+                        type="button"
+                        key={entry.id}
+                        onClick={() => handleSelectSection(chapterIndex, sectionIndex)}
+                        className={`flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors ${
+                          isActive
+                            ? "border-[rgba(54,87,132,0.18)] bg-[var(--accent-soft)] font-bold text-[var(--accent)]"
+                            : "border-transparent text-[var(--text-main)] hover:border-[var(--border-soft)] hover:bg-white"
+                        }`}
+                      >
+                        <span>
+                          {entry.number}. {entry.title}
+                        </span>
+                        {isRead ? <CheckCircle className="h-3.5 w-3.5 shrink-0 text-[rgb(21,128,61)]" /> : null}
+                      </button>
+                    );
+                  })}
                 </div>
-                <h3 className="mt-4 text-lg font-black text-[var(--text-strong)]">{step.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">{step.body}</p>
-              </article>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <article className="rounded-2xl border border-[var(--border-soft)] bg-white p-6 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-faint)]">
-            {tutorial.chunking.eyebrow}
-          </p>
-          <h2 className="mt-2 text-2xl font-black tracking-tight text-[var(--text-strong)]">
-            {tutorial.chunking.title}
-          </h2>
-          <div className="mt-5 space-y-3">
-            {(tutorial.chunking.rules || []).map((rule) => (
-              <p key={rule} className="flex gap-3 text-sm leading-7 text-[var(--text-muted)]">
-                <CheckCircle className="mt-1 h-4 w-4 shrink-0 text-[rgb(21,128,61)]" />
-                <span>{rule}</span>
-              </p>
+              </div>
             ))}
-          </div>
-        </article>
-
-        <article className="rounded-2xl border border-[var(--border-soft)] bg-white p-6 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-faint)]">
-            {tutorial.prompt.eyebrow}
-          </p>
-          <h2 className="mt-2 text-2xl font-black tracking-tight text-[var(--text-strong)]">
-            {tutorial.prompt.title}
-          </h2>
-          <pre className="mt-5 overflow-x-auto rounded-2xl bg-[#0f172a] p-5 text-xs leading-6 text-slate-100">
-            <code>{tutorial.prompt.snippet}</code>
-          </pre>
-        </article>
-      </section>
-
-      <section className="rounded-2xl border border-[var(--border-soft)] bg-white p-6 shadow-sm">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-faint)]">
-          {tutorial.checklist.eyebrow}
-        </p>
-        <h2 className="mt-2 text-2xl font-black tracking-tight text-[var(--text-strong)]">
-          {tutorial.checklist.title}
-        </h2>
-        <div className="mt-6 grid gap-3 md:grid-cols-2">
-          {(tutorial.checklist.items || []).map((item) => (
-            <p
-              key={item}
-              className="flex gap-3 rounded-2xl bg-[var(--panel-muted)] p-4 text-sm leading-7 text-[var(--text-muted)]"
-            >
-              <CheckCircle className="mt-1 h-4 w-4 shrink-0 text-[rgb(21,128,61)]" />
-              <span>{item}</span>
-            </p>
-          ))}
+          </nav>
         </div>
-      </section>
+      </aside>
 
-      <section className="rounded-2xl border border-[var(--border-soft)] bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--text-faint)]">
-              {tutorial.nextSteps.eyebrow}
+      <main className="min-w-0 flex-1">
+        <div className="px-6 py-10 md:px-12 md:py-14 lg:px-20">
+          <div className="mb-8 rounded-[22px] border border-[var(--border-soft)] bg-white p-6 shadow-sm md:p-8">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--accent)]">
+              Chapter {chapter?.number}: {chapter?.title}
             </p>
-            <h2 className="mt-2 text-2xl font-black tracking-tight text-[var(--text-strong)]">
-              {tutorial.nextSteps.title}
-            </h2>
+            <h1 className="mt-3 text-3xl font-black tracking-tight text-[var(--text-strong)] md:text-5xl">
+              {section?.title}
+            </h1>
+            <p className="mt-4 max-w-3xl text-base leading-8 text-[var(--text-muted)]">
+              {tutorial.heroDescription || tutorial.description}
+            </p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            {(tutorial.nextSteps.links || []).map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-soft)] bg-[var(--panel-muted)] px-4 py-3 text-sm font-bold text-[var(--accent)]"
+
+          <article className="rounded-[22px] border border-[var(--border-soft)] bg-white px-6 py-7 shadow-sm md:px-9 md:py-9">
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+              {section?.content || ""}
+            </ReactMarkdown>
+          </article>
+
+          <div className="mt-8 flex flex-col gap-3 border-t border-[var(--border-soft)] pt-6 sm:flex-row sm:justify-between">
+            {previous ? (
+              <button
+                type="button"
+                onClick={() => handleSelectSection(previous.chapterIndex, previous.sectionIndex)}
+                className="rounded-xl border border-[var(--border-soft)] bg-white p-4 text-left hover:bg-[var(--panel-muted)] sm:min-w-[220px]"
               >
-                {link.label}
-                <ArrowRight className="h-3.5 w-3.5" />
+                <span className="flex items-center gap-1 text-xs font-black uppercase tracking-[0.14em] text-[var(--text-faint)]">
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                  Previous
+                </span>
+                <span className="mt-1 block text-sm font-bold text-[var(--text-strong)]">{previous.section.title}</span>
+              </button>
+            ) : (
+              <span />
+            )}
+
+            {next ? (
+              <button
+                type="button"
+                onClick={() => handleSelectSection(next.chapterIndex, next.sectionIndex)}
+                className="rounded-xl border border-[var(--border-soft)] bg-white p-4 text-left hover:bg-[var(--panel-muted)] sm:min-w-[220px] sm:text-right"
+              >
+                <span className="flex items-center gap-1 text-xs font-black uppercase tracking-[0.14em] text-[var(--text-faint)] sm:justify-end">
+                  Next
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </span>
+                <span className="mt-1 block text-sm font-bold text-[var(--accent)]">{next.section.title}</span>
+              </button>
+            ) : (
+              <Link
+                href="/ai-tutorials"
+                className="rounded-xl bg-[var(--accent)] px-5 py-4 text-center text-sm font-black text-white hover:bg-[var(--accent-strong)]"
+              >
+                Finish tutorial
               </Link>
-            ))}
+            )}
           </div>
         </div>
-      </section>
+      </main>
     </div>
   );
 }

@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "eslint app src --ext .js,.jsx",
     "content:check": "node scripts/content-depth-check.mjs",
-    "indexing:check": "node scripts/model-indexing-check.mjs"
+    "indexing:check": "node scripts/model-indexing-check.mjs",
+    "seed:ai-inference-tutorial": "node scripts/seed-ai-inference-tutorial.mjs",
+    "seed:gpu-tutorial": "node scripts/seed-gpu-tutorial.mjs"
   },
   "dependencies": {
     "chart.js": "^4.5.1",

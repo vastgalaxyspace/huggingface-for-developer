@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import {
   Menu,
   X,
@@ -22,7 +22,9 @@ import {
   Cloud,
   Layers,
   Box,
+  UserCircle,
 } from 'lucide-react';
+import { AppContext } from '../providers/AppContext';
 
 const PRIMARY_NAV_ITEMS = [
   {
@@ -193,6 +195,8 @@ const NAV_ITEMS = [
 
 const Header = () => {
   const pathname = usePathname();
+  const appContext = useContext(AppContext);
+  const auth = appContext?.auth;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDesktopMenu, setOpenDesktopMenu] = useState(null);
   const closeTimerRef = useRef(null);
@@ -256,6 +260,8 @@ const Header = () => {
       closeTimerRef.current = null;
     }
   };
+
+  const profileLabel = auth?.profile?.displayName || auth?.user?.displayName || auth?.user?.email?.split('@')[0] || 'Profile';
 
   return (
     <header className="sticky top-0 z-[200] border-b border-[var(--border-soft)] bg-white">
@@ -378,6 +384,24 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-3 text-[var(--text-muted)]">
+          {auth?.loading ? null : auth?.user ? (
+            <Link
+              href="/profile"
+              prefetch={false}
+              className="hidden items-center gap-2 rounded-xl border border-[var(--border-soft)] bg-[var(--panel-muted)] px-3 py-2 text-sm font-bold text-[var(--text-main)] transition-colors hover:text-[var(--text-strong)] sm:flex"
+            >
+              <UserCircle className="h-4 w-4" />
+              <span className="max-w-[120px] truncate">{profileLabel}</span>
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              prefetch={false}
+              className="hidden rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--accent-strong)] sm:inline-flex"
+            >
+              Sign in
+            </Link>
+          )}
           <button
             type="button"
             aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
@@ -394,6 +418,33 @@ const Header = () => {
         <div className="border-t border-[var(--border-soft)] bg-[rgba(251,253,255,0.96)] lg:hidden">
           <div className="shell-container py-4">
             <nav className="grid gap-2">
+              {auth?.loading ? null : auth?.user ? (
+                <Link
+                  href="/profile"
+                  prefetch={false}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors ${
+                    isActive('/profile')
+                      ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
+                      : 'border-[var(--border-soft)] bg-white text-[var(--text-main)]'
+                  }`}
+                >
+                  Profile
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  prefetch={false}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors ${
+                    isActive('/login')
+                      ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
+                      : 'border-[var(--border-soft)] bg-white text-[var(--text-main)]'
+                  }`}
+                >
+                  Sign in
+                </Link>
+              )}
               {[...PRIMARY_NAV_ITEMS, ...NAV_ITEMS].map((item) => (
                 <Link
                   key={item.href}

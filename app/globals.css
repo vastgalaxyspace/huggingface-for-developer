@@ -955,3 +955,49 @@ input[type="search"]::-webkit-search-results-decoration {
     transition-delay: 0ms !important;
   }
 }
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    width: 100%;
+    min-height: 0;
+    background: #ffffff !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .certificate-print-area,
+  .certificate-print-area * {
+    visibility: visible !important;
+  }
+
+  .certificate-print-area {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 277mm !important;
+    height: 190mm !important;
+    max-width: none !important;
+    margin: 0 auto !important;
+    border-width: 8px !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .certificate-inner {
+    min-height: calc(190mm - 28px) !important;
+    height: calc(190mm - 28px) !important;
+    padding: 11mm 14mm !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
