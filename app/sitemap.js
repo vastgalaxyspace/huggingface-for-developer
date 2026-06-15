@@ -24,6 +24,7 @@ const routes = [
   { path: '/ai-inference', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/ai-inference/tutorial', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/compare', priority: 0.8, changeFrequency: 'weekly' },
+  { path: '/validation-lab', priority: 0.85, changeFrequency: 'weekly' },
   { path: '/contact', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/gpu', priority: 0.9, changeFrequency: 'weekly' },
   { path: '/gpu/hardware', priority: 0.8, changeFrequency: 'monthly' },

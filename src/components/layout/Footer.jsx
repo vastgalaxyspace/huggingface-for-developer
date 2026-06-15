@@ -16,8 +16,10 @@ const Footer = () => {
     { href: '/contact', label: 'Contact' },
   ];
 
+  const smartlinkUrl = 'https://www.effectivecpmnetwork.com/crdkt4c98h?key=f2cb6fcb7c6982e0f5153bf05990df23';
+
   return (
-    <footer className="mt-16 border-t border-[var(--border-soft)] bg-[rgba(251,253,255,0.9)]">
+    <footer className="border-t border-[var(--border-soft)] bg-[rgba(251,253,255,0.9)]">
       <div className="shell-container py-10">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-xl">
@@ -41,6 +43,14 @@ const Footer = () => {
                 {link.label}
               </Link>
             ))}
+            <a
+              href={smartlinkUrl}
+              target="_blank"
+              rel="nofollow sponsored noopener noreferrer"
+              className="transition-colors hover:text-[var(--text-main)]"
+            >
+              Sponsored
+            </a>
           </div>
         </div>
       </div>

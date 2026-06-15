@@ -13,7 +13,7 @@ export const metadata = pageMetadata({
 
 export default function VramCalculatorPage() {
   return (
-    <div className="min-h-[calc(100vh-78px)] bg-gray-100 py-8 md:py-12">
+    <div className="bg-gray-100 py-8 md:py-12">
       <div className="shell-container space-y-6">
         <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
           <Link href="/gpu" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#274867]">
@@ -30,34 +30,6 @@ export default function VramCalculatorPage() {
             <span>Useful for local inference and server planning</span>
             <span>Best used before renting GPUs or scaling prompts</span>
           </div>
-        </section>
-
-        <section className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-2xl font-black tracking-tight text-gray-900">How to use this calculator</h2>
-            <ol className="mt-4 space-y-3 text-sm leading-7 text-gray-600">
-              <li>1. Search for the model you actually plan to run, not a nearby family member.</li>
-              <li>2. Test multiple precisions because FP16, INT8, and INT4 can change feasibility completely.</li>
-              <li>3. Increase sequence length and batch size to reflect real usage, not just demo prompts.</li>
-              <li>4. Leave headroom for runtime overhead instead of targeting a perfect 100% GPU fill.</li>
-            </ol>
-          </article>
-
-          <article className="rounded-2xl border border-gray-200 bg-slate-50 p-6">
-            <h2 className="text-2xl font-black tracking-tight text-gray-900">What teams often miss</h2>
-            <div className="mt-4 space-y-3 text-sm leading-7 text-gray-600">
-              <p>
-                Weight size alone is not the whole story. Longer context windows, KV cache growth, framework overhead,
-                and concurrency can turn a model that “fits” on paper into one that fails in real usage.
-              </p>
-              <p>
-                If you need a hardware recommendation after this estimate, continue to the{' '}
-                <Link href="/gpu/tools/gpu-picker" className="font-semibold text-[#274867] hover:text-[#18324f]">
-                  GPU picker
-                </Link>.
-              </p>
-            </div>
-          </article>
         </section>
 
         <VramCalculatorClient />

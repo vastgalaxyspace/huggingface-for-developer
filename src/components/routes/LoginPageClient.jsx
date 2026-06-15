@@ -12,6 +12,7 @@ const formatAuthError = (error) => {
   if (code.includes('invalid-credential') || code.includes('wrong-password')) return 'Email or password is incorrect.';
   if (code.includes('weak-password')) return 'Use a password with at least 6 characters.';
   if (code.includes('popup-closed-by-user')) return 'Google sign-in was closed before it finished.';
+  if (code.includes('unauthorized-domain')) return 'This site domain is not authorized for Firebase login. Add the current domain in Firebase Authentication settings.';
   return error?.message || 'Sign-in failed. Please try again.';
 };
 

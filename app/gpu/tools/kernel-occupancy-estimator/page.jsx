@@ -13,7 +13,7 @@ export const metadata = pageMetadata({
 
 export default function KernelOccupancyEstimatorPage() {
   return (
-    <div className="min-h-[calc(100vh-78px)] bg-gray-100 py-8 md:py-12">
+    <div className="bg-gray-100 py-8 md:py-12">
       <div className="shell-container">
         <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
           <Link href="/gpu" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#274867]">

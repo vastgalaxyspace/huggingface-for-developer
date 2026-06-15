@@ -22,7 +22,10 @@ const PRECISION_BYTES = {
 };
 
 export default function GpuPickerPage() {
-  const [modelId, setModelId] = useState("");
+  const [modelId, setModelId] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("model") || "";
+  });
   const [fetchState, setFetchState] = useState("idle");
   const [error, setError] = useState("");
   const [rawModelData, setRawModelData] = useState(null);
@@ -124,35 +127,6 @@ export default function GpuPickerPage() {
             <span>Budget and intent filters</span>
             <span>Useful after model choice, before infra commitment</span>
           </div>
-        </section>
-
-        <section className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-2xl font-black tracking-tight text-gray-900">How to use the picker well</h2>
-            <ol className="mt-4 space-y-3 text-sm leading-7 text-gray-600">
-              <li>1. Enter the exact model you intend to run so the hardware fit stays realistic.</li>
-              <li>2. Choose the real usage intent, because local inference and production serving are different sizing problems.</li>
-              <li>3. Apply budget honestly instead of browsing only flagship GPUs.</li>
-              <li>4. Treat the result as a shortlist, then validate latency and throughput on your own workload.</li>
-            </ol>
-          </article>
-
-          <article className="rounded-2xl border border-gray-200 bg-slate-50 p-6">
-            <h2 className="text-2xl font-black tracking-tight text-gray-900">What this tool helps prevent</h2>
-            <div className="mt-4 space-y-3 text-sm leading-7 text-gray-600">
-              <p>
-                Teams often pick GPUs based on reputation, not workload fit. That leads to overspending, low utilization,
-                or discovering too late that a model only fits under unrealistic assumptions.
-              </p>
-              <p>
-                If you still need to estimate memory behavior first, use the{' '}
-                <Link href="/gpu/tools/vram-calculator" className="font-semibold text-[#23425f] hover:text-[#18324f]">
-                  VRAM calculator
-                </Link>{' '}
-                before trusting any ranking.
-              </p>
-            </div>
-          </article>
         </section>
 
         <ModelSearchBar value={modelId} onChange={setModelId} onSubmit={fetchModel} loading={fetchState === "loading"} error={error} />

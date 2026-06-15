@@ -33,7 +33,7 @@ export default function GpuHardwarePage() {
   ];
 
   return (
-    <div className="min-h-[calc(100vh-78px)] bg-[#f2f6fb] py-8 md:py-12">
+    <div className="bg-[#f2f6fb] py-8 md:py-12">
       <div className="shell-container space-y-10">
         <section className="overflow-hidden rounded-[20px] border border-[#d7dfe8] bg-white shadow-[0_12px_30px_rgba(31,45,61,0.08)]">
           <div className="gpu-grid-light px-6 py-8 md:px-10 md:py-10">

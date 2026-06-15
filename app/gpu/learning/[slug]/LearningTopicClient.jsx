@@ -240,7 +240,7 @@ export default function LearningTopicClient({ slug }) {
   }
 
   return (
-    <div className="min-h-[calc(100vh-78px)] bg-[#f2f6fb] py-8 md:py-12">
+    <div className="bg-[#f2f6fb] py-8 md:py-12">
       <div className="shell-container">
         <Card className="rounded-[20px] border-[#cddaea] bg-gradient-to-b from-white via-[#fbfdff] to-[#f7fbff] p-6 md:p-8">
           <Link href="/gpu" className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-[#1f3f5f]">

@@ -103,7 +103,7 @@ export default function GpuPage() {
   ];
 
   return (
-    <div className="min-h-[calc(100vh-78px)] bg-[#f2f6fb] py-6 md:py-12">
+    <div className="bg-[#f2f6fb] py-6 md:py-12">
       <div className="shell-container">
         <section className="overflow-hidden rounded-[22px] border border-[#d7e0ea] bg-white shadow-[0_12px_30px_rgba(31,45,61,0.08)]">
           <div className="border-b border-[#d7e0ea] bg-[#f8fbff] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f8298] sm:px-6 sm:text-[11px] sm:tracking-[0.22em]">
@@ -178,31 +178,6 @@ export default function GpuPage() {
               </Link>
             ))}
           </div>
-        </section>
-
-        <section className="mt-10 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-          <article className="rounded-[20px] border border-[#d7dfe8] bg-white p-6 shadow-[0_10px_24px_rgba(45,67,92,0.05)]">
-            <h2 className="text-2xl font-extrabold tracking-[-0.01em] text-[#1a2635]">How to use this hub</h2>
-            <ol className="mt-4 space-y-3 text-sm leading-7 text-[#5a6d83]">
-              <li>1. Learn the hardware and memory basics if you are still building intuition.</li>
-              <li>2. Use the VRAM and GPU tools once you have a model or workload in mind.</li>
-              <li>3. Validate performance bottlenecks with the roofline and occupancy tools when tuning kernels or inference.</li>
-              <li>4. Move between learning pages and tools instead of treating them as separate tracks.</li>
-            </ol>
-          </article>
-
-          <article className="rounded-[20px] border border-[#d7dfe8] bg-white p-6 shadow-[0_10px_24px_rgba(45,67,92,0.05)]">
-            <h2 className="text-2xl font-extrabold tracking-[-0.01em] text-[#1a2635]">Why this matters for AI teams</h2>
-            <div className="mt-4 space-y-3 text-sm leading-7 text-[#5a6d83]">
-              <p>
-                Model choice without hardware understanding leads to expensive mistakes. This hub exists to connect
-                architecture concepts with the decisions teams actually make around VRAM, latency, throughput, and cost.
-              </p>
-              <p>
-                The goal is not to memorize GPU theory. It is to make better deployment calls with less guesswork.
-              </p>
-            </div>
-          </article>
         </section>
 
         <section className="mt-10 rounded-[20px] border border-[#d7dfe8] bg-white p-6 md:p-8">

@@ -12,6 +12,7 @@ import {
   BarChart3,
   AlertTriangle,
   Sparkles,
+  FlaskConical,
   Target,
   BrainCircuit,
   BookOpen,
@@ -35,6 +36,12 @@ const PRIMARY_NAV_ITEMS = [
         title: 'Model Comparison',
         description: 'Side-by-side model specs and capability checks',
         icon: Scale,
+      },
+      {
+        href: '/validation-lab',
+        title: 'Validation Lab',
+        description: 'Generate test prompts, snippets, and decision notes',
+        icon: FlaskConical,
       },
       {
         href: '/coding-model-analysis',

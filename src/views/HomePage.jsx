@@ -166,6 +166,13 @@ const coreTools = [
     cta: 'Compare Models',
   },
   {
+    href: '/validation-lab',
+    icon: FlaskConical,
+    title: 'Model Validation Lab',
+    body: 'Generate prompt tests, runtime snippets, VRAM warnings, and notes before committing to a model.',
+    cta: 'Validate Models',
+  },
+  {
     href: '/recommender',
     icon: Sparkles,
     title: 'AI Model Recommender',
@@ -1001,7 +1008,7 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD_FAQ) }}
       />
 
-      <div className="min-h-screen">
+      <div>
 
         {/* ══ 1. HERO ════════════════════════════════════════════════════════ */}
         <section aria-labelledby="hero-heading" className="shell-container pb-8 pt-8 sm:pt-12 lg:pt-16">
@@ -1582,7 +1589,7 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
             body="Everything you need to go from model discovery to production deployment — in one place."
           />
           <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {coreTools.map((tool) => <CardLink key={tool.title} {...tool} />)}
+            {coreTools.map((tool) => <CardLink key={tool.href} {...tool} />)}
           </div>
         </section>
 

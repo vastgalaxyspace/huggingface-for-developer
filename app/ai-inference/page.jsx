@@ -139,59 +139,6 @@ export default function AIInferencePage() {
         </p>
       </section>
 
-      <section
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-          gap: '1.25rem',
-          marginBottom: '3rem',
-        }}
-      >
-        <article
-          style={{
-            padding: '1.5rem',
-            borderRadius: '1rem',
-            border: '1px solid var(--border-soft)',
-            background: 'white',
-          }}
-        >
-          <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-strong)' }}>How to use this page</h2>
-          <ol style={{ marginTop: '0.9rem', paddingLeft: '1rem', color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.8 }}>
-            <li>1. Choose the serving pattern that matches your current stage, not your long-term dream architecture.</li>
-            <li>2. Compare privacy, scaling, cost, and operational ownership together.</li>
-            <li>3. Validate model memory fit before committing to any infrastructure path.</li>
-            <li>4. Use this page as a deployment guide, then test final candidates on real prompts.</li>
-          </ol>
-        </article>
-
-        <article
-          style={{
-            padding: '1.5rem',
-            borderRadius: '1rem',
-            border: '1px solid var(--border-soft)',
-            background: 'white',
-          }}
-        >
-          <h2 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-strong)' }}>What this helps decide</h2>
-          <div style={{ marginTop: '0.9rem', color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.8 }}>
-            <p>
-              This page is best for deciding between serverless APIs, dedicated endpoints, managed clouds, and
-              self-operated inference stacks.
-            </p>
-            <p style={{ marginTop: '0.6rem' }}>
-              If you already know the model and mainly need memory or hardware guidance, continue to the{' '}
-              <Link href="/gpu/tools/vram-calculator" style={{ color: 'var(--accent)', fontWeight: 700, textDecoration: 'none' }}>
-                VRAM calculator
-              </Link>{' '}
-              or{' '}
-              <Link href="/gpu/tools/gpu-picker" style={{ color: 'var(--accent)', fontWeight: 700, textDecoration: 'none' }}>
-                GPU picker
-              </Link>.
-            </p>
-          </div>
-        </article>
-      </section>
-
       <section style={{ marginBottom: '3rem' }}>
         <div
           style={{

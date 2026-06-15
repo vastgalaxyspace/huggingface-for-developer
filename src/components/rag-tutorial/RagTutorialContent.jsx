@@ -1,10 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { AppContext } from "../providers/AppContext";
+import { getTutorialProgress, saveTutorialProgress } from "../../lib/tutorialProgress";
+
+const TUTORIAL_ID = "rag";
 
 function getTextFromNode(node) {
   if (typeof node === "string") return node;
@@ -86,12 +91,16 @@ const markdownComponents = {
 };
 
 export default function RagTutorialContent({ tutorial }) {
+  const router = useRouter();
+  const { auth } = useContext(AppContext);
   const chapters = useMemo(() => tutorial.chapters || [], [tutorial]);
-  const initialSectionKey = getSectionKey(chapters[0], chapters[0]?.sections?.[0]);
   const [activeChapter, setActiveChapter] = useState(0);
   const [activeSection, setActiveSection] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [readSections, setReadSections] = useState(() => (initialSectionKey ? [initialSectionKey] : []));
+  const [readSections, setReadSections] = useState([]);
+  const [progressLoading, setProgressLoading] = useState(false);
+  const [progressReady, setProgressReady] = useState(false);
+  const [progressError, setProgressError] = useState("");
 
   const chapter = chapters[activeChapter];
   const section = chapter?.sections?.[activeSection];
@@ -111,6 +120,67 @@ export default function RagTutorialContent({ tutorial }) {
   const previous = flatSections[flatIndex - 1];
   const next = flatSections[flatIndex + 1];
 
+  useEffect(() => {
+    if (auth.loading) return;
+    if (!auth.user) return;
+
+    let isMounted = true;
+
+    async function fetchProgress() {
+      setProgressLoading(true);
+      const savedProgress = await getTutorialProgress(auth.user.uid, TUTORIAL_ID);
+      if (!isMounted) return;
+
+      setReadSections(Array.isArray(savedProgress?.readSections) ? savedProgress.readSections : []);
+      setProgressLoading(false);
+      setProgressReady(true);
+    }
+
+    fetchProgress();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [auth.loading, auth.user]);
+
+  const markSectionRead = useCallback(
+    (targetChapter, targetSection) => {
+      if (!auth.user || !targetChapter || !targetSection) return;
+
+      const key = getSectionKey(targetChapter, targetSection);
+      if (!key || readSections.includes(key)) return;
+
+      const nextReadSections = [...readSections, key];
+      setReadSections(nextReadSections);
+      setProgressError("");
+
+      saveTutorialProgress(auth.user.uid, TUTORIAL_ID, {
+        tutorialId: TUTORIAL_ID,
+        tutorialTitle: tutorial.title,
+        readSections: nextReadSections,
+        totalSections,
+        progressPercent: totalSections > 0 ? Math.round((nextReadSections.length / totalSections) * 100) : 0,
+        lastChapterId: targetChapter.id || null,
+        lastSectionId: targetSection.id || null,
+        startedAt: readSections.length === 0 ? new Date().toISOString() : undefined,
+      }).catch((err) => {
+        console.error("Error saving RAG tutorial progress:", err);
+        setProgressError("Progress could not be saved right now.");
+      });
+    },
+    [auth.user, readSections, totalSections, tutorial.title]
+  );
+
+  useEffect(() => {
+    if (!progressReady) return;
+    if (progressLoading) return;
+    const timeout = window.setTimeout(() => {
+      markSectionRead(chapter, section);
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
+  }, [chapter, markSectionRead, progressLoading, progressReady, section]);
+
   const handleSelectSection = (chapterIndex, sectionIndex) => {
     const targetChapter = chapters[chapterIndex];
     const targetSection = targetChapter?.sections?.[sectionIndex];
@@ -118,13 +188,53 @@ export default function RagTutorialContent({ tutorial }) {
 
     setActiveChapter(chapterIndex);
     setActiveSection(sectionIndex);
-    setReadSections((current) => {
-      const key = getSectionKey(targetChapter, targetSection);
-      return current.includes(key) ? current : [...current, key];
-    });
+    markSectionRead(targetChapter, targetSection);
     setSidebarOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  if (auth.loading) {
+    return (
+      <div className="flex min-h-[calc(100vh-78px)] items-center justify-center bg-[var(--page-bg)] px-6 text-center">
+        <div>
+          <p className="section-kicker mb-3">RAG Tutorial</p>
+          <h1 className="text-2xl font-black tracking-tight text-[var(--text-strong)]">Checking your account...</h1>
+        </div>
+      </div>
+    );
+  }
+
+  if (!auth.user) {
+    return (
+      <div className="flex min-h-[calc(100vh-78px)] items-center justify-center bg-[var(--page-bg)] px-6 text-center">
+        <div className="max-w-md rounded-[24px] border border-[var(--border-soft)] bg-white p-8 shadow-sm">
+          <p className="section-kicker mb-3">RAG Tutorial</p>
+          <h1 className="text-2xl font-black tracking-tight text-[var(--text-strong)]">Sign in to start the tutorial</h1>
+          <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">
+            Your reading progress is saved to your account so you can continue from any device.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push("/login?next=/ai-tutorials/rag")}
+            className="mt-6 inline-flex rounded-xl bg-[var(--accent)] px-5 py-3 text-sm font-bold text-white hover:bg-[var(--accent-strong)]"
+          >
+            Sign in to continue
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (progressLoading || !progressReady) {
+    return (
+      <div className="flex min-h-[calc(100vh-78px)] items-center justify-center bg-[var(--page-bg)] px-6 text-center">
+        <div>
+          <p className="section-kicker mb-3">RAG Tutorial</p>
+          <h1 className="text-2xl font-black tracking-tight text-[var(--text-strong)]">Loading tutorial...</h1>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--page-bg)] text-[var(--text-main)] md:flex">
@@ -175,6 +285,7 @@ export default function RagTutorialContent({ tutorial }) {
             <p className="mt-3 text-xs font-semibold leading-5 text-[var(--text-muted)]">
               {readSections.length} of {totalSections} sections opened
             </p>
+            {progressError ? <p className="mt-2 text-xs font-semibold text-red-700">{progressError}</p> : null}
           </div>
 
           <nav className="flex flex-col gap-6">
