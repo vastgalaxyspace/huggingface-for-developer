@@ -3,7 +3,7 @@ import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCvBtCj4Rm7TYL2khSsb3q0wijovmkL2wI",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain:
     process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ||
     `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "bloodunityapp-d7757"}.firebaseapp.com`,

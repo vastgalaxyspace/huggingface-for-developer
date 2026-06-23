@@ -115,13 +115,6 @@ const organizationSchema = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
-      <head>
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9740252976972845"
-          crossOrigin="anonymous"
-        />
-      </head>
       <body>
         {GA_MEASUREMENT_ID ? (
           <>
@@ -152,16 +145,6 @@ export default function RootLayout({ children }) {
           id="organization-schema"
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-        />
-        <Script
-          id="adsterra-popunder"
-          src="https://pl29621189.effectivecpmnetwork.com/35/08/e7/3508e7a0de742003db429d1cb5b14c8b.js"
-          strategy="afterInteractive"
-        />
-        <Script
-          id="adsterra-social-bar"
-          src="https://pl29621192.effectivecpmnetwork.com/9f/66/3c/9f663cdf8ba4671f3beefdba0b7582db.js"
-          strategy="afterInteractive"
         />
         <AppProviders>
           <div className="flex min-h-screen flex-col text-slate-800">

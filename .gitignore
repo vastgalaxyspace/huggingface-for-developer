@@ -25,7 +25,7 @@ ADSENSE_REAPPLY_CHECKLIST.md
 *.njsproj
 *.sln
 *.sw?
-
+.env.example
 # Next.js
 .next
 out
