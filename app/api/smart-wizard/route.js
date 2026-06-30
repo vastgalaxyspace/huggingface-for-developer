@@ -4,7 +4,7 @@ const HF_BASE = "https://huggingface.co";
 const HF_API = `${HF_BASE}/api/models`;
 
 function getHeaders() {
-  const token = process.env.NEXT_PUBLIC_HF_TOKEN || process.env.HF_TOKEN;
+  const token = process.env.HF_TOKEN;
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 

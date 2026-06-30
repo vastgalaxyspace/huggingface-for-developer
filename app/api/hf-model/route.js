@@ -6,7 +6,7 @@ const HF_FETCH_TIMEOUT_MS = 8000;
 const HF_OPTIONAL_FETCH_TIMEOUT_MS = 3500;
 
 function getHeaders() {
-  const token = process.env.NEXT_PUBLIC_HF_TOKEN || process.env.HF_TOKEN;
+  const token = process.env.HF_TOKEN;
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 

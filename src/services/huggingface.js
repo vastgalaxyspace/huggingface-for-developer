@@ -2,7 +2,6 @@
 
 const HF_API_BASE = 'https://huggingface.co';
 const HF_API_MODELS = 'https://huggingface.co/api/models';
-const HF_TOKEN = process.env.NEXT_PUBLIC_HF_TOKEN;
 const OPTIONAL_ASSET_ERROR_TEXT = [
   'abort',
   'failed to fetch',
@@ -17,19 +16,20 @@ const HF_FETCH_TIMEOUT_MS = 6000;
 const HF_OPTIONAL_FETCH_TIMEOUT_MS = 1500;
 const HF_TRENDING_HYDRATION_TIMEOUT_MS = 1500;
 const TRENDING_HYDRATION_LIMIT = 12;
+const isBrowser = typeof window !== 'undefined';
 
 /**
  * Get headers for authenticated requests
  */
 const getHeaders = () => {
+  if (isBrowser) return {};
+
   const headers = {};
-  if (HF_TOKEN) {
-    headers['Authorization'] = `Bearer ${HF_TOKEN}`;
+  if (process.env.HF_TOKEN) {
+    headers['Authorization'] = `Bearer ${process.env.HF_TOKEN}`;
   }
   return headers;
 };
-
-const isBrowser = typeof window !== 'undefined';
 
 const fetchWithTimeout = async (url, options = {}, timeoutMs = HF_FETCH_TIMEOUT_MS) => {
   const controller = new AbortController();
@@ -65,6 +65,20 @@ const fetchModelViaProxy = async (modelId, options = {}) => {
       throw new Error('Model not found. Check the model ID and try again.');
     }
     throw new Error(`API error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+const fetchModelsViaSearchProxy = async (params, options = {}) => {
+  const query = new URLSearchParams(params);
+  const response = await fetch(`/api/hf-search?${query.toString()}`, {
+    cache: 'no-store',
+    signal: options.signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Search API error: ${response.status} ${response.statusText}`);
   }
 
   return response.json();
@@ -221,10 +235,23 @@ export const searchModels = async (query, limit = 10) => {
     // If query contains '/', it's likely a specific model ID — search broadly
     // Otherwise filter to text-generation models for more relevant results
     const isKeywordSearch = !query.includes('/');
-    const filterParam = isKeywordSearch ? '&filter=text-generation' : '';
-    
+    const params = {
+      search: query,
+      limit: String(limit),
+      sort: 'downloads',
+      direction: '-1',
+    };
+
+    if (isKeywordSearch) {
+      params.filter = 'text-generation';
+    }
+
+    if (isBrowser) {
+      return await fetchModelsViaSearchProxy(params);
+    }
+
     const response = await fetchWithTimeout(
-      `${HF_API_MODELS}?search=${encodeURIComponent(query)}&limit=${limit}&sort=downloads&direction=-1${filterParam}`,
+      `${HF_API_MODELS}?${new URLSearchParams(params).toString()}`,
       { headers: getHeaders() },
       HF_FETCH_TIMEOUT_MS
     );
@@ -243,15 +270,25 @@ export const searchModels = async (query, limit = 10) => {
  */
 export const getTrendingModels = async (limit = 10) => {
   try {
-    const response = await fetchWithTimeout(
-      `${HF_API_MODELS}?sort=trendingScore&direction=-1&limit=${limit}`,
-      { next: { revalidate: 3600 } }, // Refresh trending data every hour
-      HF_FETCH_TIMEOUT_MS
-    );
-    
-    if (!response.ok) throw new Error('Failed to fetch trending models');
-    
-    const models = await response.json();
+    const params = {
+      sort: 'trendingScore',
+      direction: '-1',
+      limit: String(limit),
+    };
+    const models = isBrowser
+      ? await fetchModelsViaSearchProxy(params)
+      : await fetchWithTimeout(
+          `${HF_API_MODELS}?${new URLSearchParams(params).toString()}`,
+          {
+            headers: getHeaders(),
+            next: { revalidate: 3600 },
+          },
+          HF_FETCH_TIMEOUT_MS
+        ).then((response) => {
+          if (!response.ok) throw new Error('Failed to fetch trending models');
+          return response.json();
+        });
+
     const sizeRegex = /(?:^|[-_])(\d+(?:\.\d+)?)[bBmM](?:[-_]|$)|(\d+(?:\.\d+)?)\s*[bBmM]/;
     const candidates = models
       .filter((model) => {
