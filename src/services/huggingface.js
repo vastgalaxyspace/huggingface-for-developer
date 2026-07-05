@@ -2,7 +2,7 @@
 
 const HF_API_BASE = 'https://huggingface.co';
 const HF_API_MODELS = 'https://huggingface.co/api/models';
-const HF_TOKEN = process.env.NEXT_PUBLIC_HF_TOKEN;
+const HF_TOKEN = process.env.HF_TOKEN;
 const OPTIONAL_ASSET_ERROR_TEXT = [
   'abort',
   'failed to fetch',
@@ -65,6 +65,35 @@ const fetchModelViaProxy = async (modelId, options = {}) => {
       throw new Error('Model not found. Check the model ID and try again.');
     }
     throw new Error(`API error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+const fetchModelSearchViaProxy = async (query, limit = 10) => {
+  const params = new URLSearchParams({
+    search: query,
+    limit: String(limit),
+  });
+  const response = await fetch(`/api/hf-search?${params.toString()}`, {
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Search failed: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+const fetchTrendingModelsViaProxy = async (limit = 10) => {
+  const params = new URLSearchParams({ limit: String(limit) });
+  const response = await fetch(`/api/hf-trending?${params.toString()}`, {
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Trending fetch failed: ${response.status} ${response.statusText}`);
   }
 
   return response.json();
@@ -218,6 +247,10 @@ export const fetchCompleteModelData = async (modelId) => {
  */
 export const searchModels = async (query, limit = 10) => {
   try {
+    if (isBrowser) {
+      return await fetchModelSearchViaProxy(query, limit);
+    }
+
     // If query contains '/', it's likely a specific model ID — search broadly
     // Otherwise filter to text-generation models for more relevant results
     const isKeywordSearch = !query.includes('/');
@@ -243,6 +276,10 @@ export const searchModels = async (query, limit = 10) => {
  */
 export const getTrendingModels = async (limit = 10) => {
   try {
+    if (isBrowser) {
+      return await fetchTrendingModelsViaProxy(limit);
+    }
+
     const response = await fetchWithTimeout(
       `${HF_API_MODELS}?sort=trendingScore&direction=-1&limit=${limit}`,
       { next: { revalidate: 3600 } }, // Refresh trending data every hour

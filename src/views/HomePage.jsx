@@ -35,7 +35,7 @@ import {
   ChevronRight,
   MoreHorizontal,
 } from 'lucide-react';
-import { getTrendingModels, searchModels } from '../services/huggingface';
+import { getTrendingModels, searchModels } from '../services/huggingfaceClient';
 import { parseModelSize, formatNumber, enrichModelData } from '../utils/modelUtils';
 
 // ─── Constants ───────────────────────────────────────────────────────────────

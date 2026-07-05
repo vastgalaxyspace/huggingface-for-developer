@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Table, BarChart2, Plus, X, Loader2, Info } from 'lucide-react';
 import ModelSelector from '../components/ModelSelector';
-import { fetchCompleteModelData } from '../services/huggingface';
+import { fetchCompleteModelData } from '../services/huggingfaceClient';
 import { enrichModelData } from '../utils/modelUtils';
 import { notify } from '../lib/notifications';
 

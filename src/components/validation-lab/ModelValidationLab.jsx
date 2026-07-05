@@ -21,7 +21,7 @@ import {
   X,
 } from "lucide-react";
 import ModelSelector from "../ModelSelector";
-import { fetchCompleteModelData } from "../../services/huggingface";
+import { fetchCompleteModelData } from "../../services/huggingfaceClient";
 import { enrichModelData, formatNumber } from "../../utils/modelUtils";
 import { useComparison } from "../../hooks/useComparison";
 import { useFavorites } from "../../hooks/useFavorites";
@@ -109,7 +109,7 @@ llama-cli \\
   if (framework === "hfapi") {
     return `curl https://api-inference.huggingface.co/models/${modelId} \\
   -X POST \\
-  -H "Authorization: Bearer YOUR_HF_TOKEN" \\
+  -H "Authorization: Bearer YOUR_HUGGING_FACE_TOKEN" \\
   -H "Content-Type: application/json" \\
   -d '{
     "inputs": ${promptLiteral},

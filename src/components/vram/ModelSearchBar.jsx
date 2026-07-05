@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Search, TrendingUp } from "lucide-react";
-import { searchModels } from "../../services/huggingface";
+import { searchModels } from "../../services/huggingfaceClient";
 import { POPULAR_MODELS, cn } from "./utils";
 
 function formatNumber(value) {

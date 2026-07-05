@@ -144,7 +144,7 @@ const generateCurlCode = (modelId) => {
   return `# Using Hugging Face Inference API
 curl https://api-inference.huggingface.co/models/${modelId} \\
   -X POST \\
-  -H "Authorization: Bearer YOUR_HF_TOKEN" \\
+  -H "Authorization: Bearer YOUR_HUGGING_FACE_TOKEN" \\
   -H "Content-Type: application/json" \\
   -d '{
     "inputs": "Hello! How are you?",
