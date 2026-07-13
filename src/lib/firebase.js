@@ -35,7 +35,7 @@ if (!hasFirebaseConfig && process.env.NODE_ENV === 'development') {
   );
 }
 
-const app = hasFirebaseConfig ? (!getApps().length ? initializeApp(firebaseConfig) : getApp()) : null;
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-export const db = app ? getFirestore(app) : null;
-export const auth = app ? getAuth(app) : null;
+export const db = getFirestore(app);
+export const auth = getAuth(app);

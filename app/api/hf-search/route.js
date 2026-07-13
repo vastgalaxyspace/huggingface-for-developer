@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 
 const HF_MODELS = "https://huggingface.co/api/models";
 const HF_FETCH_TIMEOUT_MS = 8000;
-const FORWARDED_QUERY_PARAMS = ["search", "limit", "sort", "direction", "filter"];
 
 function getHeaders() {
   const token = process.env.HF_TOKEN;
@@ -23,40 +22,39 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = HF_FETCH_TIMEOUT_
   }
 }
 
-function buildHfSearchUrl(searchParams) {
-  const query = new URLSearchParams();
-
-  for (const param of FORWARDED_QUERY_PARAMS) {
-    for (const value of searchParams.getAll(param)) {
-      if (value) query.append(param, value);
-    }
-  }
-
-  const suffix = query.toString();
-  return suffix ? `${HF_MODELS}?${suffix}` : HF_MODELS;
-}
-
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
+  const search = searchParams.get("search") || "";
+  const limit = searchParams.get("limit") || "10";
+
+  if (!search.trim()) {
+    return NextResponse.json([]);
+  }
+
+  const query = new URLSearchParams({
+    search,
+    limit,
+    sort: "downloads",
+    direction: "-1",
+  });
+
+  if (!search.includes("/")) {
+    query.set("filter", "text-generation");
+  }
 
   try {
-    const response = await fetchWithTimeout(buildHfSearchUrl(searchParams), {
+    const response = await fetchWithTimeout(`${HF_MODELS}?${query.toString()}`, {
       headers: getHeaders(),
       cache: "no-store",
     });
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: "Failed to reach HuggingFace API." },
-        { status: response.status },
-      );
+      return NextResponse.json([], { status: response.status });
     }
 
-    return NextResponse.json(await response.json());
+    const models = await response.json();
+    return NextResponse.json(Array.isArray(models) ? models : []);
   } catch {
-    return NextResponse.json(
-      { error: "Failed to reach HuggingFace API." },
-      { status: 502 },
-    );
+    return NextResponse.json([], { status: 502 });
   }
 }

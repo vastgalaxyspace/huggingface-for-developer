@@ -1,8 +1,17 @@
 import { collection, doc, getDoc, getDocs, orderBy, query, where } from 'firebase/firestore';
 import { db } from './firebase';
 
-export const TUTORIALS_COLLECTION =
-  process.env.NEXT_PUBLIC_TUTORIALS_COLLECTION || 'ai_tutorials';
+const requiredEnv = (value, name) => {
+  if (!value) {
+    throw new Error(`Missing ${name} env var`);
+  }
+  return value;
+};
+
+export const TUTORIALS_COLLECTION = requiredEnv(
+  process.env.NEXT_PUBLIC_TUTORIALS_COLLECTION,
+  'NEXT_PUBLIC_TUTORIALS_COLLECTION'
+);
 
 const toMillis = (value) => {
   if (!value) return 0;

@@ -1,16 +1,59 @@
-# React + Vite
+# HF Model Explorer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+HF Model Explorer is an AI/ML developer tools site for comparing models, sizing GPU workloads, and learning practical inference concepts. It combines model exploration, GPU calculators, tutorials, and interactive analysis tools in a Next.js app.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Next.js 16 App Router
+- React 19
+- Firebase Auth and Firestore
+- Tailwind CSS
+- Chart.js and Recharts
+- Hugging Face API proxy routes
 
-## React Compiler
+## Local Development
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Install dependencies:
 
-## Expanding the ESLint configuration
+```bash
+npm install
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Create a local environment file from `.env.example` and fill in the required Firebase values:
+
+```bash
+cp .env.example .env
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+The app runs at `http://localhost:3000` by default.
+
+## Required Environment Variables
+
+See `.env.example` for the full list. Firebase configuration and `NEXT_PUBLIC_TUTORIALS_COLLECTION` are required and have no defaults, so missing values fail loudly instead of connecting to the wrong Firebase project.
+
+`HF_TOKEN` is optional and server-only. Use it when Hugging Face API requests need authentication or higher limits.
+
+## Key Features
+
+- VRAM calculator for estimating model memory needs
+- GPU picker for matching models and workloads to hardware
+- Roofline analyzer for GPU performance reasoning
+- Coding-model analysis and comparison tools
+- Model comparison workflows backed by Hugging Face metadata
+- AI inference and GPU tutorials stored in Firestore
+
+## Useful Scripts
+
+```bash
+npm run dev
+npm run build
+npm run lint
+npm run content:check
+npm run indexing:check
+```

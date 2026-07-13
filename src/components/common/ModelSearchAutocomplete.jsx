@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, Loader2, TrendingUp, Heart, Cpu, X } from 'lucide-react';
-import { searchModels } from '../../services/huggingface';
+import { searchModels } from '../../services/huggingfaceClient';
 
 const ModelSearchAutocomplete = ({ onSearch, loading }) => {
   const [query, setQuery] = useState('');

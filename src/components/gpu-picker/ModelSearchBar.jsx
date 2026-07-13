@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Search, TrendingUp } from "lucide-react";
-import { searchModels } from "../../services/huggingface";
+import { searchModels } from "../../services/huggingfaceClient";
 
 const QUICK_MODELS = [
   ["LLaMA 3 8B", "meta-llama/Meta-Llama-3-8B"],

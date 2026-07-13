@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, X, Cpu, TrendingUp, Heart } from 'lucide-react';
-import { searchModels } from '../services/huggingface';
+import { searchModels } from '../services/huggingfaceClient';
 import { parseModelSize, formatNumber } from '../utils/modelUtils';
 
 const ModelSelector = ({ onSelect, onCancel, placeholder = 'Search models to compare...' }) => {

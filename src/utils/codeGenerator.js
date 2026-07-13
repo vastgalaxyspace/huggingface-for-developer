@@ -167,10 +167,10 @@ print(response["choices"][0]["message"]["content"])`;
 
 // cURL (Hugging Face Inference Providers — OpenAI-compatible)
 const generateCurlCode = (modelId) => {
-  return `# Hugging Face Inference Providers expose an OpenAI-compatible chat API.
-# Get a token at https://huggingface.co/settings/tokens
-curl https://router.huggingface.co/v1/chat/completions \\
-  -H "Authorization: Bearer $HF_TOKEN" \\
+  return `# Using Hugging Face Inference API
+curl https://api-inference.huggingface.co/models/${modelId} \\
+  -X POST \\
+  -H "Authorization: Bearer YOUR_HUGGING_FACE_TOKEN" \\
   -H "Content-Type: application/json" \\
   -d '{
     "model": "${modelId}",

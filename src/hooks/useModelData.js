@@ -2,7 +2,7 @@
 // Handles loading states, errors, and caching
 
 import { useState, useEffect, useCallback } from 'react';
-import { fetchCompleteModelData, handleAPIError } from '../services/huggingface';
+import { fetchCompleteModelData, handleAPIError } from '../services/huggingfaceClient';
 import { parseCompleteModel } from '../utils/dataParser';
 import { calculateVRAM } from '../utils/vramCalculator';
 import { getLicenseInfo } from '../utils/licenseChecker';
@@ -124,7 +124,7 @@ export const useModelSearch = () => {
     setLoading(true);
     
     try {
-      const { searchModels } = await import('../services/huggingface');
+      const { searchModels } = await import('../services/huggingfaceClient');
       const models = await searchModels(query, 5);
       setResults(models);
     } catch (err) {
