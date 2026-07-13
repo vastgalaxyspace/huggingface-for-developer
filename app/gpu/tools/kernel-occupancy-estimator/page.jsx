@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import KernelOccupancyEstimatorClient from '../../../../src/components/kernel_KernelOccupancyEstimatorClient';
+import KernelOccupancyContent from '../../../../src/components/kernel_KernelOccupancyContent';
 import { pageMetadata } from '../../../../src/lib/seo';
 
 export const metadata = pageMetadata({
@@ -14,7 +15,7 @@ export const metadata = pageMetadata({
 export default function KernelOccupancyEstimatorPage() {
   return (
     <div className="bg-gray-100 py-8 md:py-12">
-      <div className="shell-container">
+      <div className="shell-container space-y-6">
         <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
           <Link href="/gpu" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#274867]">
             <ArrowLeft className="h-3.5 w-3.5" /> Back to GPU
@@ -26,6 +27,7 @@ export default function KernelOccupancyEstimatorPage() {
           </p>
         </section>
         <KernelOccupancyEstimatorClient />
+        <KernelOccupancyContent />
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import GpuPickerPage from '../../../../src/components/gpu-picker/GpuPickerPage';
+import GpuPickerContent from '../../../../src/components/gpu-picker/GpuPickerContent';
 import { pageMetadata } from '../../../../src/lib/seo';
 
 export const metadata = pageMetadata({
@@ -10,5 +11,14 @@ export const metadata = pageMetadata({
 });
 
 export default function Page() {
-  return <GpuPickerPage />;
+  return (
+    <>
+      <GpuPickerPage />
+      <div className="bg-slate-100 pb-12">
+        <div className="shell-container space-y-6">
+          <GpuPickerContent />
+        </div>
+      </div>
+    </>
+  );
 }

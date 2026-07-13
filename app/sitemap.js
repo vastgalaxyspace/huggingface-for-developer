@@ -1,6 +1,7 @@
 import { absoluteUrl } from '../src/lib/seo';
 import { getAllGuides } from '../src/data/guidesContent';
 import { getIndexableModelIds, modelPath } from '../src/lib/modelIndexing';
+import { canIRunPath, getCuratedCombos } from '../src/data/canIRunData';
 
 const learningTopicRoutes = [
   '/gpu/learning/physical-hardware',
@@ -27,6 +28,7 @@ const routes = [
   { path: '/validation-lab', priority: 0.85, changeFrequency: 'weekly' },
   { path: '/contact', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/gpu', priority: 0.9, changeFrequency: 'weekly' },
+  { path: '/can-i-run', priority: 0.9, changeFrequency: 'weekly' },
   { path: '/gpu/hardware', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/gpu/execution', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/gpu/performance', priority: 0.8, changeFrequency: 'monthly' },
@@ -70,5 +72,12 @@ export default async function sitemap() {
     priority: 0.8,
   }));
 
-  return [...staticSitemap, ...guideRoutes, ...modelRoutes];
+  const canIRunRoutes = getCuratedCombos().map(({ gpu, model }) => ({
+    url: absoluteUrl(canIRunPath(gpu.slug, model.id)),
+    lastModified,
+    changeFrequency: 'monthly',
+    priority: 0.7,
+  }));
+
+  return [...staticSitemap, ...guideRoutes, ...modelRoutes, ...canIRunRoutes];
 }

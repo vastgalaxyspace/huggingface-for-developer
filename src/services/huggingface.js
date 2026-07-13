@@ -227,14 +227,13 @@ export const fetchCompleteModelData = async (modelId) => {
 
 /**
  * Search models (Autocomplete)
- * Connects to HuggingFace Search API
- * Filters by text-generation for keyword searches to return relevant LLMs
+ * Connects to HuggingFace Search API.
+ * By default searches across ALL model types (text-generation, embeddings, vision,
+ * ASR, diffusion, etc.) and relies on download-count ranking for relevance.
+ * Pass options.pipelineTag to scope results to a single task when needed.
  */
-export const searchModels = async (query, limit = 10) => {
+export const searchModels = async (query, limit = 10, options = {}) => {
   try {
-    // If query contains '/', it's likely a specific model ID — search broadly
-    // Otherwise filter to text-generation models for more relevant results
-    const isKeywordSearch = !query.includes('/');
     const params = {
       search: query,
       limit: String(limit),
@@ -242,8 +241,10 @@ export const searchModels = async (query, limit = 10) => {
       direction: '-1',
     };
 
-    if (isKeywordSearch) {
-      params.filter = 'text-generation';
+    // Only restrict by task when the caller explicitly asks for it, so developers
+    // looking for embedding / vision / audio / diffusion models still find them.
+    if (options.pipelineTag) {
+      params.filter = options.pipelineTag;
     }
 
     if (isBrowser) {

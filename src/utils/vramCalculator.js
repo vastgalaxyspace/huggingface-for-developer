@@ -20,21 +20,54 @@ export const calculateVRAM = (config, options = {}) => {
     totalParams = estimateParamsFromConfig(config);
   }
 
-  // Calculate VRAM for different precisions
-  // Each parameter needs: FP32=4 bytes, FP16=2 bytes, INT8=1 byte, INT4=0.5 bytes
-  // Add 20% overhead for activations and KV cache
-  const overhead = 1.2;
+  // Weight memory only. Each parameter needs:
+  // FP32=4 bytes, FP16=2 bytes, INT8=1 byte, INT4=0.5 bytes.
+  // A ~15% allowance covers CUDA context + framework buffers + activation working set
+  // for a short prompt. KV cache is NOT included here — it scales with context length
+  // and is computed separately by calculateContextVRAM().
+  const runtimeOverhead = 1.15;
 
   const vramEstimates = {
-    fp32: Number((totalParams * 4 * overhead).toFixed(1)),
-    fp16: Number((totalParams * 2 * overhead).toFixed(1)),
-    int8: Number((totalParams * 1 * overhead).toFixed(1)),
-    int4: Number((totalParams * 0.5 * overhead).toFixed(1)),
+    fp32: Number((totalParams * 4 * runtimeOverhead).toFixed(1)),
+    fp16: Number((totalParams * 2 * runtimeOverhead).toFixed(1)),
+    int8: Number((totalParams * 1 * runtimeOverhead).toFixed(1)),
+    int4: Number((totalParams * 0.5 * runtimeOverhead).toFixed(1)),
     totalParams: Number(totalParams.toFixed(1)),
     paramSource: options.safetensorsTotal ? 'safetensors' : 'estimated'
   };
 
   return vramEstimates;
+};
+
+/**
+ * Calculate KV-cache memory for a given context length using the real model
+ * architecture (layers, KV heads, head dim). This is the dominant memory term at
+ * long context and cannot be approximated by a per-token constant.
+ *
+ * Formula: 2 (K and V) × layers × kv_heads × head_dim × context × batch × bytes
+ * The KV cache is stored in FP16 even when the weights are quantized, so we default
+ * to 2 bytes/element regardless of the weight precision.
+ *
+ * @param {object} config - Model configuration
+ * @param {number} contextLength - Context window size (tokens)
+ * @param {number} batchSize - Concurrent sequences
+ * @param {number} bytesPerElement - KV element size in bytes (default 2 = FP16)
+ * @returns {number} KV cache size in GB (0 when config is insufficient)
+ */
+export const calculateKVCacheVRAM = (config, contextLength, batchSize = 1, bytesPerElement = 2) => {
+  if (!config || !contextLength) return 0;
+
+  const numLayers = config.num_hidden_layers || config.n_layer || config.num_layers;
+  const hiddenSize = config.hidden_size || config.d_model || config.n_embd;
+  const numAttentionHeads = config.num_attention_heads || config.n_head;
+  // Grouped-query / multi-query attention: KV cache scales with KV heads, not attention heads.
+  const numKVHeads = config.num_key_value_heads || numAttentionHeads;
+  const headDim = config.head_dim || (hiddenSize && numAttentionHeads ? hiddenSize / numAttentionHeads : null);
+
+  if (!numLayers || !numKVHeads || !headDim) return 0;
+
+  const bytes = 2 * numLayers * numKVHeads * headDim * contextLength * batchSize * bytesPerElement;
+  return bytes / 1024 ** 3; // → GB
 };
 
 /**
@@ -96,34 +129,29 @@ const estimateParamsFromConfig = (config) => {
  */
 export const getGPURecommendation = (vramGB) => {
   const vram = parseFloat(vramGB);
-  
-  if (vram <= 4) {
+
+  // Each tier's GPUs have enough VRAM to actually hold a model of the given size
+  // (with headroom for KV cache and activations).
+  if (vram <= 10) {
     return {
       tier: "Consumer",
       gpus: ["RTX 3060 (12GB)", "RTX 4060 Ti (16GB)"],
-      cloud: "T4 (AWS, GCP)",
-      cost: "$0.50-1/hour"
+      cloud: "T4 16GB (AWS, GCP)",
+      cost: "$0.35-0.85/hour"
     };
-  } else if (vram <= 8) {
+  } else if (vram <= 20) {
     return {
       tier: "Prosumer",
       gpus: ["RTX 3090 (24GB)", "RTX 4090 (24GB)"],
-      cloud: "L4 (GCP), g5.xlarge (AWS)",
-      cost: "$1-2/hour"
+      cloud: "L4 24GB (GCP), g5.xlarge (AWS)",
+      cost: "$0.85-2/hour"
     };
-  } else if (vram <= 16) {
+  } else if (vram <= 32) {
     return {
       tier: "Professional",
-      gpus: ["A10 (24GB)", "RTX A6000 (48GB)"],
-      cloud: "A10 (AWS, GCP)",
+      gpus: ["RTX A6000 (48GB)", "A100 (40GB)"],
+      cloud: "A10G/L4 24GB or A100 40GB",
       cost: "$2-4/hour"
-    };
-  } else if (vram <= 24) {
-    return {
-      tier: "Enterprise",
-      gpus: ["A100 (40GB)", "A100 (80GB)"],
-      cloud: "A100 (all clouds)",
-      cost: "$4-8/hour"
     };
   } else if (vram <= 40) {
     return {
@@ -157,21 +185,25 @@ export const getGPURecommendation = (vramGB) => {
 };
 
 /**
- * Calculate context length impact on VRAM
- * @param {number|string} baseVRAM - Base VRAM in GB
- * @param {number} contextLength - Context window size
- * @param {number} batchSize - Batch size
+ * Calculate total VRAM at a given context length by adding the architecture-aware
+ * KV cache to the base (weight) VRAM.
+ *
+ * @param {number|string} baseVRAM - Base weight VRAM in GB (from calculateVRAM)
+ * @param {number} contextLength - Context window size (tokens)
+ * @param {object} config - Model configuration (required for accurate KV cache)
+ * @param {number} batchSize - Concurrent sequences
  * @returns {object} Adjusted VRAM estimates
  */
-export const calculateContextVRAM = (baseVRAM, contextLength, batchSize = 1) => {
-  const kvCacheOverhead = (contextLength * batchSize * 0.002); // GB
+export const calculateContextVRAM = (baseVRAM, contextLength, config, batchSize = 1) => {
   const parsedBase = parseFloat(baseVRAM);
-  
+  // KV cache is FP16 regardless of weight quantization.
+  const kvCache = calculateKVCacheVRAM(config, contextLength, batchSize, 2);
+
   return {
     baseVRAM: parsedBase,
-    kvCache: Number(kvCacheOverhead.toFixed(1)),
-    total: Number((parsedBase + kvCacheOverhead).toFixed(1)),
-    warning: contextLength > 8192 ? "High context increases memory significantly" : null
+    kvCache: Number(kvCache.toFixed(1)),
+    total: Number((parsedBase + kvCache).toFixed(1)),
+    warning: contextLength > 8192 ? "High context significantly increases KV-cache memory" : null
   };
 };
 

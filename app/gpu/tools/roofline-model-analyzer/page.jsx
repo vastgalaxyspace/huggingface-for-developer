@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import RooflineAnalyzerClient from '../../../../src/components/roofline/RooflineAnalyzerClient';
+import RooflineContent from '../../../../src/components/roofline/RooflineContent';
 import { pageMetadata } from '../../../../src/lib/seo';
 
 export const metadata = pageMetadata({
@@ -13,10 +14,11 @@ export const metadata = pageMetadata({
 export default function RooflineModelAnalyzerPage() {
   return (
     <div className="bg-slate-100 py-8 md:py-12">
-      <div className="shell-container">
+      <div className="shell-container space-y-6">
         <Suspense fallback={null}>
           <RooflineAnalyzerClient />
         </Suspense>
+        <RooflineContent />
       </div>
     </div>
   );

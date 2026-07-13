@@ -6,6 +6,7 @@ import { buildModelEditorial, buildModelSchemas } from '../../../src/lib/modelEd
 import { parseCompleteModel } from '../../../src/utils/dataParser';
 import { calculateVRAM } from '../../../src/utils/vramCalculator';
 import { getLicenseInfo } from '../../../src/utils/licenseChecker';
+import ModelGpuCompatibility from '../../../src/components/model/ModelGpuCompatibility';
 import Link from 'next/link';
 
 const extractConfigFromMetadata = (metadata) => {
@@ -224,6 +225,7 @@ export default async function Page({ params }) {
       ))}
       <div className="shell-container py-8">
         {editorial ? <ModelEditorialArticle editorial={editorial} modelData={initialModelData} /> : null}
+        {initialModelData ? <ModelGpuCompatibility modelData={initialModelData} /> : null}
         <ModelDetailClient modelId={modelId} initialModelData={initialModelData} />
       </div>
     </>

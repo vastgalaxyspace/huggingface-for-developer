@@ -121,6 +121,12 @@ const PRIMARY_NAV_ITEMS = [
         description: 'Identify memory vs compute bottlenecks',
         icon: Gauge,
       },
+      {
+        href: '/can-i-run',
+        title: 'Can I Run It?',
+        description: 'Check if a model fits your GPU across precisions',
+        icon: Target,
+      },
     ],
   },
   {

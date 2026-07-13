@@ -9,14 +9,16 @@
  */
 export const generateCodeSnippet = (modelData, framework = 'transformers') => {
   const modelId = modelData.modelId;
-  const hasQuantization = modelData.quantization?.quantized;
+  const quantized = Boolean(modelData.quantization?.quantized);
+  const quantMethod = modelData.quantization?.method || null;
+  const quantBits = modelData.quantization?.bits || null;
   const maxContextLength = modelData.config?.max_position_embeddings || 4096;
 
   const snippets = {
-    transformers: generateTransformersCode(modelId, hasQuantization),
+    transformers: generateTransformersCode(modelId, { quantized, quantMethod, quantBits }),
     vllm: generateVLLMCode(modelId, maxContextLength),
-    ollama: generateOllamaCode(modelId),
-    llamacpp: generateLlamaCppCode(modelId),
+    ollama: generateOllamaCode(modelId, quantMethod),
+    llamacpp: generateLlamaCppCode(modelId, maxContextLength),
     curl: generateCurlCode(modelId)
   };
 
@@ -24,139 +26,164 @@ export const generateCodeSnippet = (modelData, framework = 'transformers') => {
 };
 
 // Transformers (Hugging Face)
-const generateTransformersCode = (modelId, quantized) => {
-  const quantizationCode = quantized 
-    ? `\n# Load in 8-bit for lower VRAM\nmodel = AutoModelForCausalLM.from_pretrained(\n    "${modelId}",\n    load_in_8bit=True,\n    device_map="auto"\n)`
-    : `\nmodel = AutoModelForCausalLM.from_pretrained(\n    "${modelId}",\n    device_map="auto",\n    torch_dtype=torch.float16\n)`;
+const generateTransformersCode = (modelId, { quantized, quantMethod, quantBits } = {}) => {
+  // Pre-quantized checkpoints (GPTQ/AWQ/GGUF) load without a BitsAndBytesConfig —
+  // the quantization is baked into the weights. Only apply bitsandbytes on-the-fly
+  // quantization for full-precision checkpoints.
+  const isPrequantized = quantized && ['gptq', 'awq', 'gguf', 'int4', 'int8'].includes((quantMethod || '').toLowerCase());
+  const useBitsAndBytes = quantized && !isPrequantized;
 
-  return `from transformers import AutoTokenizer, AutoModelForCausalLM
+  let loadModelCode;
+  if (useBitsAndBytes) {
+    const fourBit = quantBits === 4;
+    loadModelCode = `# Quantize on-the-fly with bitsandbytes to reduce VRAM
+quantization_config = BitsAndBytesConfig(
+    load_in_${fourBit ? '4bit=True' : '8bit=True'},${fourBit ? '\n    bnb_4bit_compute_dtype=torch.float16,\n    bnb_4bit_quant_type="nf4",' : ''}
+)
+model = AutoModelForCausalLM.from_pretrained(
+    "${modelId}",
+    quantization_config=quantization_config,
+    device_map="auto",
+)`;
+  } else {
+    loadModelCode = `model = AutoModelForCausalLM.from_pretrained(
+    "${modelId}",
+    dtype="auto",        # picks bf16/fp16 from the model config
+    device_map="auto",
+)`;
+  }
+
+  const importLine = useBitsAndBytes
+    ? 'from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig'
+    : 'from transformers import AutoTokenizer, AutoModelForCausalLM';
+
+  return `${importLine}
 import torch
 
-# Load model and tokenizer
+# Load tokenizer and model
 tokenizer = AutoTokenizer.from_pretrained("${modelId}")
-${quantizationCode}
+${loadModelCode}
 
-# Prepare input
+# Build the prompt with the model's own chat template
 messages = [
     {"role": "user", "content": "Hello! How are you?"}
 ]
-input_ids = tokenizer.apply_chat_template(
+inputs = tokenizer.apply_chat_template(
     messages,
     add_generation_prompt=True,
-    return_tensors="pt"
+    return_tensors="pt",
 ).to(model.device)
 
 # Generate response
 outputs = model.generate(
-    input_ids,
+    inputs,
     max_new_tokens=512,
     temperature=0.7,
     top_p=0.9,
-    do_sample=True
+    do_sample=True,
 )
 
-response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+# Only decode the newly generated tokens, not the prompt
+response = tokenizer.decode(outputs[0][inputs.shape[-1]:], skip_special_tokens=True)
 print(response)`;
 };
 
 // vLLM (Production inference)
 const generateVLLMCode = (modelId, contextLength) => {
-  return `from vllm import LLM, SamplingParams
+  return `# Serve an OpenAI-compatible endpoint (recommended for production):
+#   vllm serve ${modelId} --max-model-len ${contextLength}
+# Then call it with any OpenAI client pointed at http://localhost:8000/v1
 
-# Initialize vLLM engine
+# Or run offline batched inference in Python:
+from vllm import LLM, SamplingParams
+
 llm = LLM(
     model="${modelId}",
-    tensor_parallel_size=1,  # Use multiple GPUs if available
+    tensor_parallel_size=1,      # increase to shard across multiple GPUs
     max_model_len=${contextLength},
-    gpu_memory_utilization=0.9
+    gpu_memory_utilization=0.9,
 )
 
-# Set sampling parameters
-sampling_params = SamplingParams(
-    temperature=0.7,
-    top_p=0.9,
-    max_tokens=512
-)
+sampling_params = SamplingParams(temperature=0.7, top_p=0.9, max_tokens=512)
 
-# Generate
-prompts = ["Hello! How are you?"]
-outputs = llm.generate(prompts, sampling_params)
+# chat() applies the model's chat template automatically
+messages = [{"role": "user", "content": "Hello! How are you?"}]
+outputs = llm.chat(messages, sampling_params)
 
 for output in outputs:
-    print(output.outputs[0].text)
-
-# For OpenAI-compatible API server:
-# vllm serve ${modelId} --host 0.0.0.0 --port 8000`;
+    print(output.outputs[0].text)`;
 };
 
 // Ollama (Local deployment)
-const generateOllamaCode = (modelId) => {
-  return `# First, pull the model (if available on Ollama)
-# ollama pull ${modelId.split('/')[1]}
+const generateOllamaCode = (modelId, quantMethod) => {
+  const isGguf = (quantMethod || '').toLowerCase() === 'gguf';
+  // Ollama can pull GGUF repos straight from the Hub via the hf.co/ prefix.
+  const runTarget = isGguf ? `hf.co/${modelId}` : modelId.split('/')[1];
+  const pullNote = isGguf
+    ? `# This is a GGUF repo — Ollama can run it directly from the Hub:`
+    : `# Ollama uses its own short names, which may differ from the HF id.
+# Search the library first: https://ollama.com/library`;
 
-# Python API
+  return `${pullNote}
+# Command line:
+ollama run ${runTarget} "Hello! How are you?"
+
+# Python API (pip install ollama):
 import ollama
 
 response = ollama.chat(
-    model='${modelId.split('/')[1]}',
-    messages=[
-        {'role': 'user', 'content': 'Hello! How are you?'}
-    ]
+    model="${runTarget}",
+    messages=[{"role": "user", "content": "Hello! How are you?"}],
 )
-print(response['message']['content'])
-
-# Command Line
-# ollama run ${modelId.split('/')[1]} "Hello! How are you?"
-
-# Note: Check if this model is available on Ollama
-# Visit: https://ollama.ai/library`;
+print(response["message"]["content"])`;
 };
 
-// llama.cpp (CPU inference)
-const generateLlamaCppCode = (modelId) => {
-  return `# First, convert model to GGUF format
-# python convert.py ${modelId}
+// llama.cpp (CPU / GGUF inference)
+const generateLlamaCppCode = (modelId, contextLength) => {
+  return `# 1) Convert the HF model to GGUF (skip if you downloaded a *-GGUF repo):
+#    python convert_hf_to_gguf.py ./${modelId.split('/')[1]} --outfile model.gguf
+# 2) (optional) quantize to 4-bit:
+#    ./llama-quantize model.gguf model-q4_k_m.gguf Q4_K_M
+# 3) Chat from the CLI:
+#    ./llama-cli -m model-q4_k_m.gguf -cnv -c ${Math.min(contextLength, 8192)} -p "Hello! How are you?"
 
-# Then run with llama.cpp
-# ./main -m model.gguf -p "Hello! How are you?" -n 512
-
-# Python bindings (llama-cpp-python)
+# Python bindings (pip install llama-cpp-python):
 from llama_cpp import Llama
 
 llm = Llama(
-    model_path="./model.gguf",
-    n_ctx=4096,  # Context window
-    n_threads=8  # CPU threads
+    model_path="./model-q4_k_m.gguf",
+    n_ctx=${Math.min(contextLength, 8192)},   # context window
+    n_gpu_layers=-1,   # offload all layers to GPU; use 0 for CPU-only
 )
 
-output = llm(
-    "Hello! How are you?",
+response = llm.create_chat_completion(
+    messages=[{"role": "user", "content": "Hello! How are you?"}],
     max_tokens=512,
     temperature=0.7,
-    top_p=0.9
+    top_p=0.9,
 )
-
-print(output['choices'][0]['text'])`;
+print(response["choices"][0]["message"]["content"])`;
 };
 
-// cURL (API usage)
+// cURL (Hugging Face Inference Providers — OpenAI-compatible)
 const generateCurlCode = (modelId) => {
-  return `# Using Hugging Face Inference API
-curl https://api-inference.huggingface.co/models/${modelId} \\
-  -X POST \\
-  -H "Authorization: Bearer YOUR_HF_TOKEN" \\
+  return `# Hugging Face Inference Providers expose an OpenAI-compatible chat API.
+# Get a token at https://huggingface.co/settings/tokens
+curl https://router.huggingface.co/v1/chat/completions \\
+  -H "Authorization: Bearer $HF_TOKEN" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "inputs": "Hello! How are you?",
-    "parameters": {
-      "max_new_tokens": 512,
-      "temperature": 0.7,
-      "top_p": 0.9
-    }
+    "model": "${modelId}",
+    "messages": [
+      {"role": "user", "content": "Hello! How are you?"}
+    ],
+    "max_tokens": 512,
+    "temperature": 0.7,
+    "top_p": 0.9
   }'
 
-# Response:
-# [{"generated_text": "..."}]`;
+# Response (OpenAI schema):
+# {"choices": [{"message": {"role": "assistant", "content": "..."}}]}`;
 };
 
 /**

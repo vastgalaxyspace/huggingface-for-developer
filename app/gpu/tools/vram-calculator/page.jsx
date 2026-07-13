@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import VramCalculatorClient from '../../../../src/components/vram/VramCalculatorClient';
+import VramCalculatorContent from '../../../../src/components/vram/VramCalculatorContent';
 import { pageMetadata } from '../../../../src/lib/seo';
 
 export const metadata = pageMetadata({
@@ -34,35 +35,7 @@ export default function VramCalculatorPage() {
 
         <VramCalculatorClient />
 
-        <section className="grid gap-5 md:grid-cols-3">
-          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-black tracking-tight text-gray-900">Best next check</h2>
-            <p className="mt-3 text-sm leading-7 text-gray-600">
-              Compare the winning estimate against real GPU options so you can see whether the fit is consumer,
-              workstation, or server-class.
-            </p>
-          </article>
-          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-black tracking-tight text-gray-900">Use this before buying</h2>
-            <p className="mt-3 text-sm leading-7 text-gray-600">
-              This tool is most valuable before hardware purchase, cloud reservation, or self-hosting commitments. It
-              helps avoid choosing a model that quietly exceeds your real memory budget.
-            </p>
-          </article>
-          <article className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-black tracking-tight text-gray-900">Related guide</h2>
-            <p className="mt-3 text-sm leading-7 text-gray-600">
-              For deeper deployment context, read{' '}
-              <Link href="/guides/best-models-low-vram" className="font-semibold text-[#274867] hover:text-[#18324f]">
-                Best Models for Low VRAM
-              </Link>{' '}
-              and{' '}
-              <Link href="/guides/quantization-4bit-8bit-fp16" className="font-semibold text-[#274867] hover:text-[#18324f]">
-                Precision Strategy
-              </Link>.
-            </p>
-          </article>
-        </section>
+        <VramCalculatorContent />
       </div>
     </div>
   );
