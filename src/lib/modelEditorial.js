@@ -24,10 +24,17 @@ const titleCase = (value = "") =>
 
 export function getModelFamily(modelId = "") {
   const id = modelId.toLowerCase();
+  // Order matters: more specific version checks come before generic family names
+  // (e.g. "deepseek-r1" before any deepseek fallback, "qwen3"/"qwen2.5" before "qwen").
   if (id.includes("llama-4-scout")) return "Llama 4 Scout";
   if (id.includes("deepseek-r1")) return "DeepSeek R1";
+  if (id.includes("deepseek-v3")) return "DeepSeek V3";
   if (id.includes("qwen3")) return "Qwen 3";
+  if (id.includes("qwen2.5")) return "Qwen 2.5";
   if (id.includes("gemma-3")) return "Gemma 3";
+  if (id.includes("gpt-oss")) return "GPT-OSS";
+  // "phi-4"/"phi-3" rather than a bare "phi" — avoids matching names like "dolphin".
+  if (id.includes("phi-4") || id.includes("phi-3")) return "Phi";
   if (id.includes("llama")) return "Llama";
   if (id.includes("mistral")) return "Mistral";
   if (id.includes("qwen")) return "Qwen";
@@ -53,6 +60,26 @@ const FAMILY_GUIDANCE = {
     overview: "Qwen 3 models are strong general-purpose open models with useful coverage across multilingual, coding, agentic, and structured-output workloads.",
     deployment: "They are good candidates for teams that need broad task coverage and want several model sizes for routing across latency and budget tiers.",
     quantization: "Qwen deployments commonly benefit from AWQ/GPTQ for GPU serving and GGUF variants for local inference, but structured-output tests should be rerun after quantization.",
+  },
+  "Qwen 2.5": {
+    overview: "Qwen 2.5 is a widely deployed open-weight family spanning small to 72B plus dedicated Coder and Math variants, and it remains a proven default thanks to broad tooling support, long-context handling, and Apache-2.0 licensing on most sizes.",
+    deployment: "It is a safe production baseline for chat, RAG, extraction, and coding assistants: the 7B and 14B sizes cover most single-GPU serving, while 32B and 72B target quality-first workloads on 24–80 GB cards. Reach for Qwen2.5-Coder on repository-scale code tasks.",
+    quantization: "Qwen 2.5 quantizes cleanly — AWQ and GPTQ are widely available for vLLM/SGLang and GGUF for llama.cpp — but rerun structured-output and function-calling tests after quantizing, since JSON adherence is usually the first thing to degrade.",
+  },
+  "DeepSeek V3": {
+    overview: "DeepSeek V3 is a frontier-scale mixture-of-experts model with hundreds of billions of total parameters but only a fraction active per token, aimed at teams that want near-frontier quality from open weights rather than a small self-hosted assistant.",
+    deployment: "This is a data-center deployment, not a single consumer GPU: even in 4-bit the full expert set must stay resident, so plan for multi-GPU tensor/expert parallelism or a hosted endpoint, and route only high-value prompts here while a smaller model handles routine traffic.",
+    quantization: "Because experts dominate memory while per-token compute stays low, quantization is mostly about fitting the experts rather than saving on activations; validate router behavior and output quality after quantizing, since degrading the router hurts more than degrading dense layers.",
+  },
+  Phi: {
+    overview: "Microsoft's Phi models are small, heavily curated 'textbook-quality' models that punch above their parameter count on reasoning and coding benchmarks, which makes them a strong fit for on-device and cost-sensitive deployments.",
+    deployment: "A Phi-class model runs comfortably on a single consumer GPU — or even CPU/edge hardware when quantized — so it suits local assistants, offline features, classification, and prototypes where a larger model is overkill; validate on your domain, since the small size shows on knowledge-heavy tasks.",
+    quantization: "Phi reaches attractive 4-bit local profiles, but its compact size makes it more sensitive to aggressive quantization than a large dense model, so compare instruction following and reasoning against the FP16 baseline before shipping a quantized build.",
+  },
+  "GPT-OSS": {
+    overview: "GPT-OSS is OpenAI's open-weight release, shipped as mixture-of-experts models (roughly 20B and 120B total parameters) under a permissive Apache-2.0 license, aimed at teams that want an OpenAI-lineage model they can self-host.",
+    deployment: "The 20B variant is designed to fit a single high-memory consumer or workstation GPU, while the 120B targets a data-center card or multi-GPU serving; both are MoE, so only a subset of experts activates per token but every expert must be resident in memory.",
+    quantization: "GPT-OSS ships in a native low-precision (MXFP4) expert format, so much of the memory saving is already built in — when quantizing further, confirm your serving stack supports that format and validate tool-calling and reasoning output rather than assuming parity with the released weights.",
   },
   "Gemma 3": {
     overview: "Gemma 3 models are useful for developers who want compact, modern open models with practical deployment paths on consumer and workstation GPUs.",
