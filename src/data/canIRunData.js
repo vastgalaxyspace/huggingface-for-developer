@@ -7,21 +7,37 @@
 // accurate KV cache (layers, kv_heads, head_dim). paramsB is the parameter count in
 // billions.
 
+// Only `vram` (GB) feeds the fit verdict; `tier`/`vendor` are descriptive metadata
+// and are not consumed by the can-i-run engine or pages. VRAM figures are the
+// standard advertised on-board memory for each card's mainstream variant.
 export const CURATED_GPUS = [
-  // Consumer
+  // Consumer — NVIDIA
   { slug: 'rtx-5090', name: 'RTX 5090', vram: 32, tier: 'Consumer', vendor: 'NVIDIA' },
   { slug: 'rtx-5080', name: 'RTX 5080', vram: 16, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-5070-ti', name: 'RTX 5070 Ti', vram: 16, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-5070', name: 'RTX 5070', vram: 12, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-5060-ti-16gb', name: 'RTX 5060 Ti 16GB', vram: 16, tier: 'Consumer', vendor: 'NVIDIA' },
   { slug: 'rtx-4090', name: 'RTX 4090', vram: 24, tier: 'Consumer', vendor: 'NVIDIA' },
   { slug: 'rtx-4080', name: 'RTX 4080', vram: 16, tier: 'Consumer', vendor: 'NVIDIA' },
   { slug: 'rtx-4070-ti-super', name: 'RTX 4070 Ti SUPER', vram: 16, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-4070-super', name: 'RTX 4070 SUPER', vram: 12, tier: 'Consumer', vendor: 'NVIDIA' },
   { slug: 'rtx-4070-ti', name: 'RTX 4070 Ti', vram: 12, tier: 'Consumer', vendor: 'NVIDIA' },
   { slug: 'rtx-4070', name: 'RTX 4070', vram: 12, tier: 'Consumer', vendor: 'NVIDIA' },
   { slug: 'rtx-4060-ti-16gb', name: 'RTX 4060 Ti 16GB', vram: 16, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-4060-ti-8gb', name: 'RTX 4060 Ti 8GB', vram: 8, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-4060', name: 'RTX 4060', vram: 8, tier: 'Consumer', vendor: 'NVIDIA' },
   { slug: 'rtx-3090', name: 'RTX 3090', vram: 24, tier: 'Consumer', vendor: 'NVIDIA' },
   { slug: 'rtx-3080', name: 'RTX 3080', vram: 10, tier: 'Consumer', vendor: 'NVIDIA' },
   { slug: 'rtx-3070', name: 'RTX 3070', vram: 8, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-3060-ti', name: 'RTX 3060 Ti', vram: 8, tier: 'Consumer', vendor: 'NVIDIA' },
   { slug: 'rtx-3060', name: 'RTX 3060', vram: 12, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-3050', name: 'RTX 3050', vram: 8, tier: 'Consumer', vendor: 'NVIDIA' },
   { slug: 'rtx-2080-ti', name: 'RTX 2080 Ti', vram: 11, tier: 'Consumer', vendor: 'NVIDIA' },
+  // Consumer — AMD Radeon (ROCm / Vulkan via llama.cpp)
+  { slug: 'rx-7900-xtx', name: 'Radeon RX 7900 XTX', vram: 24, tier: 'Consumer', vendor: 'AMD' },
+  { slug: 'rx-7900-xt', name: 'Radeon RX 7900 XT', vram: 20, tier: 'Consumer', vendor: 'AMD' },
+  { slug: 'rx-7800-xt', name: 'Radeon RX 7800 XT', vram: 16, tier: 'Consumer', vendor: 'AMD' },
+  { slug: 'rx-9070-xt', name: 'Radeon RX 9070 XT', vram: 16, tier: 'Consumer', vendor: 'AMD' },
   // Workstation
   { slug: 'rtx-6000-ada', name: 'RTX 6000 Ada', vram: 48, tier: 'Workstation', vendor: 'NVIDIA' },
   { slug: 'rtx-a6000', name: 'RTX A6000', vram: 48, tier: 'Workstation', vendor: 'NVIDIA' },
