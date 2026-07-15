@@ -13,9 +13,16 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { pageMetadata } from '../../../src/lib/seo';
-import { getTutorialFromFirestore } from '../../../src/lib/tutorialsFirestore';
+import { getTutorialFromFirestore, getTutorialsFromFirestore } from '../../../src/lib/tutorialsFirestore';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
+
+// Prerender every published tutorial. If Firebase config is absent at build time
+// getTutorialsFromFirestore returns [], and unknown slugs still render on demand.
+export async function generateStaticParams() {
+  const tutorials = await getTutorialsFromFirestore();
+  return tutorials.map((tutorial) => ({ slug: tutorial.slug }));
+}
 
 const ICONS = {
   bookOpen: BookOpen,

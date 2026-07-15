@@ -13,6 +13,10 @@ import {
 import './globals.css';
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-KV1HD9TCT7';
+// AdSense publisher ID (ca-pub-...). Drives both the loader script and the
+// google-adsense-account meta tag Google uses to verify site ownership.
+// Keep this in sync with public/ads.txt (which uses the pub-... form).
+const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || 'ca-pub-9740252976972845';
 
 const siteKeywords = [
   'hugging face model explorer',
@@ -48,6 +52,12 @@ export const metadata = {
     telephone: false,
     email: false,
     address: false,
+  },
+  other: {
+    // Static, server-rendered <meta name="google-adsense-account">. This is the
+    // "Meta tag" verification method and does not depend on JS execution, so it is
+    // the most reliable ownership signal for the AdSense crawler.
+    'google-adsense-account': ADSENSE_CLIENT,
   },
   icons: {
     icon: '/images/innoai logo main.png',
@@ -135,6 +145,14 @@ export default function RootLayout({ children }) {
               }}
             />
           </>
+        ) : null}
+        {ADSENSE_CLIENT ? (
+          <Script
+            id="google-adsense"
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+            strategy="afterInteractive"
+            crossOrigin="anonymous"
+          />
         ) : null}
         <Script
           id="website-schema"

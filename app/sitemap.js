@@ -2,6 +2,7 @@ import { absoluteUrl } from '../src/lib/seo';
 import { getAllGuides } from '../src/data/guidesContent';
 import { getIndexableModelIds, modelPath } from '../src/lib/modelIndexing';
 import { canIRunPath, getCuratedCombos } from '../src/data/canIRunData';
+import { getTutorialsFromFirestore } from '../src/lib/tutorialsFirestore';
 
 const learningTopicRoutes = [
   '/gpu/learning/physical-hardware',
@@ -47,9 +48,18 @@ const routes = [
   { path: '/recommender', priority: 0.85, changeFrequency: 'weekly' },
 ];
 
+// Firestore stores dates as Timestamps, ISO strings, or human text like "March 2025".
+// Anything unparseable falls back rather than emitting an Invalid Date into the sitemap.
+function toDate(value, fallback) {
+  if (!value) return fallback;
+  const parsed = typeof value?.toDate === 'function' ? value.toDate() : new Date(value);
+  return Number.isNaN(parsed.getTime()) ? fallback : parsed;
+}
+
 export default async function sitemap() {
   const lastModified = new Date();
   const guides = getAllGuides();
+  const tutorials = await getTutorialsFromFirestore();
 
   const staticSitemap = routes.map((route) => ({
     url: absoluteUrl(route.path),
@@ -79,5 +89,17 @@ export default async function sitemap() {
     priority: 0.7,
   }));
 
-  return [...staticSitemap, ...guideRoutes, ...modelRoutes, ...canIRunRoutes];
+  // Firestore-backed tutorials. Skipped when a URL is already declared above
+  // (e.g. /ai-tutorials/rag) so the sitemap never lists a URL twice.
+  const declaredUrls = new Set(staticSitemap.map((entry) => entry.url));
+  const tutorialRoutes = tutorials
+    .map((tutorial) => ({
+      url: absoluteUrl(tutorial.href || `/ai-tutorials/${tutorial.slug}`),
+      lastModified: toDate(tutorial.updatedAt || tutorial.lastUpdated, lastModified),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    }))
+    .filter((entry) => !declaredUrls.has(entry.url));
+
+  return [...staticSitemap, ...guideRoutes, ...tutorialRoutes, ...modelRoutes, ...canIRunRoutes];
 }

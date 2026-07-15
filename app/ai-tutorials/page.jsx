@@ -4,7 +4,7 @@ import { pageMetadata } from '../../src/lib/seo';
 import { getAllGuides } from '../../src/data/guidesContent';
 import { getTutorialsFromFirestore } from '../../src/lib/tutorialsFirestore';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 export const metadata = pageMetadata({
   title: 'AI Tutorials',

@@ -49,20 +49,24 @@ const getAllTrackKeys = (topics = {}) =>
     ...getVisualItems(topicValue).map((_, index) => getTrackItemKey(topicSlug, "visuals", index)),
   ]);
 
-export default function LearningTopicClient({ slug }) {
+export default function LearningTopicClient({ slug, initialTutorial = null, initialTopic = null }) {
   const router = useRouter();
   const { auth } = useContext(AppContext);
   const [activeTab, setActiveTab] = useState("learning");
   const [selectedTopicIndex, setSelectedTopicIndex] = useState(0);
-  const [tutorial, setTutorial] = useState(null);
-  const [topic, setTopic] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [tutorial, setTutorial] = useState(initialTutorial);
+  const [topic, setTopic] = useState(initialTopic);
+  const [isLoading, setIsLoading] = useState(!initialTopic);
   const [progressLoading, setProgressLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [progressError, setProgressError] = useState("");
   const [readItems, setReadItems] = useState([]);
 
+  // The server component supplies the topic so the content is in the crawlable
+  // HTML. This only runs as a fallback when that server fetch came back empty.
   useEffect(() => {
+    if (initialTopic) return undefined;
+
     let isMounted = true;
 
     async function fetchTopic() {
@@ -92,7 +96,7 @@ export default function LearningTopicClient({ slug }) {
     return () => {
       isMounted = false;
     };
-  }, [slug]);
+  }, [slug, initialTopic]);
 
   useEffect(() => {
     if (auth.loading || !auth.user) return;
@@ -176,39 +180,10 @@ export default function LearningTopicClient({ slug }) {
     return () => window.clearTimeout(timeout);
   }, [activeTab, markTrackItemRead, progressLoading, safeIndex, sidebarTopics.length, slug]);
 
-  if (auth.loading) {
-    return (
-      <div className="flex min-h-[calc(100vh-78px)] items-center justify-center bg-[#f2f6fb] px-6 text-center">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#4e6883]">GPU Learning Path</p>
-          <h1 className="mt-3 text-2xl font-black tracking-tight text-[#152a40]">Checking your account...</h1>
-        </div>
-      </div>
-    );
-  }
-
-  if (!auth.user) {
-    return (
-      <div className="flex min-h-[calc(100vh-78px)] items-center justify-center bg-[#f2f6fb] px-6 text-center">
-        <div className="max-w-md rounded-[22px] border border-[#d7e5f4] bg-white p-8 shadow-[0_12px_30px_rgba(31,45,61,0.08)]">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#4e6883]">GPU Learning Path</p>
-          <h1 className="mt-3 text-2xl font-black tracking-tight text-[#152a40]">Sign in to start the GPU tutorial</h1>
-          <p className="mt-3 text-sm leading-7 text-[#4e6883]">
-            Your learning progress, final test result, and certificate are saved to your account.
-          </p>
-          <button
-            type="button"
-            onClick={() => router.push(`/login?next=/gpu/learning/${slug}`)}
-            className="mt-6 inline-flex rounded-xl bg-[#18324f] px-5 py-3 text-sm font-bold text-white hover:bg-[#11253b]"
-          >
-            Sign in to continue
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading || progressLoading) {
+  // The topic content itself is public so that search engines and first-time
+  // visitors can read it. Signing in only adds progress tracking, the final
+  // test, and the certificate — see the prompt rendered in the sidebar below.
+  if (isLoading) {
     return (
       <div className="flex min-h-[calc(100vh-78px)] items-center justify-center bg-[#f2f6fb] px-6 text-center">
         <div>
@@ -256,24 +231,41 @@ export default function LearningTopicClient({ slug }) {
               <p className="mb-2 px-1 text-xs font-black uppercase tracking-[0.16em] text-[#4e6883]">
                 Main Sections
               </p>
-              <div className="mb-4 rounded border border-[#d7e5f4] bg-white p-3">
-                <div className="flex items-center justify-between text-xs font-black uppercase tracking-[0.14em] text-[#4e6883]">
-                  <span>Progress</span>
-                  <span>{progressPercent}%</span>
+              {auth.user ? (
+                <div className="mb-4 rounded border border-[#d7e5f4] bg-white p-3">
+                  <div className="flex items-center justify-between text-xs font-black uppercase tracking-[0.14em] text-[#4e6883]">
+                    <span>Progress</span>
+                    <span>{progressPercent}%</span>
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#edf5ff]">
+                    <div
+                      className="h-full rounded-full bg-[#18324f] transition-all"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                  <p className="mt-3 text-xs font-semibold leading-5 text-[#4e6883]">
+                    {validReadCount} of {totalTrackItems} learning + visual items visited
+                  </p>
+                  {progressError ? (
+                    <p className="mt-2 text-xs font-semibold text-red-700">{progressError}</p>
+                  ) : null}
                 </div>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#edf5ff]">
-                  <div
-                    className="h-full rounded-full bg-[#18324f] transition-all"
-                    style={{ width: `${progressPercent}%` }}
-                  />
+              ) : (
+                <div className="mb-4 rounded border border-[#d7e5f4] bg-white p-3">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-[#4e6883]">Track your progress</p>
+                  <p className="mt-2 text-xs font-semibold leading-5 text-[#4e6883]">
+                    Sign in to save your progress across all {totalTrackItems || "the"} sections, take the final test,
+                    and earn a certificate.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/login?next=/gpu/learning/${slug}`)}
+                    className="mt-3 inline-flex w-full justify-center rounded-lg bg-[#18324f] px-3 py-2 text-xs font-bold text-white hover:bg-[#11253b]"
+                  >
+                    Sign in
+                  </button>
                 </div>
-                <p className="mt-3 text-xs font-semibold leading-5 text-[#4e6883]">
-                  {validReadCount} of {totalTrackItems} learning + visual items visited
-                </p>
-                {progressError ? (
-                  <p className="mt-2 text-xs font-semibold text-red-700">{progressError}</p>
-                ) : null}
-              </div>
+              )}
               <div className="space-y-1">
                 {TABS.map((tab) => (
                   <div key={tab.key}>
@@ -353,7 +345,9 @@ export default function LearningTopicClient({ slug }) {
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-[#4e6883]">Final test</p>
                   <h2 className="mt-2 text-2xl font-black tracking-tight text-[#152a40]">GPU Tutorial MCQ</h2>
                   <p className="mt-3 text-sm leading-7 text-[#4e6883]">
-                    The final test is now on a separate page with 10 MCQ questions. Your current progress is {progressPercent}%.
+                    {auth.user
+                      ? `The final test is on a separate page with 10 MCQ questions. Your current progress is ${progressPercent}%.`
+                      : "The final test is on a separate page with 10 MCQ questions. Sign in to take it and save your result."}
                   </p>
                   <Link
                     href="/gpu/test"

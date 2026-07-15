@@ -1,7 +1,7 @@
 import { fetchCompleteModelData } from '../../../src/services/huggingface';
 import ModelDetailClient from '../../../src/components/model/ModelDetailClient';
 import { absoluteUrl, pageMetadata } from '../../../src/lib/seo';
-import { isModelIndexable, modelPath } from '../../../src/lib/modelIndexing';
+import { getIndexableModelIds, isModelIndexable, modelPath } from '../../../src/lib/modelIndexing';
 import { buildModelEditorial, buildModelSchemas } from '../../../src/lib/modelEditorial';
 import { parseCompleteModel } from '../../../src/utils/dataParser';
 import { calculateVRAM } from '../../../src/utils/vramCalculator';
@@ -39,6 +39,15 @@ const buildServerModelData = (rawData) => {
     rawData,
   };
 };
+
+// Prerender the curated, indexable models so the pages Google actually ranks are
+// served static instead of round-tripping to Hugging Face per request. Every other
+// model ID still renders on demand.
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  return getIndexableModelIds().map((modelId) => ({ id: modelId.split('/') }));
+}
 
 export async function generateMetadata({ params }) {
   const unwrapParams = await params;
