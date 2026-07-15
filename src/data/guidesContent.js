@@ -1587,6 +1587,344 @@ const TOPIC_DEPTH = {
       },
     ],
   },
+  'quantization-4bit-8bit-fp16': {
+    sections: [
+      {
+        heading: 'Estimate the memory before you pick a precision',
+        content:
+          'Precision is a memory decision first, so start from the arithmetic. Weight memory is roughly parameters × bytes-per-parameter: 2 bytes at FP16/BF16, 1 byte at INT8, and about 0.5 bytes at 4-bit. A 7B model is therefore near 14 GB in FP16, 7 GB at INT8, and under 4 GB at 4-bit — before you add the KV cache and a gigabyte or so of runtime overhead. Because the KV cache can rival the weights at long context, a precision that fits the weights can still overflow the card once conversations grow. Run the real numbers through the VRAM calculator instead of assuming the weight size is the whole cost.',
+      },
+      {
+        heading: 'Match the quantization method to your stack',
+        content:
+          'The label "4-bit" hides very different tools. bitsandbytes quantizes on the fly (NF4/INT8), is the easiest path inside Transformers, and underpins QLoRA training. GPTQ and AWQ are calibrated weight-only methods with large libraries of prebuilt repos and are the usual choice for GPU serving through vLLM or TGI. GGUF (llama.cpp) is the format for CPU-first and mixed CPU/GPU offload, with K-quants such as Q4_K_M giving the best quality per gigabyte. FP8 runs natively on Ada and Hopper GPUs and keeps near-FP16 quality while using tensor-core speed. Pick the method your runtime supports well rather than the smallest file.',
+      },
+      {
+        heading: 'Where quality actually breaks',
+        content:
+          'Quantization damage is not uniform, and it appears in a predictable order. Strict structured output — JSON adherence and tool calling — usually degrades first, then long-context coherence, then multi-step reasoning on code and math. That is why 4-bit is often near-lossless for general chat but risky for agentic or schema-bound workloads. Keep an FP16 or BF16 baseline, re-run your structured-output and tool-calling tests at each precision, and define a rollback trigger so an aggressive quant that saves memory cannot quietly ship worse answers to users.',
+      },
+      {
+        heading: 'A practical precision ladder',
+        content:
+          'When you are unsure where to begin, use a ladder and stop at the first rung that meets your constraints. Start at BF16 or FP16 for maximum quality when memory allows; step to FP8 on Ada or Hopper hardware for near-identical quality with better throughput; drop to INT8 as a widely safe production midpoint; and move to 4-bit — GPTQ, AWQ, or a GGUF K-quant — only when memory or cost genuinely forces it. Descend one rung at a time and re-run your evaluation suite at each step, because the right stopping point depends on the specific model and task rather than a universal rule. Many toolkits also let you keep sensitive layers — the embeddings, the output head, or attention projections — at higher precision while quantizing the bulk of the weights, which recovers noticeable quality at almost no extra memory cost. Documenting which rung you chose, and why, makes the decision easy to revisit when a newer quantization method or a larger GPU shifts the trade-off later.',
+      },
+    ],
+    checklist: [
+      'Compute weights + KV cache + overhead before committing to a precision.',
+      'Choose the method by runtime: bitsandbytes, GPTQ/AWQ, GGUF, or FP8.',
+      'Prefer prebuilt, well-calibrated quants over ad-hoc one-off conversions.',
+      'Re-test JSON output and tool calling at every precision level.',
+      'Keep a higher-precision fallback and a defined rollback threshold.',
+    ],
+    faq: [
+      {
+        q: 'Does 4-bit always halve quality?',
+        a: 'No. For general chat it is often close to lossless, but for code, math, agentic loops, and strict JSON it can regress noticeably. Always measure on your own prompt suite rather than trusting a single benchmark.',
+      },
+    ],
+  },
+  'open-vs-closed-models': {
+    sections: [
+      {
+        heading: 'Run the actual cost model, in both directions',
+        content:
+          'Closed-API cost is tokens × price: it scales linearly with usage and carries no infrastructure work. Self-hosting an open model is mostly a fixed cost — GPU rental or amortization plus engineering and on-call time — that you pay whether or not the GPUs are busy. The break-even point is simple to estimate: divide your monthly GPU-plus-operations cost by the API price per token to get the token volume above which self-hosting is cheaper. Below that volume the API wins, and spiky traffic tilts the decision further toward the API because idle self-hosted GPUs still bill every hour.',
+      },
+      {
+        heading: 'Control, latency, and data residency are the real differentiators',
+        content:
+          'Beyond price, open models buy you control that closed APIs cannot. You can pin an exact model version so a silent provider update never breaks your prompts, keep inference inside your own region or VPC for residency and latency, and fine-tune the weights themselves. Closed APIs trade that away for frontier quality, zero operations, and fast iteration — but you accept their retention policy, rate limits, and deprecation schedule. Teams handling regulated data or source code often find these governance constraints decide the architecture before any benchmark comparison is relevant.',
+      },
+      {
+        heading: 'Keep an exit ramp from day one',
+        content:
+          'Whichever side you start on, design so the decision stays reversible. Put a thin provider abstraction in front of the model, log prompts, outputs, and evaluations in a provider-neutral format, and maintain an evaluation suite so switching is a measured comparison rather than a rewrite. A hybrid architecture then becomes easy: route hard or premium requests to a closed frontier API and send bulk, cheap, or privacy-sensitive traffic to a self-hosted open model.',
+      },
+      {
+        heading: 'Total cost of ownership beyond the invoice',
+        content:
+          'The line items people forget are usually the ones that decide the real cost. On the closed side, budget for rate-limit headroom, retries, prompt-caching discounts, and the engineering time to adapt when the provider deprecates a model. On the open side, the GPU is rarely the largest number: staffing for on-call and upgrades, observability and load-testing infrastructure, and the effort to re-tune prompts and re-validate quality after every model update often dominate a twelve-month view. A useful exercise is to write both totals as fully loaded monthly figures — including people, not just compute — and compare them at your realistic traffic, then again at two and five times that traffic. That sensitivity check frequently flips the answer, because the option that is cheapest at launch is often not the one that stays cheapest as usage grows and reliability expectations rise.',
+      },
+    ],
+    checklist: [
+      'Compute the break-even token volume before assuming open is cheaper.',
+      'List version-pinning, residency, and retention requirements up front.',
+      'Check the closed provider deprecation and data-retention policy.',
+      'Add a provider abstraction layer before deep integration work.',
+      'Keep a portable evaluation suite so migration stays evidence-based.',
+    ],
+    faq: [
+      {
+        q: 'At what scale does self-hosting beat an API?',
+        a: 'When steady token volume exceeds the break-even point (monthly GPU + operations cost divided by API price per token) and traffic is predictable enough to keep the GPUs utilized. Spiky or low volume usually favors a managed API. Re-run the calculation whenever your pricing, traffic, or hardware costs change, because the break-even point moves with all three at once.',
+      },
+    ],
+  },
+  'llama-vs-qwen-vs-gemma-coding': {
+    sections: [
+      {
+        heading: 'How the three open families actually differ for code',
+        content:
+          'Treat these as current-generation signals to verify on your repository, not fixed rankings. Qwen — especially the Qwen2.5-Coder line in 1.5B, 7B, 14B, and 32B — is the strongest open code family across sizes right now, with long context and fill-in-the-middle support; the 32B variant competes with much larger models on HumanEval and MBPP. Llama 3.x Instruct (8B, 70B) is a capable generalist with the broadest fine-tune and tooling ecosystem, though it no longer leads pure coding benchmarks. Gemma 2 and 3 (2B to 27B) are efficient and strong at reasoning and multilingual work, but have a smaller coding-specialized lineage.',
+      },
+      {
+        heading: 'Pick the size that fits your GPU, then the task',
+        content:
+          'Shortlist by what your hardware can hold before comparing quality. At 4-bit, a 7B model fits comfortably on 8–12 GB, a 32B needs roughly 24 GB, and a 70B wants multiple GPUs or aggressive quantization. Then match model to job: for inline autocomplete a fast 7B fill-in-the-middle model beats a slow 70B, while multi-file refactors and reliable bug-fixing reward a larger model with long context. Choosing a model that does not fit, or a slow one for latency-sensitive completion, hurts developer experience more than a few benchmark points ever help.',
+      },
+      {
+        heading: 'Evaluate on first-pass success, not leaderboards',
+        content:
+          'HumanEval, MBPP, and SWE-bench are directional only. Build a 20–50 task suite from your own repository — real bug fixes, refactors, and test generation — and score pass-on-first-attempt and edit-acceptance rate with precision and context held fixed. That measures the experience your team will actually have, which public leaderboards cannot.',
+      },
+      {
+        heading: 'Check the license and context terms, not just quality',
+        content:
+          'Two models with similar benchmark scores can carry very different obligations. Llama ships under a community license with an acceptable-use policy and a monthly-active-user threshold that matters for large products; Qwen and Gemma have their own terms; and some coding-tuned forks add further restrictions. Before standardizing on a family, confirm the license permits your commercial and hosting use, and check the real usable context length rather than the advertised maximum, since long-context quality often falls off well before the stated limit. For coding specifically, verify the model supports the interaction mode you need — fill-in-the-middle for inline completion, or a chat template that plays well with your agent framework — because a mismatch there costs more day to day than a small benchmark gap.',
+      },
+    ],
+    checklist: [
+      'Shortlist by GPU-fitting size before comparing model quality.',
+      'Prefer Qwen2.5-Coder sizes for code-heavy local workflows.',
+      'Use fill-in-the-middle models for inline completion.',
+      'Build an evaluation set from your real repository tasks.',
+      'Score first-pass pass rate and edit-acceptance, not benchmarks alone.',
+    ],
+    faq: [
+      {
+        q: 'Which open family is best for coding right now?',
+        a: 'For most local setups Qwen2.5-Coder leads open-weight code quality per size, Llama wins on ecosystem breadth, and Gemma on efficiency. Treat this as a starting point and validate on your own repository tasks.',
+      },
+    ],
+  },
+  'best-models-low-vram': {
+    sections: [
+      {
+        heading: 'The math that decides each tier',
+        content:
+          'Usable VRAM is the card total minus roughly 0.5–1 GB of OS and driver overhead, minus the KV cache that grows with context and concurrency. At 4-bit, weight memory is about parameters × 0.5 bytes, so the tiers fall out cleanly: 8 GB holds a 7B model at 4-bit with modest context, 16 GB holds a 13–14B at 4-bit or a 7B in FP16 with room for cache, and 24 GB holds a 32B at 4-bit or a 14B in FP16 with longer context. Always leave 1–2 GB of headroom for KV growth rather than sizing to the exact weight footprint.',
+      },
+      {
+        heading: 'Concrete starting points per tier',
+        content:
+          'Use these as starting points to confirm in the VRAM calculator, not guarantees. On 8 GB, a 7B-class 4-bit model such as Qwen2.5-7B, Llama-3.1-8B, or Mistral-7B works, or drop to a 3–4B model when you need long context. On 16 GB, a 14B at 4-bit or a 7B in FP16 makes a solid coding or document assistant. On 24 GB, a 32B at 4-bit (for example Qwen2.5-32B) or a 14B in FP16 with extended context becomes realistic. Verify the exact model and context length before committing.',
+      },
+      {
+        heading: 'What breaks these plans',
+        content:
+          'The failures are almost always memory growth you did not budget for. Long conversations expand the KV cache linearly and can OOM a setup that loaded fine on a short prompt; concurrency multiplies that cache per active request; and mixture-of-experts models must keep every expert resident even though only a couple are active per token, so their low active-parameter count understates VRAM. Cap context length, cap concurrency, and test the worst-case prompt before calling a plan safe.',
+      },
+      {
+        heading: 'Reclaim memory before dropping model size',
+        content:
+          'When a model almost fits, several levers recover headroom before you accept a smaller checkpoint. Quantizing the KV cache to FP8 or INT8 (supported in vLLM and TensorRT-LLM) can roughly halve cache memory at long context; choosing a grouped-query-attention model shrinks the cache structurally; and lowering the reserved maximum sequence length to the context you actually send stops the runtime pre-allocating for the worst case. Reducing batch size and enabling paged attention or prefix caching further raises effective capacity. Work through these first, because a 14B model that fits after cache quantization usually beats a 7B model that fit only because you gave up half the parameters — but re-run your quality tests after each change, since FP8 cache and aggressive context caps have their own small trade-offs.',
+      },
+    ],
+    checklist: [
+      'Compute usable VRAM as card total minus overhead minus KV cache.',
+      'Pick a 4-bit model that leaves 1–2 GB of headroom for cache.',
+      'Verify the exact model and context in the VRAM calculator.',
+      'Stress-test long-context and concurrent requests, not one prompt.',
+      'Prefer dense models over MoE when VRAM is tight.',
+    ],
+    faq: [
+      {
+        q: 'Can I run a 13B model on 8GB?',
+        a: 'Only with aggressive 3-bit quantization and a very small context, and quality suffers noticeably on code and reasoning. A 7B model at 4-bit is usually the better choice on 8 GB because it leaves headroom for the KV cache and keeps quality closer to the full-precision model.',
+      },
+    ],
+  },
+  'best-multilingual-llms': {
+    sections: [
+      {
+        heading: 'Tokenizer efficiency is a hidden multilingual cost',
+        content:
+          'Before comparing accuracy, check how each model tokenizes your languages. English-centric tokenizers split non-Latin scripts such as Devanagari or Tamil into many more tokens per word than English, which inflates latency and cost and consumes context faster. That "fertility" difference can make a nominally capable model impractical for Indic products. Models trained with multilingual tokenizers — Gemma, Qwen, Llama 3.x, and dedicated efforts like Cohere Aya — generally represent Indian-language text more compactly, so measuring tokens-per-word on your own sentences is a cheap and decisive first filter.',
+      },
+      {
+        heading: 'Families with real multilingual coverage',
+        content:
+          'Coverage varies widely. Gemma and Qwen carry broad multilingual training, Llama 3.x improved its non-English performance markedly, and specialized projects target Indian languages directly — Cohere Aya, AI4Bharat-style Indic models, and Sarvam among them. For an English-plus-Indic product, shortlist by three things in order: tokenizer efficiency on the target scripts, instruction-following quality in each language, and stability when users code-switch within a single prompt. Only then compare general benchmark scores, which rarely reflect regional phrasing.',
+      },
+      {
+        heading: 'Build Indic-aware evaluation sets',
+        content:
+          'Translation benchmarks miss how people actually type. Include transliteration (Hindi written in Latin script), code-switching such as Hinglish, formal versus colloquial register, and domain vocabulary from finance, health, and government. Track correction and escalation rates per language rather than a single global accuracy number, which can hide one weak language that quietly erodes trust for an entire audience segment.',
+      },
+      {
+        heading: 'Lift regional quality with retrieval and glossaries',
+        content:
+          'When a capable multilingual model still stumbles on your domain, the fix is often not a different model but better grounding. A retrieval layer built on regional and domain content lets the model answer from correct local sources instead of guessing, and a curated glossary — mapping product, legal, and medical terms to their accepted translations — keeps terminology consistent across a language where the base model would otherwise drift. For English-plus-Indic products this combination usually raises quality faster than chasing a higher benchmark score, because it targets the exact failure modes real users hit: unfamiliar named entities, code-mixed phrasing, and specialized vocabulary.',
+      },
+      {
+        heading: 'Decide between one model and language routing',
+        content:
+          'A single strong multilingual model is the simplest starting point, but at scale it can be worth routing by language or script. If one language shows persistently high correction rates, sending its traffic to a model specialized for that language — or to a different prompt and retrieval configuration — can lift quality without regressing the others. Weigh that gain against the added operational complexity of running and evaluating more than one path, and let per-language metrics, not intuition, decide when routing earns its keep.',
+      },
+    ],
+    checklist: [
+      'Measure tokenizer fertility (tokens per word) on each target script.',
+      'Shortlist multilingual-trained families: Gemma, Qwen, Aya, Indic-specific.',
+      'Test transliteration and Hinglish code-switching explicitly.',
+      'Check domain terminology consistency per language.',
+      'Track correction rate per language, not one global score.',
+    ],
+    faq: [
+      {
+        q: 'Is a bigger model always better multilingually?',
+        a: 'No. Tokenizer coverage and language-specific training data usually matter more than raw size. A smaller model trained well on your languages can beat a larger English-centric one on both quality and cost, and it will often produce shorter, cheaper token sequences on non-Latin scripts as a bonus. Always confirm this on your own languages rather than assuming the larger model wins.',
+      },
+    ],
+  },
+  'fastest-models-low-latency-apps': {
+    sections: [
+      {
+        heading: 'Separate time-to-first-token from tokens-per-second',
+        content:
+          'Perceived speed is two distinct numbers. Time-to-first-token is dominated by prefill, which scales with prompt length and any queueing, so shortening the prompt cuts it immediately. Tokens-per-second is decode, which is memory-bandwidth-bound and set by model size, precision, and batching, so a smaller or quantized model raises it. Streaming makes an app feel fast by showing the first tokens quickly, but it does not reduce total completion time — you still have to measure the whole request. Optimizing the wrong half is the most common latency mistake.',
+      },
+      {
+        heading: 'Model-level levers, cheapest first',
+        content:
+          'Work from the cheapest change upward. Quantizing to 4-bit or FP8 raises decode throughput and frees memory; right-sizing the model — routing easy requests to a fast 7B rather than a 70B — often cuts latency dramatically with acceptable quality; trimming prompt instructions and oversized retrieval payloads reduces prefill; and capping maximum output tokens bounds the worst case. A distilled or 7B model at 4-bit frequently beats a large model on latency-sensitive paths while still passing your quality bar.',
+      },
+      {
+        heading: 'Serving-level levers',
+        content:
+          'The serving stack matters as much as the model. A batching server such as vLLM or TGI with continuous batching keeps concurrent requests from serializing; prefix caching skips repeated prefill for shared system prompts; and speculative decoding can raise the decode rate. Load-test at real concurrency and watch p95 latency and timeout rate rather than single-request averages, which hide the tail behavior users actually feel.',
+      },
+      {
+        heading: 'Cache and precompute the repeatable work',
+        content:
+          'The fastest request is the one you never fully run. Response caching for identical or near-identical prompts eliminates the model call entirely for common queries; embedding and retrieval caches avoid recomputing vectors for repeated documents; and prompt-prefix caching reuses the prefill of a shared system prompt across every user turn. For classification and routing, a small local model or even a rules layer can answer the easy majority instantly and escalate only the ambiguous cases. Each of these removes work from the hot path rather than making the model faster, which is usually the cheapest latency win available and the first place to look before you reach for bigger or more expensive hardware.',
+      },
+      {
+        heading: 'Design the timeout and fallback path deliberately',
+        content:
+          'Tail latency is a product decision, not just an infrastructure metric. Set explicit per-stage timeouts, and decide in advance what happens when one is exceeded — return a partial streamed answer, retry on a faster model, or degrade gracefully to a cached or simpler response. An app that occasionally answers a little worse but always answers quickly usually feels better than one that is fast on average but stalls unpredictably. Measure how often each fallback fires, because a fallback that triggers constantly is really a capacity problem wearing a disguise.',
+      },
+    ],
+    checklist: [
+      'Measure time-to-first-token and tokens-per-second separately.',
+      'Shorten prompt and retrieval payload before scaling infrastructure.',
+      'Quantize and right-size the model to the request type.',
+      'Use continuous batching and prefix caching in the serving layer.',
+      'Optimize p95 latency and timeout rate, not the average.',
+    ],
+    faq: [
+      {
+        q: 'Does a smaller model always mean lower latency?',
+        a: 'For raw decode rate yes, but if the smaller model fails more often and triggers retries or corrections, total task-completion time can rise. Optimize for successful-completion latency, not raw generation speed, and route only the requests the smaller model handles reliably to it while sending harder ones to a stronger model.',
+      },
+    ],
+  },
+  'build-local-ai-assistant-8gb': {
+    sections: [
+      {
+        heading: 'Pick a runtime and a right-sized quant',
+        content:
+          'On 8 GB, use a llama.cpp-based runtime — Ollama or LM Studio — with a GGUF Q4_K_M build of a 7B model, or a 3–4B model when you need longer context. Leave roughly 1.5 GB for the KV cache and system. Tune the number of offloaded GPU layers (llama.cpp calls this -ngl) to push as many layers onto the card as fit and keep the rest on the CPU, then measure tokens per second after each change. The goal is a stable configuration with headroom, not the largest model that technically loads.',
+      },
+      {
+        heading: 'Add lightweight retrieval instead of a bigger model',
+        content:
+          'A small embedding model plus a local vector store such as Chroma, FAISS, or SQLite lets a 7B assistant answer from your own documents far better than upgrading the base model would. Chunk documents on semantic boundaries, attach source metadata for citations, and keep top-k small so retrieved context does not blow the tight KV budget. On constrained hardware, better context selection beats a larger checkpoint almost every time.',
+      },
+      {
+        heading: 'Guardrails that keep 8GB stable',
+        content:
+          'Stability on 8 GB comes from limits, not luck. Cap context length and maximum output tokens, serialize requests so only one runs at a time, and add a fallback when a prompt is too long. Log correction rate, truncation events, and latency weekly, and tune prompts and retrieval before switching model families — most early failures are workflow problems rather than model limitations.',
+      },
+      {
+        heading: 'A minimal, reproducible setup path',
+        content:
+          'Keep the first build small enough to rebuild from scratch in an afternoon. Install one runtime (Ollama is the simplest), pull a single Q4_K_M 7B model, and confirm it generates at an acceptable tokens-per-second before adding anything. Then layer retrieval: a compact embedding model, a local vector store, and an ingestion script that chunks your documents and attaches source metadata. Wire a thin chat interface last. Pin the exact model tag, embedding model, and runtime version in a short README so the environment is reproducible, and keep configuration — context length, offloaded layers, top-k — in one file rather than scattered flags. This makes it trivial to roll back a change that hurt quality or stability, which on constrained hardware you will do often.',
+      },
+      {
+        heading: 'Know when 8 GB is the wrong tool',
+        content:
+          'Part of building well is recognizing the ceiling. An 8 GB assistant is excellent for personal workflows, prototypes, private document Q&A, and internal tools with light traffic. It is the wrong choice for concurrent production traffic, very long documents, or tasks that genuinely need a large model — heavy multi-file code reasoning or complex agentic loops. When your logs show frequent truncation, rising correction rates, or queueing under real use, that is the signal to move to a larger GPU or a hosted API rather than fighting the memory limit with ever more aggressive quantization.',
+      },
+    ],
+    checklist: [
+      'Run a GGUF Q4_K_M 7B (or 3–4B for long context) via Ollama or llama.cpp.',
+      'Tune GPU-offloaded layers to fit, leaving ~1.5 GB KV headroom.',
+      'Add a small embedding model and a local vector store.',
+      'Cap context, max tokens, and concurrency to one request.',
+      'Log corrections, truncations, and latency weekly before changing models.',
+    ],
+    faq: [
+      {
+        q: 'Ollama or llama.cpp directly on 8GB?',
+        a: 'Ollama wraps llama.cpp with easy model management and is the better default. Drop to raw llama.cpp only when you need fine control over offloaded layers, KV-cache type, or a custom quantization.',
+      },
+    ],
+  },
+  'deploy-small-rag-app': {
+    sections: [
+      {
+        heading: 'Chunking and embedding choices decide retrieval',
+        content:
+          'Retrieval quality is set long before the generation model runs. Start with chunks of roughly 300–500 tokens and 10–15% overlap, and keep semantic units intact rather than splitting mid-table or mid-function. Match the embedding model to your domain and language, and store title, URL, and section metadata so you can filter results and produce citations. Whenever you change chunking, re-embed — stale vectors quietly degrade retrieval while everything appears to still work.',
+      },
+      {
+        heading: 'Measure retrieval and grounding separately',
+        content:
+          'When answers are wrong, you need to know why. Track retrieval hit rate — was the correct passage in the top-k? — apart from answer quality, and add unsupported-answer rate and citation correctness. If the right passage never reaches the model, the fix is chunking or reranking; if it does but the answer is still wrong, the fix is the prompt or the generator. Add a low-confidence fallback that declines rather than inventing an answer.',
+      },
+      {
+        heading: 'Keep the source data fresh and scoped',
+        content:
+          'A RAG app is only as current as its index. Decide up front how documents get updated — scheduled re-ingestion, a webhook on source changes, or manual refresh — and re-embed whenever content or chunking changes so the vectors never drift from the truth. Keep the corpus scoped to what the app actually answers; adding unrelated documents dilutes retrieval precision and raises the chance of confidently citing the wrong source. Attach a last-updated timestamp to chunks so stale answers are diagnosable, and prune or version content that has been superseded rather than leaving contradictory passages in the index.',
+      },
+    ],
+    checklist: [
+      'Start with ~300–500 token chunks and light overlap on semantic boundaries.',
+      'Match the embedding model to your domain and language.',
+      'Store title, URL, and section metadata for filtering and citations.',
+      'Measure retrieval hit rate separately from answer quality.',
+      'Add a decline-on-low-confidence fallback instead of hallucinating.',
+    ],
+    faq: [
+      {
+        q: 'How do I tell a retrieval problem from a generation problem?',
+        a: 'Check retrieval hit rate first. If the correct passage is not in the top-k results, fix chunking or add reranking. If it is present but the answer is still wrong, fix the prompt or the generation model.',
+      },
+    ],
+  },
+  'prompt-patterns-that-work': {
+    sections: [
+      {
+        heading: 'Structure the context, not just the instructions',
+        content:
+          'How you lay out a prompt matters as much as what it says. Put instructions before long context, use clear delimiters — XML-like tags or fenced blocks — to separate role, data, and examples, and reference each input by an explicit name. Models attend most reliably to the beginning and end of a long prompt, so the critical rule and the required output format belong at the edges rather than buried in the middle where they are most likely to be ignored.',
+      },
+      {
+        heading: 'Make prompt quality measurable',
+        content:
+          'Treat a production prompt like a function with a test suite: a set of inputs paired with expected properties such as valid JSON, a correct refusal, or specific field values. Score format-validity and correctness on every edit before rollout. That turns "the new prompt feels better" into evidence and catches regressions when you change the underlying model or add new retrieval context, exactly the moments when prompt behavior silently shifts.',
+      },
+      {
+        heading: 'Specify refusal and fallback behavior explicitly',
+        content:
+          'Most prompt failures in production are not wrong answers but confident answers to questions the model should have declined. Spell out what to do when the input is missing, ambiguous, or out of scope: refuse with a specific message, ask a clarifying question, or return a defined empty result. For retrieval-backed prompts, instruct the model to answer only from the provided context and to say plainly when that context is insufficient. Making the failure path as explicit as the success path is what separates a prompt that demos well from one that behaves predictably under the messy, unexpected inputs real users send.',
+      },
+    ],
+    checklist: [
+      'Order the prompt instruction, then context, then examples, with delimiters.',
+      'Place the critical rule and output format at the start and end.',
+      'Reference every input by an explicit, named variable.',
+      'Keep a scored regression suite for each production prompt.',
+      'Re-run the suite on every model or retrieval change.',
+    ],
+    faq: [
+      {
+        q: 'Where should the most important instruction go?',
+        a: 'Near the start and restated near the end. Models attend most reliably to the beginning and end of a long prompt, so critical rules and the required output format should sit at the edges, not the middle.',
+      },
+    ],
+  },
 };
 
 const ensureGuideDepth = (guide) => {
