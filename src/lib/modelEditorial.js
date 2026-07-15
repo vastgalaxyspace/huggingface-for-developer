@@ -1,5 +1,7 @@
-import { absoluteUrl, SITE_NAME } from "./seo";
-import { isModelIndexable, modelPath } from "./modelIndexing";
+// Extensions are explicit so scripts/model-indexing-check.mjs can import this
+// module under plain Node ESM, which does not do extensionless resolution.
+import { absoluteUrl, SITE_NAME } from "./seo.js";
+import { isModelIndexable, modelPath } from "./modelIndexing.js";
 
 const formatNumber = (value) => {
   const n = Number(value || 0);
@@ -33,34 +35,56 @@ export function getModelFamily(modelId = "") {
   return "Transformer";
 }
 
+// Families with hand-written, model-specific guidance. Every indexable model must
+// resolve to one of these — a page that falls through to GENERIC_GUIDANCE below is
+// boilerplate and must not be indexed. `npm run indexing:check` enforces that.
+const FAMILY_GUIDANCE = {
+  "Llama 4 Scout": {
+    overview: "Llama 4 Scout is most relevant for teams evaluating current-generation open-weight assistant models with strong long-context and instruction-following ambitions.",
+    deployment: "Treat Scout-class models as production candidates for retrieval, agents, and coding assistants only after measuring prompt latency and memory pressure on your target GPU stack.",
+    quantization: "Start with BF16 or FP16 for quality baselines, then test AWQ or GPTQ for GPU inference and GGUF for llama.cpp-style local deployment.",
+  },
+  "DeepSeek R1": {
+    overview: "DeepSeek R1 is a reasoning-focused model family, so evaluation should emphasize multi-step tasks, math, code review, tool planning, and failure recovery rather than chat fluency alone.",
+    deployment: "Use it when reasoning quality matters more than minimum latency. For production, route routine prompts to a smaller model and reserve R1-style inference for complex requests.",
+    quantization: "Reasoning models can be sensitive to aggressive quantization, so compare full precision, 8-bit, and 4-bit outputs on the same reasoning traces before rollout.",
+  },
+  "Qwen 3": {
+    overview: "Qwen 3 models are strong general-purpose open models with useful coverage across multilingual, coding, agentic, and structured-output workloads.",
+    deployment: "They are good candidates for teams that need broad task coverage and want several model sizes for routing across latency and budget tiers.",
+    quantization: "Qwen deployments commonly benefit from AWQ/GPTQ for GPU serving and GGUF variants for local inference, but structured-output tests should be rerun after quantization.",
+  },
+  "Gemma 3": {
+    overview: "Gemma 3 models are useful for developers who want compact, modern open models with practical deployment paths on consumer and workstation GPUs.",
+    deployment: "Use smaller Gemma variants for local assistants, classification, extraction, and prototypes; reserve larger variants for higher-quality generation where latency allows.",
+    quantization: "Gemma 3 can fit attractive local profiles when quantized, but compare instruction following and refusal behavior before moving a quantized variant into production.",
+  },
+  Llama: {
+    overview: "Llama 3.x remains the default open-weight baseline most teams measure against: broad tooling support, permissive-enough licensing for most products, and predictable instruction-following at 8B and 70B.",
+    deployment: "The 8B variants serve comfortably on a single 24 GB consumer card and are the usual starting point for self-hosted chat, RAG, and extraction; 70B needs a 48–80 GB card in 4-bit or two GPUs with tensor parallelism.",
+    quantization: "Llama quantizes gracefully. GGUF for llama.cpp and AWQ/GPTQ for vLLM are both well-trodden paths, and 4-bit typically holds instruction-following quality well enough for production chat.",
+  },
+  Mistral: {
+    overview: "Mistral's 7B-class models are built for efficiency: they punch above their parameter count and use grouped-query attention, which keeps the KV cache small and long prompts affordable.",
+    deployment: "A 7B Mistral fits FP16 on a 16 GB card and 4-bit on 8 GB, making it a strong pick for cost-sensitive serving, edge deployment, and high-throughput batch work where latency per request matters.",
+    quantization: "The small KV cache means quantization mostly trades against weight memory rather than context headroom, so 4-bit Mistral retains long-context usability better than larger dense models at the same VRAM budget.",
+  },
+};
+
+const GENERIC_GUIDANCE = {
+  overview: "This model should be evaluated as a transformer-based AI system where architecture, license, context length, and deployment hardware decide practical fit.",
+  deployment: "Start with a representative workload, measure latency and memory, then choose hosted API, single-GPU, or multi-GPU deployment based on observed constraints.",
+  quantization: "Use FP16 or BF16 as the quality baseline, then test 8-bit and 4-bit variants against your own prompts before accepting the memory savings.",
+};
+
 function getFamilyGuidance(family) {
-  const guidance = {
-    "Llama 4 Scout": {
-      overview: "Llama 4 Scout is most relevant for teams evaluating current-generation open-weight assistant models with strong long-context and instruction-following ambitions.",
-      deployment: "Treat Scout-class models as production candidates for retrieval, agents, and coding assistants only after measuring prompt latency and memory pressure on your target GPU stack.",
-      quantization: "Start with BF16 or FP16 for quality baselines, then test AWQ or GPTQ for GPU inference and GGUF for llama.cpp-style local deployment.",
-    },
-    "DeepSeek R1": {
-      overview: "DeepSeek R1 is a reasoning-focused model family, so evaluation should emphasize multi-step tasks, math, code review, tool planning, and failure recovery rather than chat fluency alone.",
-      deployment: "Use it when reasoning quality matters more than minimum latency. For production, route routine prompts to a smaller model and reserve R1-style inference for complex requests.",
-      quantization: "Reasoning models can be sensitive to aggressive quantization, so compare full precision, 8-bit, and 4-bit outputs on the same reasoning traces before rollout.",
-    },
-    "Qwen 3": {
-      overview: "Qwen 3 models are strong general-purpose open models with useful coverage across multilingual, coding, agentic, and structured-output workloads.",
-      deployment: "They are good candidates for teams that need broad task coverage and want several model sizes for routing across latency and budget tiers.",
-      quantization: "Qwen deployments commonly benefit from AWQ/GPTQ for GPU serving and GGUF variants for local inference, but structured-output tests should be rerun after quantization.",
-    },
-    "Gemma 3": {
-      overview: "Gemma 3 models are useful for developers who want compact, modern open models with practical deployment paths on consumer and workstation GPUs.",
-      deployment: "Use smaller Gemma variants for local assistants, classification, extraction, and prototypes; reserve larger variants for higher-quality generation where latency allows.",
-      quantization: "Gemma 3 can fit attractive local profiles when quantized, but compare instruction following and refusal behavior before moving a quantized variant into production.",
-    },
-  };
-  return guidance[family] || {
-    overview: "This model should be evaluated as a transformer-based AI system where architecture, license, context length, and deployment hardware decide practical fit.",
-    deployment: "Start with a representative workload, measure latency and memory, then choose hosted API, single-GPU, or multi-GPU deployment based on observed constraints.",
-    quantization: "Use FP16 or BF16 as the quality baseline, then test 8-bit and 4-bit variants against your own prompts before accepting the memory savings.",
-  };
+  return FAMILY_GUIDANCE[family] || GENERIC_GUIDANCE;
+}
+
+// True when the model gets hand-written guidance rather than the generic fallback.
+// This is the editorial-depth signal that indexability is checked against.
+export function hasBespokeEditorial(modelId = "") {
+  return Boolean(FAMILY_GUIDANCE[getModelFamily(modelId)]);
 }
 
 // Rough parameter count (in billions) from safetensors metadata or the VRAM estimate.

@@ -3,7 +3,7 @@ import RagTutorialContent from "../../../src/components/rag-tutorial/RagTutorial
 import { pageMetadata } from "../../../src/lib/seo";
 import { getTutorialFromFirestore } from "../../../src/lib/tutorialsFirestore";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata = pageMetadata({
   title: "Complete RAG Tutorial for Developers",

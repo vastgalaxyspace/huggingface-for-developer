@@ -1,4 +1,21 @@
 import { Code2, Gauge, ShieldCheck, DollarSign, Clock3, Layers3 } from 'lucide-react';
+import { pageMetadata } from '../../src/lib/seo';
+
+export const metadata = pageMetadata({
+  title: 'Best AI Coding Models Compared: Benchmarks, Speed & Pricing',
+  description:
+    'Compare the top AI coding models — GPT-4.1, Claude Sonnet, Gemini 2.5 Pro, Codestral, DeepSeek Coder and more — across benchmarks, real-world tasks, context window, latency, pricing, and hosting.',
+  path: '/coding-model-analysis',
+  keywords: [
+    'best AI coding model',
+    'AI coding models compared',
+    'GPT-4.1 vs Claude vs Gemini coding',
+    'DeepSeek Coder',
+    'Codestral',
+    'AI code generation benchmark',
+  ],
+  type: 'article',
+});
 
 const LAST_UPDATED = 'April 15, 2026';
 

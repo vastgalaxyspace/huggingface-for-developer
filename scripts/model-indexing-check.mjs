@@ -1,4 +1,5 @@
 import { getIndexableModelIds, isModelIndexable, modelPath } from '../src/lib/modelIndexing.js';
+import { hasBespokeEditorial } from '../src/lib/modelEditorial.js';
 
 const indexed = getIndexableModelIds();
 const failures = [];
@@ -9,6 +10,13 @@ for (const modelId of indexed) {
   }
   if (!modelPath(modelId).startsWith('/model/')) {
     failures.push(`${modelId} produced an invalid model path`);
+  }
+  // An indexable page must carry hand-written family guidance. Without this, a model
+  // can be added to the whitelist and quietly ship a page of generic boilerplate.
+  if (!hasBespokeEditorial(modelId)) {
+    failures.push(
+      `${modelId} is indexable but falls back to generic editorial — add a family entry to FAMILY_GUIDANCE in src/lib/modelEditorial.js, or drop it from INDEXABLE_MODEL_IDS`
+    );
   }
 }
 
@@ -30,4 +38,6 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`Model indexing check passed for ${indexed.length} curated model URLs.`);
+console.log(
+  `Model indexing check passed for ${indexed.length} curated model URLs (all carry bespoke editorial).`
+);
