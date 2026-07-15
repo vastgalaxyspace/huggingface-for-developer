@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Cpu } from "lucide-react";
 import ModelSearchBar from "./ModelSearchBar";
@@ -9,6 +9,7 @@ import UsageIntentSelector from "./UsageIntentSelector";
 import BudgetSelector from "./BudgetSelector";
 import GpuResultsList from "./GpuResultsList";
 import QuantizedAlternatives from "./QuantizedAlternatives";
+import ShareButton from "../common/ShareButton";
 import { detectModelProfile } from "../../utils/gpuPickerModelDetection";
 import { useGpuPicker } from "../../hooks/useGpuPicker";
 
@@ -22,10 +23,9 @@ const PRECISION_BYTES = {
 };
 
 export default function GpuPickerPage() {
-  const [modelId, setModelId] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return new URLSearchParams(window.location.search).get("model") || "";
-  });
+  // Defaults must match on server and client to avoid a hydration mismatch; the
+  // URL is applied after mount in the effect below.
+  const [modelId, setModelId] = useState("");
   const [fetchState, setFetchState] = useState("idle");
   const [error, setError] = useState("");
   const [rawModelData, setRawModelData] = useState(null);
@@ -36,6 +36,7 @@ export default function GpuPickerPage() {
   const [budgetTier, setBudgetTier] = useState("any");
   const [vendorPreference, setVendorPreference] = useState("all");
   const [compareIds, setCompareIds] = useState([]);
+  const initializedRef = useRef(false);
 
   const modelProfile = useMemo(() => {
     if (!rawModelData) return null;
@@ -92,6 +93,46 @@ export default function GpuPickerPage() {
       setError("Failed to reach HuggingFace API.");
     }
   };
+
+  // Restore state from the URL on first load so a shared link lands on the same
+  // shortlist. Runs after mount (not in useState initializers) so server and
+  // client render the same defaults and hydration stays clean.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const m = params.get("model");
+    const use = params.get("use") || "";
+    const budget = params.get("budget");
+    const vendor = params.get("vendor");
+    if (budget) setBudgetTier(budget);
+    if (vendor) setVendorPreference(vendor);
+    let cancelled = false;
+
+    (async () => {
+      if (m) {
+        await fetchModel(m);
+        if (!cancelled && use) setUsageIntent(use);
+      }
+      if (!cancelled) initializedRef.current = true;
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep the URL in sync with the fetched model + filters so it stays copyable.
+  useEffect(() => {
+    if (!initializedRef.current) return;
+    const params = new URLSearchParams();
+    const fetchedId = rawModelData?.metadata?.id;
+    if (fetchedId) params.set("model", fetchedId);
+    if (usageIntent) params.set("use", usageIntent);
+    if (budgetTier !== "any") params.set("budget", budgetTier);
+    if (vendorPreference !== "all") params.set("vendor", vendorPreference);
+    const qs = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
+  }, [rawModelData, usageIntent, budgetTier, vendorPreference]);
 
   const onOverrideChange = (key, value) => {
     setOverrides((current) => ({ ...current, [key]: value }));
@@ -153,6 +194,15 @@ export default function GpuPickerPage() {
               onBudgetChange={setBudgetTier}
               onVendorChange={setVendorPreference}
             />
+          </div>
+        ) : null}
+
+        {phase === "ready" ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+            <p className="text-sm font-semibold text-gray-600">
+              Share this shortlist — the link keeps the model, intent, and budget filters.
+            </p>
+            <ShareButton label="Share link" />
           </div>
         ) : null}
 
