@@ -1339,7 +1339,269 @@ const depthExpansionFor = (guide) => ({
   ],
 });
 
+// Genuine, topic-specific depth per guide. Guides that reach real length through
+// their own material must never fall through to depthExpansionFor(), whose sections
+// are identical across pages and read as duplicate/templated content. Add a slug
+// here to give that page bespoke depth instead of the generic boilerplate.
+const TOPIC_DEPTH = {
+  'what-is-vllm': {
+    sections: [
+      {
+        heading: '9. Continuous batching is the other half of the story',
+        content:
+          'PagedAttention gets the headlines, but continuous (in-flight) batching is what keeps the GPU busy under real traffic. Naive servers wait for a fixed batch to fill and finish together, so one slow 2,000-token generation stalls seven short replies. vLLM instead admits and evicts requests at every decoding step: as soon as one sequence emits its stop token, its slot is freed and a queued request takes its place. That is why throughput scales with bursty, mixed-length traffic rather than collapsing to the slowest request in each batch.',
+      },
+      {
+        heading: '10. The configuration knobs that decide fit',
+        content:
+          'Four settings govern most vLLM deployments. gpu-memory-utilization caps how much VRAM the KV cache pool may claim (leave headroom or you will OOM under load). max-model-len reserves cache for the worst-case context; setting it to the model maximum when you only send 4K prompts silently halves your concurrency. max-num-seqs bounds how many sequences run at once, and tensor-parallel-size shards the model across GPUs. Tune max-model-len to real prompt lengths first — it is the cheapest way to raise the number of concurrent users a card can hold.',
+      },
+    ],
+    checklist: [
+      'Confirm the model architecture is on the vLLM supported list before committing.',
+      'Set gpu-memory-utilization below 1.0 so a traffic spike does not OOM the server.',
+      'Cap max-model-len to the context you actually send, not the model maximum.',
+      'Load-test concurrency (max-num-seqs) at p95 prompt length, not a single request.',
+      'Pin the vLLM version; kernel and quantization support shifts between releases.',
+    ],
+    faq: [
+      {
+        q: 'Does vLLM run quantized models?',
+        a: 'Yes — AWQ, GPTQ, FP8, and (in recent versions) some GGUF and INT8 KV-cache paths are supported, though exact coverage varies by release and GPU. Validate answer quality under the specific quantization before shipping.',
+      },
+    ],
+  },
+  'what-is-quantization': {
+    sections: [
+      {
+        heading: '9. Weight-only versus full quantization',
+        content:
+          'Not all "4-bit" or "8-bit" labels mean the same thing. Weight-only methods such as GPTQ and AWQ compress the stored weights but dequantize to FP16 for the actual matrix multiply, so they mainly save memory and bandwidth. Full schemes such as W8A8 or FP8 also quantize the activations, which can unlock faster tensor-core math but are more sensitive to outliers. Knowing which one you are using explains why two "INT8" models can differ in both speed and quality on the same GPU.',
+      },
+      {
+        heading: '10. Calibration and outliers decide the quality hit',
+        content:
+          'Post-training quantization estimates the range of each weight or activation from a small calibration set. A handful of outlier channels carry disproportionate magnitude, and squashing them is where accuracy is lost. AWQ works by identifying and protecting the most salient weight channels; GPTQ minimizes layer-wise reconstruction error greedily. The practical consequence: a poorly chosen calibration set — wrong domain, too few samples — produces a model that benchmarks fine but fails on your actual prompts. Prefer published quants calibrated on general data, and always re-test on your workload.',
+      },
+    ],
+    checklist: [
+      'Note whether the method is weight-only (GPTQ/AWQ) or full (W8A8/FP8) — they behave differently.',
+      'Keep an FP16/BF16 baseline run for every quality comparison.',
+      'Re-test structured output and tool calling; JSON adherence degrades first.',
+      'Check the calibration domain of any downloaded quant matches your use case.',
+      'Record the exact quant repo, method, and revision as a deployment dependency.',
+    ],
+    faq: [
+      {
+        q: 'What is the difference between GPTQ and AWQ?',
+        a: 'Both are weight-only post-training methods. GPTQ minimizes layer-wise reconstruction error; AWQ scales and protects the most salient weight channels using activation statistics. AWQ often preserves quality slightly better at 4-bit, while GPTQ has broader tooling and prebuilt models.',
+      },
+    ],
+  },
+  'how-gguf-works': {
+    sections: [
+      {
+        heading: '9. Anatomy of a GGUF file',
+        content:
+          'A GGUF file is a single self-describing container: it stores the quantized tensors alongside metadata for the architecture, tokenizer, RoPE settings, and often the chat template. That is why a runtime can load one file and run the model without the scattered config.json, tokenizer.json, and shard files a Transformers checkpoint needs. The metadata block is also why newer llama.cpp builds can refuse or mis-run an older GGUF: if the architecture keys predate a format change, the file must be re-converted.',
+      },
+      {
+        heading: '10. Reading the K-quant suffix',
+        content:
+          'GGUF filenames encode the quantization scheme, and the modern "K-quant" family (Q4_K_M, Q5_K_M, Q6_K, Q8_0) is what most users should pick. K-quants assign mixed per-block precision — attention and feed-forward tensors that matter most keep more bits — which is why Q4_K_M beats the older flat Q4_0 at the same size. The _M and _S suffixes mean medium and small variants of that trade. Importance-matrix (imatrix) quants push this further by calibrating which weights to protect. For most hardware, Q4_K_M or Q5_K_M is the quality-per-gigabyte sweet spot.',
+      },
+    ],
+    checklist: [
+      'Match the GGUF quant level (Q4_K_M / Q5_K_M / Q6_K) to your VRAM, not the smallest file.',
+      'Update llama.cpp before blaming a model — GGUF format keys change over time.',
+      'Prefer imatrix or K-quants over legacy Q4_0/Q4_1 at the same size.',
+      'Set -ngl (GPU layers) deliberately and measure tokens/sec after each change.',
+      'Watch KV-cache growth at long context even when the weight file is small.',
+    ],
+    faq: [
+      {
+        q: 'What does the _K_M suffix mean in a GGUF filename?',
+        a: 'K marks a K-quant (mixed per-block precision that protects the most important tensors), and M is the medium-size variant (S is smaller, larger blocks keep more bits). Q4_K_M is the common balanced default.',
+      },
+    ],
+  },
+  'tensor-parallelism': {
+    sections: [
+      {
+        heading: '9. How the split actually works',
+        content:
+          'Tensor parallelism partitions the big matmuls inside each layer. In the Megatron pattern, attention projections and the first feed-forward matrix are split column-wise, the second feed-forward matrix row-wise, and an all-reduce combines partial results after each block. Every token therefore triggers cross-GPU communication twice per layer. This is why tensor parallelism is latency-sensitive and wants NVLink or NVSwitch: on PCIe-only links the all-reduce traffic can erase the compute savings, especially at small batch sizes where there is little work to hide the communication behind.',
+      },
+      {
+        heading: '10. Tensor vs pipeline vs data parallel',
+        content:
+          'These three axes solve different problems. Tensor parallelism splits within a layer to cut per-GPU memory and latency, but needs fast interconnect. Pipeline parallelism assigns whole layer ranges to different GPUs; it tolerates slower links but introduces pipeline "bubbles" that hurt latency at low batch. Data parallelism replicates the full model to raise throughput and does nothing for a model that does not fit. Large clusters combine them — tensor parallel inside a node, pipeline across nodes — but for a single 8-GPU box, plain tensor parallelism is usually the simplest path to serving a 70B model.',
+      },
+    ],
+    checklist: [
+      'Confirm the interconnect (NVLink vs PCIe) before choosing a tensor-parallel size.',
+      'Set tensor-parallel-size to a value that divides the attention head count.',
+      'Compare against a 4-bit single-GPU run before committing to multi-GPU complexity.',
+      'Measure p95 latency, not just aggregate throughput, as you add GPUs.',
+      'Pin runtime and driver versions; sharded paths are the most version-sensitive.',
+    ],
+    faq: [
+      {
+        q: 'Why must the tensor-parallel size divide the number of attention heads?',
+        a: 'Each GPU handles a whole-number slice of the attention heads. If the head count is not divisible by the tensor-parallel size, the heads cannot be split evenly and the runtime will reject the configuration.',
+      },
+    ],
+  },
+  'kv-cache-optimization': {
+    sections: [
+      {
+        heading: '9. Sizing the cache with the actual formula',
+        content:
+          'KV cache memory is predictable: roughly 2 × layers × kv_heads × head_dim × sequence_length × batch × bytes_per_element. The factor of two is keys plus values. Work a real example: a 32-layer model with 8 key-value heads, 128 head dim, at 32K tokens and FP16 costs about 2 × 32 × 8 × 128 × 32768 × 2 bytes ≈ 4.3 GB per sequence — often larger than a quantized copy of the weights. Plugging your own numbers into this formula, rather than trusting the weight size alone, is what prevents production OOMs.',
+      },
+      {
+        heading: '10. The levers that actually cut cache memory',
+        content:
+          'Because kv_heads is a direct multiplier, grouped-query and multi-query attention are the biggest structural savings — a model with 8 KV heads instead of 64 uses an eighth of the cache. Beyond architecture, you can quantize the cache itself to FP8 or INT8 (supported in vLLM and TensorRT-LLM), enable sliding-window attention to bound the cache at long context, or reuse prefix cache for shared system prompts. Each lever trades something: FP8 cache can nick quality, sliding windows drop distant tokens. Pick the one that matches whether your constraint is context length, concurrency, or raw capacity.',
+      },
+    ],
+    checklist: [
+      'Compute cache size with the 2·layers·kv_heads·head_dim·seq·batch·bytes formula.',
+      'Prefer GQA/MQA models when long context or high concurrency is required.',
+      'Evaluate FP8/INT8 KV cache against quality before enabling it in production.',
+      'Cap or bucket context length so worst-case prompts cannot exhaust VRAM.',
+      'Reuse prefix cache for shared system prompts to reclaim concurrency.',
+    ],
+    faq: [
+      {
+        q: 'Does a bigger context window automatically use more memory?',
+        a: 'Only when you fill it. The KV cache grows with the tokens actually present, so a 128K-capable model at a 2K prompt uses little cache — but the runtime may pre-reserve for max-model-len, so cap that setting to your real needs.',
+      },
+    ],
+  },
+  flashattention: {
+    sections: [
+      {
+        heading: '9. Why attention is memory-bound',
+        content:
+          'A standard attention implementation forms the full N×N score matrix in high-bandwidth memory, softmaxes it, then multiplies by values — writing and re-reading a matrix that grows quadratically with sequence length. On modern GPUs the math is cheap relative to that memory traffic, so attention is bandwidth-bound, not compute-bound. FlashAttention keeps tiles of queries, keys, and values in fast on-chip SRAM, computes the softmax incrementally (the "online softmax" trick), and never materializes the full score matrix. The result is mathematically exact attention with memory that scales linearly instead of quadratically.',
+      },
+      {
+        heading: '10. Versions and support gotchas',
+        content:
+          'FlashAttention-2 improved GPU occupancy and parallelism; FlashAttention-3 targets Hopper-class hardware and FP8. Support is not universal: head dimensions above certain limits, some sliding-window or ALiBi variants, and older GPUs may not be covered, in which case the framework quietly falls back to a slower kernel. That silent fallback is the classic trap — your latency assumptions were built on FlashAttention but the run never used it. Check startup logs or profiler output to confirm the fast kernel is actually active for your model and precision. On multi-GPU serving, verify it again after tensor-parallel sharding, because some fused kernels only cover specific head-dimension and dtype combinations and quietly revert on the rest.',
+      },
+    ],
+    checklist: [
+      'Confirm your GPU generation and head dimension are supported by the FA version.',
+      'Check logs/profiler to verify the fast kernel is active, not a silent fallback.',
+      'Test at production context length — short prompts hide the benefit.',
+      'Hold model, precision, and batch fixed when benchmarking FA on vs off.',
+      'Remember weights and KV cache are unchanged; FA only speeds attention.',
+    ],
+    faq: [
+      {
+        q: 'Is FlashAttention an approximation?',
+        a: 'No. It computes exact attention — the same result as the naive implementation — using tiling and an online softmax to avoid writing the full score matrix to memory. The gain is efficiency, not an accuracy trade.',
+      },
+    ],
+  },
+  'pagedattention-internals': {
+    sections: [
+      {
+        heading: '9. Blocks, block tables, and copy-on-write',
+        content:
+          'PagedAttention stores each sequence’s KV cache in fixed-size blocks (commonly 16 tokens) rather than one contiguous slab. A per-sequence block table maps logical token positions to physical blocks scattered across the pool, exactly like virtual-memory page tables. This indirection enables copy-on-write sharing: when many requests share a system prompt or a beam-search branch, they point at the same physical blocks until one diverges, at which point only the changed block is copied. That sharing is why prefix-heavy workloads see large concurrency gains.',
+      },
+      {
+        heading: '10. The fragmentation math',
+        content:
+          'Contiguous pre-allocation wastes memory two ways: internal fragmentation (a request reserved for max length but generated few tokens) and external fragmentation (free gaps too small to reuse). PagedAttention nearly eliminates both — external fragmentation drops to zero because any free block fits any sequence, and internal fragmentation is bounded to less than one block per sequence. In vLLM’s own measurements this pushed KV memory utilization from roughly 20–40% to over 90%, which is the concrete reason a paged runtime serves several times more concurrent requests on the same card. The same block-sharing mechanism also makes beam search and parallel sampling cheap: candidate sequences share the prompt’s physical blocks and only diverge where their tokens differ, instead of duplicating the entire cache per candidate.',
+      },
+    ],
+    checklist: [
+      'Expect the largest gains on workloads with shared prefixes or many concurrent users.',
+      'Enable prefix caching when system prompts or templates repeat across requests.',
+      'Log active sequence count and block-pool usage to diagnose cache pressure.',
+      'Remember paging improves utilization but cannot exceed physical VRAM.',
+      'Treat block size as a tunable; smaller blocks cut waste but add metadata overhead.',
+    ],
+    faq: [
+      {
+        q: 'What block size does PagedAttention use?',
+        a: 'vLLM defaults to 16 tokens per block, and it is configurable. Smaller blocks reduce internal fragmentation but increase block-table metadata and lookup overhead, so the default is a balance for typical serving.',
+      },
+    ],
+  },
+  'cuda-graph-optimization': {
+    sections: [
+      {
+        heading: '9. The capture-and-replay lifecycle',
+        content:
+          'A CUDA graph is recorded once via stream capture, which traces the full directed graph of kernels and their dependencies for one decode step. On every subsequent step the runtime replays the captured graph instead of re-issuing and re-validating each kernel from the CPU. The launch overhead — normally a few microseconds per kernel, multiplied by dozens of kernels per token — is paid once and amortized across thousands of tokens. That is why the benefit shows up as lower, steadier per-token decode latency rather than higher peak throughput.',
+      },
+      {
+        heading: '10. Why stable shapes matter',
+        content:
+          'Graph replay assumes the same tensor shapes and memory addresses as capture, so serving stacks bucket requests into a small set of fixed batch sizes and pad to them; a captured graph exists per bucket. Prefill, where prompt lengths vary widely, is harder to graph and often uses piecewise or partial capture instead. The cost is memory: each captured graph reserves its own working set, so capturing many buckets can reduce the concurrency headroom you were trying to protect. Capture a few well-chosen batch sizes rather than every possible shape — a common compromise is to graph only the handful of batch sizes your scheduler actually produces under load, then let rare or oversized shapes fall back to normal eager execution without a captured graph.',
+      },
+    ],
+    checklist: [
+      'Stabilize decode shapes (fixed batch buckets, padding) before enabling capture.',
+      'Benchmark graphs on vs off with identical model, precision, and context.',
+      'Watch reserved memory — many captured graphs can shrink concurrency.',
+      'Verify the runtime did not silently disable capture for your config.',
+      'Apply CUDA graphs last, after model, precision, and batching are settled.',
+    ],
+    faq: [
+      {
+        q: 'Do CUDA graphs help prefill or decode more?',
+        a: 'Decode. The token-by-token decode loop repeats the same small kernels with stable shapes, which is ideal for graph replay. Prefill has variable prompt lengths and larger kernels, so launch overhead matters less and capture is harder.',
+      },
+    ],
+  },
+  'moe-routing': {
+    sections: [
+      {
+        heading: '9. Top-k gating and load balancing',
+        content:
+          'A mixture-of-experts layer replaces one feed-forward network with many, plus a lightweight router that scores the experts for each token and sends it to the top-k (often top-1 or top-2). The catch is balance: left alone, the router collapses onto a few favorite experts while others go unused, wasting capacity. Training adds an auxiliary load-balancing loss to spread tokens, and inference uses a capacity factor that caps how many tokens each expert accepts — excess tokens are dropped or padded. Understanding this explains why MoE quality can be uneven across domains where routing skews.',
+      },
+      {
+        heading: '10. Expert parallelism and the all-to-all cost',
+        content:
+          'At serving scale the experts are sharded across GPUs (expert parallelism), so after routing, tokens must be shipped to whichever GPU holds their chosen expert and the results shipped back — two all-to-all communication steps per MoE layer. This makes MoE inference bandwidth-sensitive in a way dense models are not: interconnect, not FLOPs, is frequently the bottleneck. It is also why a model advertising few active parameters can still demand a lot of VRAM and fast links — every expert must be resident even though each token only visits a couple.',
+      },
+    ],
+    checklist: [
+      'Size VRAM for all resident experts, not just the active-parameter count.',
+      'Prefer fast interconnect; MoE all-to-all traffic is bandwidth-bound.',
+      'Evaluate across domains — routing skew makes quality task-dependent.',
+      'Confirm your runtime and quantization support the MoE layers cleanly.',
+      'Check the config for num_experts and num_experts_per_tok before planning memory.',
+    ],
+    faq: [
+      {
+        q: 'What is the capacity factor in a mixture-of-experts model?',
+        a: 'It caps how many tokens each expert will process in a batch, as a multiple of the average. Tokens beyond the cap are dropped or padded. Higher capacity reduces dropped tokens but costs memory and compute; it is a balance-versus-efficiency knob.',
+      },
+    ],
+  },
+};
+
 const ensureGuideDepth = (guide) => {
+  // Bespoke, per-topic depth wins over the generic expansion — even if the guide
+  // is already long — so these pages never carry the shared boilerplate.
+  const topic = TOPIC_DEPTH[guide.slug];
+  if (topic) {
+    return {
+      ...guide,
+      sections: [...(guide.sections || []), ...topic.sections],
+      checklist: [...(guide.checklist || []), ...topic.checklist],
+      faq: [...(guide.faq || []), ...topic.faq],
+    };
+  }
+
   if (countGuideWords(guide) >= 900) return guide;
   const expansion = depthExpansionFor(guide);
   return {
