@@ -12,7 +12,8 @@
     "indexing:check": "node scripts/model-indexing-check.mjs",
     "specs:check": "node scripts/can-i-run-specs-check.mjs",
     "seed:ai-inference-tutorial": "node scripts/seed-ai-inference-tutorial.mjs",
-    "seed:gpu-tutorial": "node scripts/seed-gpu-tutorial.mjs"
+    "seed:gpu-tutorial": "node scripts/seed-gpu-tutorial.mjs",
+    "seed:ai-updates": "node scripts/seed-ai-updates.mjs"
   },
   "dependencies": {
     "chart.js": "^4.5.1",
@@ -38,6 +39,7 @@
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "firebase-admin": "^14.1.0",
     "globals": "^16.5.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18"
