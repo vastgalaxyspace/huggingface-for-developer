@@ -16,61 +16,89 @@ export const calculateTCO = (modelData, usage = {}) => {
   } = usage;
 
   const vram = parseFloat(modelData.vramEstimates?.fp16 || 16);
+  const comparison = compareOptions(tokensPerMonth, vram, hoursPerDay, daysPerMonth);
 
   return {
-    api: calculateAPICost(tokensPerMonth),
+    api: calculateAPICost(tokensPerMonth, vram),
     cloudGPU: calculateCloudGPUCost(vram, hoursPerDay, daysPerMonth),
     selfHosted: calculateSelfHostedCost(vram),
-    comparison: compareOptions(tokensPerMonth, vram, hoursPerDay, daysPerMonth),
+    comparison,
     breakEven: calculateBreakEven(tokensPerMonth, vram),
-    recommendations: generateCostRecommendations(tokensPerMonth, vram, monthlyActiveUsers)
+    recommendations: generateCostRecommendations(tokensPerMonth, vram, monthlyActiveUsers, comparison)
   };
 };
 
 /**
  * API Service Costs
+ *
+ * Prices are blended input+output per 1K tokens, current as of July 2026, and are
+ * deliberately illustrative: real cost swings with model size (serverless open-model
+ * rates span roughly $0.03–$4.50 per 1M tokens) and with your input/output ratio.
+ * Serverless providers here are priced for a mid-size open model; the frontier row is
+ * a managed closed API for contrast.
+ *
+ * These move often. Re-check against provider pricing pages before treating any
+ * number as a quote.
  */
-const calculateAPICost = (tokensPerMonth) => {
+const API_PRICING_UPDATED = '2026-07';
+
+// Serverless per-token price tracks model size — a 70B costs far more per token than a
+// 3B. Rates are $ per 1K tokens for a mid-tier serverless host, interpolated across the
+// observed 2026 range (~$0.03–$4.50 per 1M tokens), anchored on ~$1.04/1M for 70B-class.
+// vram is the FP16 footprint, from which params ≈ vram / 2.3 (2 bytes + ~15% overhead).
+const serverlessRatePer1k = (vram) => {
+  const params = vram / 2.3;
+  if (params < 5) return 0.0001;
+  if (params < 10) return 0.0002;
+  if (params < 20) return 0.00035;
+  if (params < 40) return 0.0006;
+  return 0.00104;
+};
+
+const calculateAPICost = (tokensPerMonth, vram = 16) => {
+  const base = serverlessRatePer1k(vram);
+  const perMonth = (rate) => (tokensPerMonth / 1000) * rate;
+
   const providers = {
     together: {
       name: 'Together AI',
-      costPer1k: 0.0002,
-      monthly: (tokensPerMonth / 1000) * 0.0002,
+      costPer1k: base,
+      monthly: perMonth(base),
       setup: 0,
       maintenance: 0,
       scaling: 'Automatic',
       pros: ['No infrastructure', 'Auto-scaling', 'Pay per use', 'No DevOps'],
       cons: ['Data privacy concerns', 'Vendor lock-in', 'API rate limits', 'Network latency']
     },
+    huggingface: {
+      name: 'Hugging Face Inference',
+      costPer1k: base * 2,
+      monthly: perMonth(base * 2),
+      setup: 0,
+      maintenance: 0,
+      scaling: 'Automatic',
+      pros: ['Integrated ecosystem', 'Easy to start', 'Model updates'],
+      cons: ['Higher cost than raw compute', 'Rate limits', 'Less control']
+    },
     replicate: {
       name: 'Replicate',
-      costPer1k: 0.0002,
-      monthly: (tokensPerMonth / 1000) * 0.0002,
+      costPer1k: base * 2.5,
+      monthly: perMonth(base * 2.5),
       setup: 0,
       maintenance: 0,
       scaling: 'Automatic',
       pros: ['Easy deployment', 'Flexible billing', 'Good documentation'],
       cons: ['Cold starts', 'Cost at scale', 'Limited customization']
     },
-    huggingface: {
-      name: 'HuggingFace Inference',
-      costPer1k: 0.0006,
-      monthly: (tokensPerMonth / 1000) * 0.0006,
+    frontier: {
+      name: 'Frontier closed API (Sonnet-class)',
+      costPer1k: 0.0036,
+      monthly: perMonth(0.0036),
       setup: 0,
       maintenance: 0,
       scaling: 'Automatic',
-      pros: ['Integrated ecosystem', 'Easy to start', 'Model updates'],
-      cons: ['Higher cost', 'Rate limits', 'Less control']
-    },
-    openai: {
-      name: 'OpenAI GPT-3.5',
-      costPer1k: 0.002,
-      monthly: (tokensPerMonth / 1000) * 0.002,
-      setup: 0,
-      maintenance: 0,
-      scaling: 'Automatic',
-      pros: ['Best quality', 'Reliable', 'Great support'],
-      cons: ['Most expensive', 'No customization', 'No open source']
+      pros: ['Top quality', 'Reliable', 'No ops burden'],
+      cons: ['Highest per-token cost', 'No weight access', 'Provider retention policy']
     }
   };
 
@@ -212,7 +240,7 @@ const calculatePowerCost = (watts) => {
  * Compare all options
  */
 const compareOptions = (tokensPerMonth, vram, hoursPerDay, daysPerMonth) => {
-  const api = calculateAPICost(tokensPerMonth);
+  const api = calculateAPICost(tokensPerMonth, vram);
   const cloud = calculateCloudGPUCost(vram, hoursPerDay, daysPerMonth);
   const selfHosted = calculateSelfHostedCost(vram);
 
@@ -249,7 +277,7 @@ const compareOptions = (tokensPerMonth, vram, hoursPerDay, daysPerMonth) => {
  * Calculate break-even points
  */
 const calculateBreakEven = (tokensPerMonth, vram) => {
-  const api = calculateAPICost(tokensPerMonth);
+  const api = calculateAPICost(tokensPerMonth, vram);
   const cloud = calculateCloudGPUCost(vram, 24, 30);
   const selfHosted = calculateSelfHostedCost(vram);
 
@@ -292,27 +320,37 @@ const calculateBreakEven = (tokensPerMonth, vram) => {
 /**
  * Generate recommendations
  */
-const generateCostRecommendations = (tokensPerMonth, vram, monthlyActiveUsers) => {
+const generateCostRecommendations = (tokensPerMonth, vram, monthlyActiveUsers, comparison) => {
   const recommendations = [];
-  
-  if (tokensPerMonth < 1000000) {
+
+  // Drive the headline recommendation from the numbers actually shown to the user.
+  // A fixed token threshold used to contradict the table above it (recommending
+  // self-hosting while the API column was orders of magnitude cheaper).
+  const totals = comparison?.threeYearTotal;
+  if (totals) {
+    const ranked = [
+      { key: 'api', label: 'API services', total: totals.api, why: 'lowest three-year cost at this volume, with no infrastructure to run' },
+      { key: 'cloudGPU', label: 'Cloud GPU', total: totals.cloudGPU, why: 'cheapest three-year cost once the GPU stays busy enough to earn its hourly rate' },
+      { key: 'selfHosted', label: 'Self-hosted', total: totals.selfHosted, why: 'lowest three-year cost despite the upfront hardware and staffing' },
+    ].sort((a, b) => a.total - b.total);
+
+    const winner = ranked[0];
+    const runnerUp = ranked[1];
+    const margin = runnerUp.total > 0 ? (runnerUp.total - winner.total) / runnerUp.total : 1;
+
     recommendations.push({
       type: 'success',
-      message: 'Start with API services',
-      reason: 'Low volume makes API most cost-effective'
+      message: `${winner.label} looks cheapest here`,
+      reason: `At ${(tokensPerMonth / 1e6).toLocaleString()}M tokens/month it is the ${winner.why} — about ${formatCurrency(winner.total)} over three years versus ${formatCurrency(runnerUp.total)} for ${runnerUp.label}.`
     });
-  } else if (tokensPerMonth < 10000000) {
-    recommendations.push({
-      type: 'info',
-      message: 'Consider Cloud GPU',
-      reason: 'Volume justifies dedicated infrastructure'
-    });
-  } else {
-    recommendations.push({
-      type: 'success',
-      message: 'Self-hosted recommended',
-      reason: 'High volume makes self-hosting economical'
-    });
+
+    if (margin < 0.2) {
+      recommendations.push({
+        type: 'info',
+        message: 'The top two options are close',
+        reason: `${winner.label} and ${runnerUp.label} are within 20% over three years, which is inside the error bar of these estimates. Decide on privacy, latency, and operational capacity rather than cost alone.`
+      });
+    }
   }
 
   if (vram > 24) {
@@ -326,13 +364,15 @@ const generateCostRecommendations = (tokensPerMonth, vram, monthlyActiveUsers) =
   if (monthlyActiveUsers > 700000) {
     recommendations.push({
       type: 'warning',
-      message: 'Check Llama 2 license',
-      reason: 'Commercial use restrictions apply above 700M MAU'
+      message: 'Check the model license at this scale',
+      reason: 'Some open-weight licenses (e.g. Llama) add commercial terms above a monthly-active-user threshold'
     });
   }
 
   return recommendations;
 };
+
+export const API_PRICING_LAST_UPDATED = API_PRICING_UPDATED;
 
 /**
  * Format currency

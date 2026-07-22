@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, ChartNoAxesCombined, Cpu, GitBranch, Gauge, Layers, MemoryStick, Wrench } from "lucide-react";
+import { ArrowRight, ChartNoAxesCombined, Cpu, DollarSign, GitBranch, Gauge, Layers, MemoryStick, Wrench } from "lucide-react";
 import { pageMetadata } from "../../src/lib/seo";
 
 export const metadata = pageMetadata({
@@ -78,6 +78,13 @@ export default function GpuPage() {
       body: "Shortlist GPU options for training, fine-tune, and high-throughput inference.",
       cta: "Open GPU Picker",
       href: "/gpu/tools/gpu-picker",
+    },
+    {
+      icon: DollarSign,
+      name: "Cost Calculator",
+      body: "Compare API, cloud GPU, and self-hosted cost over three years, with break-even points.",
+      cta: "Open Cost Calculator",
+      href: "/gpu/tools/cost-calculator",
     },
     {
       icon: GitBranch,
