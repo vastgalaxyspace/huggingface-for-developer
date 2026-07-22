@@ -1,7 +1,7 @@
 import { absoluteUrl } from '../src/lib/seo';
 import { getAllGuides } from '../src/data/guidesContent';
 import { getIndexableModelIds, modelPath } from '../src/lib/modelIndexing';
-import { canIRunPath, getCuratedCombos } from '../src/data/canIRunData';
+import { CURATED_GPUS, canIRunGpuPath, canIRunPath, getCuratedCombos } from '../src/data/canIRunData';
 import { getTutorialsFromFirestore } from '../src/lib/tutorialsFirestore';
 
 const learningTopicRoutes = [
@@ -36,6 +36,7 @@ const routes = [
   { path: '/gpu/performance', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/gpu/tools/vram-calculator', priority: 0.9, changeFrequency: 'weekly' },
   { path: '/gpu/tools/gpu-picker', priority: 0.9, changeFrequency: 'weekly' },
+  { path: '/gpu/tools/cost-calculator', priority: 0.85, changeFrequency: 'weekly' },
   { path: '/gpu/tools/roofline-model-analyzer', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/gpu/tools/kernel-occupancy-estimator', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/gpu/tools/warp-divergence', priority: 0.75, changeFrequency: 'monthly' },
@@ -83,6 +84,15 @@ export default async function sitemap() {
     priority: 0.8,
   }));
 
+  // Per-GPU hub pages ("what can I run on an RTX 4090?") rank higher than any single
+  // combo and are the crawl path into them, so they carry a higher priority.
+  const canIRunGpuRoutes = CURATED_GPUS.map((gpu) => ({
+    url: absoluteUrl(canIRunGpuPath(gpu.slug)),
+    lastModified,
+    changeFrequency: 'monthly',
+    priority: 0.8,
+  }));
+
   const canIRunRoutes = getCuratedCombos().map(({ gpu, model }) => ({
     url: absoluteUrl(canIRunPath(gpu.slug, model.id)),
     lastModified,
@@ -102,5 +112,12 @@ export default async function sitemap() {
     }))
     .filter((entry) => !declaredUrls.has(entry.url));
 
-  return [...staticSitemap, ...guideRoutes, ...tutorialRoutes, ...modelRoutes, ...canIRunRoutes];
+  return [
+    ...staticSitemap,
+    ...guideRoutes,
+    ...tutorialRoutes,
+    ...modelRoutes,
+    ...canIRunGpuRoutes,
+    ...canIRunRoutes,
+  ];
 }

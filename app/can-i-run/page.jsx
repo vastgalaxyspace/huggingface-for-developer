@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import CanIRunPicker from '../../src/components/can-i-run/CanIRunPicker';
 import { evaluateModelOnGpu } from '../../src/utils/canIRunEngine';
-import { CURATED_GPUS, CURATED_MODELS, canIRunPath } from '../../src/data/canIRunData';
+import { CURATED_GPUS, CURATED_MODELS, canIRunGpuPath, canIRunPath } from '../../src/data/canIRunData';
 import { pageMetadata } from '../../src/lib/seo';
 
 export const metadata = pageMetadata({
@@ -83,6 +83,35 @@ export default function CanIRunIndexPage() {
             <span className="font-semibold text-amber-700">4/8-bit</span> = fits with quantization ·{' '}
             <span className="font-semibold text-red-600">No</span> = needs a bigger or additional GPU.
           </p>
+        </section>
+
+        {/* Per-GPU hubs. Also the crawl path into every model × GPU combo. */}
+        <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+          <h2 className="text-2xl font-black tracking-tight text-gray-900">Browse by GPU</h2>
+          <p className="mt-2 text-sm leading-7 text-gray-600">
+            Pick your card to see every model it runs, and the precision each one needs.
+          </p>
+          {['Consumer', 'Workstation', 'Data center'].map((tier) => {
+            const tierGpus = CURATED_GPUS.filter((g) => g.tier === tier);
+            if (tierGpus.length === 0) return null;
+            return (
+              <div key={tier} className="mt-5">
+                <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-gray-400">{tier}</h3>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                  {tierGpus.map((g) => (
+                    <Link
+                      key={g.slug}
+                      href={canIRunGpuPath(g.slug)}
+                      className="rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-[#23425f] hover:bg-[#f7faff]"
+                    >
+                      What runs on {g.name}
+                      <span className="block text-xs font-normal text-gray-400">{g.vram} GB VRAM</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </section>
 
         {/* Explainer for content depth + SEO */}

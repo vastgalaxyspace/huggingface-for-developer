@@ -200,6 +200,92 @@ export const CURATED_MODELS = [
     paramsB: 1.71,
     layers: 24, heads: 32, kvHeads: 32, headDim: 64, hiddenSize: 2048, context: 8192, moe: false,
   },
+  // Specs below fetched from each model's live config.json + HF safetensors param
+  // count (scripts/can-i-run-specs-check.mjs proves them). Do not hand-edit.
+  {
+    id: 'Qwen/Qwen2.5-0.5B-Instruct',
+    label: 'Qwen2.5 0.5B Instruct',
+    paramsB: 0.49,
+    layers: 24, heads: 14, kvHeads: 2, headDim: 64, hiddenSize: 896, context: 32768, moe: false,
+  },
+  {
+    id: 'Qwen/Qwen2.5-1.5B-Instruct',
+    label: 'Qwen2.5 1.5B Instruct',
+    paramsB: 1.54,
+    layers: 28, heads: 12, kvHeads: 2, headDim: 128, hiddenSize: 1536, context: 32768, moe: false,
+  },
+  {
+    id: 'Qwen/Qwen2.5-Coder-1.5B-Instruct',
+    label: 'Qwen2.5 Coder 1.5B Instruct',
+    paramsB: 1.54,
+    layers: 28, heads: 12, kvHeads: 2, headDim: 128, hiddenSize: 1536, context: 32768, moe: false,
+  },
+  {
+    id: 'Qwen/Qwen2.5-Coder-14B-Instruct',
+    label: 'Qwen2.5 Coder 14B Instruct',
+    paramsB: 14.77,
+    layers: 48, heads: 40, kvHeads: 8, headDim: 128, hiddenSize: 5120, context: 32768, moe: false,
+  },
+  {
+    id: 'Qwen/Qwen3-0.6B',
+    label: 'Qwen3 0.6B',
+    paramsB: 0.75,
+    layers: 28, heads: 16, kvHeads: 8, headDim: 128, hiddenSize: 1024, context: 40960, moe: false,
+  },
+  {
+    id: 'Qwen/Qwen3-1.7B',
+    label: 'Qwen3 1.7B',
+    paramsB: 2.03,
+    layers: 28, heads: 16, kvHeads: 8, headDim: 128, hiddenSize: 2048, context: 40960, moe: false,
+  },
+  {
+    id: 'Qwen/Qwen3-4B',
+    label: 'Qwen3 4B',
+    paramsB: 4.02,
+    layers: 36, heads: 32, kvHeads: 8, headDim: 128, hiddenSize: 2560, context: 40960, moe: false,
+  },
+  {
+    id: 'Qwen/QwQ-32B',
+    label: 'QwQ 32B',
+    paramsB: 32.76,
+    layers: 64, heads: 40, kvHeads: 8, headDim: 128, hiddenSize: 5120, context: 40960, moe: false,
+  },
+  {
+    id: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
+    label: 'DeepSeek R1 Distill Qwen 1.5B',
+    paramsB: 1.78,
+    layers: 28, heads: 12, kvHeads: 2, headDim: 128, hiddenSize: 1536, context: 131072, moe: false,
+  },
+  {
+    id: 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B',
+    label: 'DeepSeek R1 Distill Llama 70B',
+    paramsB: 70.55,
+    layers: 80, heads: 64, kvHeads: 8, headDim: 128, hiddenSize: 8192, context: 131072, moe: false,
+  },
+  {
+    id: 'mistralai/Mistral-Small-24B-Instruct-2501',
+    label: 'Mistral Small 24B Instruct',
+    paramsB: 23.57,
+    layers: 40, heads: 32, kvHeads: 8, headDim: 128, hiddenSize: 5120, context: 32768, moe: false,
+  },
+  {
+    id: 'ibm-granite/granite-3.1-8b-instruct',
+    label: 'Granite 3.1 8B Instruct',
+    paramsB: 8.17,
+    layers: 40, heads: 32, kvHeads: 8, headDim: 128, hiddenSize: 4096, context: 131072, moe: false,
+  },
+  {
+    id: 'allenai/OLMo-2-1124-7B-Instruct',
+    label: 'OLMo 2 7B Instruct',
+    paramsB: 7.3,
+    layers: 32, heads: 32, kvHeads: 32, headDim: 128, hiddenSize: 4096, context: 4096, moe: false,
+  },
+  {
+    id: 'HuggingFaceTB/SmolLM2-360M-Instruct',
+    label: 'SmolLM2 360M Instruct',
+    paramsB: 0.36,
+    layers: 32, heads: 15, kvHeads: 5, headDim: 64, hiddenSize: 960, context: 8192, moe: false,
+  },
 ];
 
 export function gpuBySlug(slug) {
@@ -217,6 +303,12 @@ export function modelPathSegments(id) {
 
 export function canIRunPath(gpuSlug, modelId) {
   return `/can-i-run/${gpuSlug}/${modelPathSegments(modelId).join('/')}`;
+}
+
+// Per-GPU hub page ("What can I run on an RTX 4090?"). Parent of every
+// canIRunPath() combo for that card.
+export function canIRunGpuPath(gpuSlug) {
+  return `/can-i-run/${gpuSlug}`;
 }
 
 // All curated indexable combinations (model × GPU).
