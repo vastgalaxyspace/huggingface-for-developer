@@ -17,6 +17,11 @@ const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-KV1HD9
 // google-adsense-account meta tag Google uses to verify site ownership.
 // Keep this in sync with public/ads.txt (which uses the pub-... form).
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT || 'ca-pub-9740252976972845';
+// Google Search Console "HTML tag" verification token. Optional: set it in the
+// hosting env to emit <meta name="google-site-verification">. This is a fallback
+// for the Google Analytics verification method, which requires the gtag snippet
+// to be server-rendered inside <head> (see the <head> block below).
+const GOOGLE_SITE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '';
 
 const siteKeywords = [
   'hugging face model explorer',
@@ -59,6 +64,9 @@ export const metadata = {
     // the most reliable ownership signal for the AdSense crawler.
     'google-adsense-account': ADSENSE_CLIENT,
   },
+  ...(GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: GOOGLE_SITE_VERIFICATION } }
+    : {}),
   icons: {
     icon: '/images/innoai logo main.png',
     shortcut: '/images/innoai logo main.png',
@@ -125,16 +133,15 @@ const organizationSchema = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
-      <body>
+      {/* Plain <script> tags, not next/script: Search Console's Google Analytics
+          verification reads the raw server HTML and requires the gtag snippet in
+          <head>. next/script with strategy="afterInteractive" injects into <body>
+          after hydration, which the verifier never sees. */}
+      <head>
         {GA_MEASUREMENT_ID ? (
           <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-              strategy="afterInteractive"
-            />
-            <Script
-              id="google-analytics"
-              strategy="afterInteractive"
+            <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} />
+            <script
               dangerouslySetInnerHTML={{
                 __html: `
                   window.dataLayer = window.dataLayer || [];
@@ -146,6 +153,8 @@ export default function RootLayout({ children }) {
             />
           </>
         ) : null}
+      </head>
+      <body>
         {ADSENSE_CLIENT ? (
           <Script
             id="google-adsense"
