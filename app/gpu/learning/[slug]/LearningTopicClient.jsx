@@ -321,8 +321,26 @@ export default function LearningTopicClient({ slug, initialTutorial = null, init
             </Card>
 
             <div className="space-y-3">
-              {selectedTheoryTopic ? (
-                <PhysicalHardwareTopic topic={selectedTheoryTopic} />
+              {isLearning && theoryItems.length > 0 ? (
+                /*
+                 * Render every theory topic, not just the selected one, and hide the
+                 * inactive ones with CSS instead of unmounting them.
+                 *
+                 * Crawlers never click the sidebar, so rendering only theoryItems[index]
+                 * meant Googlebot saw roughly one of eight topics — about 250 words next
+                 * to seven empty headings. All 7 sitemap'd learning topics were demoted to
+                 * "Crawled - currently not indexed" as thin content. Keeping the full
+                 * lesson in the HTML fixes that while leaving the tab UX unchanged.
+                 */
+                theoryItems.map((theoryTopic, index) => (
+                  <div
+                    key={`theory-${theoryTopic.id ?? index}`}
+                    className={index === safeIndex ? undefined : 'hidden'}
+                    aria-hidden={index === safeIndex ? undefined : 'true'}
+                  >
+                    <PhysicalHardwareTopic topic={theoryTopic} />
+                  </div>
+                ))
               ) : isPhysicalVisuals ? (
                 <PhysicalHardwareVisuals selectedIndex={safeIndex} />
               ) : hasDedicatedVisuals ? (
