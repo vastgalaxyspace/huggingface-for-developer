@@ -1,7 +1,7 @@
 import { absoluteUrl } from '../src/lib/seo';
 import { getAllGuides } from '../src/data/guidesContent';
 import { getIndexableModelIds, modelPath } from '../src/lib/modelIndexing';
-import { CURATED_GPUS, canIRunGpuPath, canIRunPath, getCuratedCombos } from '../src/data/canIRunData';
+import { CURATED_GPUS, canIRunGpuPath } from '../src/data/canIRunData';
 import { getTutorialsFromFirestore } from '../src/lib/tutorialsFirestore';
 
 const learningTopicRoutes = [
@@ -93,12 +93,15 @@ export default async function sitemap() {
     priority: 0.8,
   }));
 
-  const canIRunRoutes = getCuratedCombos().map(({ gpu, model }) => ({
-    url: absoluteUrl(canIRunPath(gpu.slug, model.id)),
-    lastModified,
-    changeFrequency: 'monthly',
-    priority: 0.7,
-  }));
+  // The 1,400+ model x GPU combo pages are deliberately NOT listed.
+  //
+  // Search Console (2026-07) showed 7 indexed URLs against ~913 submitted, with
+  // zero combo pages ever crawled and a 67% rejection rate on the pages Google did
+  // fetch. Submitting a thousand near-identical URLs from a low-authority domain
+  // spends the crawl budget without earning an index entry, and reads as
+  // mass-generated content. The combos stay live and linked from their GPU hub for
+  // users; the sitemap now points crawlers at the pages that can actually rank.
+  // Revisit once impressions show the hubs are being indexed.
 
   // Firestore-backed tutorials. Skipped when a URL is already declared above
   // (e.g. /ai-tutorials/rag) so the sitemap never lists a URL twice.
@@ -118,6 +121,5 @@ export default async function sitemap() {
     ...tutorialRoutes,
     ...modelRoutes,
     ...canIRunGpuRoutes,
-    ...canIRunRoutes,
   ];
 }

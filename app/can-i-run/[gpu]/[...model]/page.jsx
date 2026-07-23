@@ -51,7 +51,13 @@ export async function generateMetadata({ params }) {
       type: 'article',
     }),
     alternates: { canonical: absoluteUrl(path) },
-    robots: { index: true, follow: true },
+    // noindex, follow: these combo pages are useful to a visitor who clicks through
+    // from a GPU hub, but there are 1,400+ of them and they are near-identical in
+    // structure. Search Console showed none had ever been crawled while the pages
+    // Google did fetch were being rejected, so they are kept out of the index and
+    // the crawl budget is spent on the hubs, guides, and tools instead. "follow"
+    // keeps their outbound links flowing to those pages.
+    robots: { index: false, follow: true },
   };
 }
 
