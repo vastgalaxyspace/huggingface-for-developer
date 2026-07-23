@@ -106,6 +106,101 @@ export default function GpuHardwarePage() {
             </div>
           </div>
         </section>
+
+        <section className="rounded-[20px] border border-[#d7dfe8] bg-white p-6 md:p-8">
+          <h2 className="text-2xl font-extrabold tracking-[-0.01em] text-[#1a2635]">The memory hierarchy is the real constraint</h2>
+          <p className="mt-4 text-sm leading-7 text-[#5f758d]">
+            GPU specifications lead with core counts and teraflops, but for AI workloads the memory system decides
+            almost everything. Each level of the hierarchy trades capacity for speed. Registers sit closest to the
+            arithmetic units and are effectively free to access, but there are only tens of kilobytes per streaming
+            multiprocessor and they are divided among every resident thread. Shared memory — a programmer-managed
+            scratchpad inside the SM — offers roughly a hundred kilobytes per block at latency measured in tens of
+            cycles. Global memory (HBM or GDDR) holds gigabytes but costs hundreds of cycles per access.
+          </p>
+          <p className="mt-4 text-sm leading-7 text-[#5f758d]">
+            That last gap is the one that matters. A read from global memory can cost several hundred cycles, during
+            which the arithmetic units would sit idle if the scheduler had nothing else to run. Every major GPU
+            optimization technique is, at bottom, an attempt to avoid paying that cost: tiling data into shared memory
+            so it is read from HBM once and reused many times, coalescing accesses so 32 threads fetch one contiguous
+            block instead of 32 scattered ones, and keeping enough warps resident that the SM always has other work
+            available while one warp waits.
+          </p>
+          <p className="mt-4 text-sm leading-7 text-[#5f758d]">
+            For running language models this shows up immediately in a practical form. Weights must live in VRAM, and
+            the KV cache grows alongside them with context length — which is why a card is chosen by capacity first and
+            speed second. Once the model fits, generation speed tracks memory <em>bandwidth</em> far more closely than
+            it tracks peak FLOPs, because producing each token means streaming the whole weight matrix out of memory
+            again. A card with more bandwidth generates faster even at identical compute. You can size the capacity
+            side precisely with the{' '}
+            <Link href="/gpu/tools/vram-calculator" className="font-semibold text-[#21405f] hover:text-[#16324d]">
+              VRAM calculator
+            </Link>{' '}
+            or check a specific pairing in{' '}
+            <Link href="/can-i-run" className="font-semibold text-[#21405f] hover:text-[#16324d]">
+              can I run it
+            </Link>
+            .
+          </p>
+        </section>
+
+        <section className="rounded-[20px] border border-[#d7dfe8] bg-white p-6 md:p-8">
+          <h2 className="text-2xl font-extrabold tracking-[-0.01em] text-[#1a2635]">SMs and tensor cores in practice</h2>
+          <p className="mt-4 text-sm leading-7 text-[#5f758d]">
+            The streaming multiprocessor is the unit that actually does work. A GPU is essentially many SMs plus a
+            memory system to feed them, and each SM contains CUDA cores for general arithmetic, tensor cores for matrix
+            math, a register file, shared memory, schedulers, and load/store units. Work arrives as thread blocks
+            assigned to an SM, and each block is subdivided into 32-thread warps that the schedulers issue from. How
+            many blocks an SM can hold at once depends on how much of its register file and shared memory each block
+            claims, which is why resource usage in your kernel translates directly into how well latency can be hidden.
+          </p>
+          <p className="mt-4 text-sm leading-7 text-[#5f758d]">
+            Tensor cores are the reason modern GPUs are fast at AI specifically. Rather than computing one
+            multiply-accumulate per cycle per lane, a tensor core performs a small matrix multiply-accumulate as a
+            single operation, delivering an order-of-magnitude throughput increase on exactly the operation that
+            dominates transformer workloads. The catch is that they only engage under the right conditions: reduced
+            precision (BF16, FP16, FP8, or INT8 depending on generation), and tensor shapes that align to the
+            hardware&apos;s expected tile sizes. A model running in FP32, or with awkward dimensions, quietly falls back
+            to the standard cores and gives up most of the advertised performance — one of the most common reasons real
+            throughput lands far below a datasheet figure.
+          </p>
+        </section>
+
+        <section className="rounded-[20px] border border-[#d7dfe8] bg-white p-6 md:p-8">
+          <h2 className="text-2xl font-extrabold tracking-[-0.01em] text-[#1a2635]">Frequently asked questions</h2>
+          <div className="mt-6 divide-y divide-[#dbe3ed]">
+            <div className="py-5 first:pt-0">
+              <h3 className="text-base font-black text-[#1a2635]">What is a streaming multiprocessor?</h3>
+              <p className="mt-2 text-sm leading-7 text-[#5f758d]">
+                The core execution block of a GPU. It contains CUDA cores, tensor cores, a register file, shared
+                memory, and warp schedulers. A GPU is many SMs plus the memory system that feeds them.
+              </p>
+            </div>
+            <div className="py-5">
+              <h3 className="text-base font-black text-[#1a2635]">Why does VRAM bandwidth matter more than FLOPs for LLMs?</h3>
+              <p className="mt-2 text-sm leading-7 text-[#5f758d]">
+                Generating each token requires reading the full set of weights from memory to perform relatively little
+                arithmetic. That makes decoding memory-bound, so bandwidth sets the speed while peak compute goes
+                largely unused until you batch requests together.
+              </p>
+            </div>
+            <div className="py-5">
+              <h3 className="text-base font-black text-[#1a2635]">When do tensor cores actually get used?</h3>
+              <p className="mt-2 text-sm leading-7 text-[#5f758d]">
+                When the operation is a matrix multiply in a supported reduced precision (BF16, FP16, FP8, or INT8 by
+                generation) with shapes that match the hardware tile sizes. FP32 kernels or misaligned dimensions fall
+                back to standard CUDA cores.
+              </p>
+            </div>
+            <div className="py-5 last:pb-0">
+              <h3 className="text-base font-black text-[#1a2635]">How much VRAM do I need for a given model?</h3>
+              <p className="mt-2 text-sm leading-7 text-[#5f758d]">
+                Roughly two bytes per parameter in FP16, one at INT8, and about half at 4-bit, plus the KV cache which
+                grows with context length and concurrency. Add headroom for activations and fragmentation rather than
+                sizing to the exact weight footprint.
+              </p>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
