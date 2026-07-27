@@ -84,24 +84,24 @@ export default async function sitemap() {
     priority: 0.8,
   }));
 
-  // Per-GPU hub pages ("what can I run on an RTX 4090?") rank higher than any single
-  // combo and are the crawl path into them, so they carry a higher priority.
+  // Per-GPU hub pages ("what can I run on an RTX 4090?"). These are now the only
+  // pages in the can-i-run section: each one carries the full model x precision
+  // matrix, the capacity cliffs, and long-context headroom for that card.
+  //
+  // The 1,444 /can-i-run/{gpu}/{model} combo pages that used to sit beneath them
+  // were retired and permanently redirected to their hub (see next.config.mjs).
+  // Search Console
+  // (2026-07) showed 7 indexed URLs against ~913 submitted with zero combos ever
+  // crawled, and AdSense rejected the site for "low value content" — a thousand
+  // near-identical URLs whose only difference is a computed number is the scaled
+  // content abuse pattern in Google's spam policies. The answers did not go away;
+  // they were consolidated onto pages substantive enough to rank.
   const canIRunGpuRoutes = CURATED_GPUS.map((gpu) => ({
     url: absoluteUrl(canIRunGpuPath(gpu.slug)),
     lastModified,
     changeFrequency: 'monthly',
     priority: 0.8,
   }));
-
-  // The 1,400+ model x GPU combo pages are deliberately NOT listed.
-  //
-  // Search Console (2026-07) showed 7 indexed URLs against ~913 submitted, with
-  // zero combo pages ever crawled and a 67% rejection rate on the pages Google did
-  // fetch. Submitting a thousand near-identical URLs from a low-authority domain
-  // spends the crawl budget without earning an index entry, and reads as
-  // mass-generated content. The combos stay live and linked from their GPU hub for
-  // users; the sitemap now points crawlers at the pages that can actually rank.
-  // Revisit once impressions show the hubs are being indexed.
 
   // Firestore-backed tutorials. Skipped when a URL is already declared above
   // (e.g. /ai-tutorials/rag) so the sitemap never lists a URL twice.

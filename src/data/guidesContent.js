@@ -1275,74 +1275,15 @@ const mergeGuideSupplement = (guide) => {
   };
 };
 
-const countWords = (value = '') =>
-  String(value)
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean).length;
-
-const countGuideWords = (guide) => {
-  const fields = [
-    guide.description,
-    ...(guide.keyTakeaways || []),
-    ...(guide.checklist || []),
-    ...(guide.sections || []).flatMap((section) => [section.heading, section.content]),
-    ...(guide.faq || []).flatMap((entry) => [entry.q, entry.a]),
-  ];
-  return fields.reduce((sum, item) => sum + countWords(item), 0);
-};
-
-const depthExpansionFor = (guide) => ({
-  sections: [
-    {
-      heading: `Decision context for ${guide.title}`,
-      content:
-        `${guide.title} should be read as a deployment decision guide rather than a definition page. The practical question is how this topic changes model choice, hardware sizing, runtime selection, evaluation design, and operating cost. For ${guide.category.toLowerCase()} work, teams should write down the workload, acceptable latency, context length, privacy limits, and budget before adopting a technique. That framing prevents a common mistake: choosing a popular model or runtime feature before proving that it solves the actual bottleneck.`,
-    },
-    {
-      heading: 'Implementation workflow',
-      content:
-        'A reliable workflow starts with a baseline. Pick one representative model, one hardware target, one runtime, and a small set of real prompts. Measure quality, time to first token, tokens per second, p95 latency, memory use, and failure patterns. Then change only one variable at a time. If the page topic improves memory but hurts output quality, record both outcomes. If it improves average latency but worsens p95 behavior, treat that as a product risk rather than a benchmark win.',
-    },
-    {
-      heading: 'Common failure modes',
-      content:
-        'Most production failures come from hidden assumptions. Teams test short prompts and later deploy long documents. They measure one user and later serve many concurrent sessions. They accept a quantized model without rerunning structured-output tests. They compare model families without checking license or tokenizer behavior. They assume a GPU that fits weights will also fit KV cache and runtime overhead. Use this guide to surface those assumptions before they become outages, surprise bills, or poor user experiences.',
-    },
-    {
-      heading: 'Measurement checklist',
-      content:
-        'Before publishing an internal recommendation, record the exact model repository, revision, precision, runtime version, GPU, driver, context length, batch settings, and prompt set. Keep output samples from the baseline and the optimized run. Include at least one easy case, one average case, one long-context case, one malformed input, and one high-value production scenario. This makes the decision reproducible and helps future reviewers understand whether a change is still valid after model or runtime updates. Add notes about cost and operational complexity so a technically faster option does not hide a maintenance burden or weaken reliability.',
-    },
-    {
-      heading: 'How this connects to InnoAI tools',
-      content:
-        'Use the VRAM calculator before renting or buying hardware, the GPU picker when memory and budget are both constrained, the comparison workspace when multiple model families look plausible, and the recommender when the use case is still unclear. Editorial guides provide the reasoning layer around those tools. The strongest workflow combines both: read the guide, estimate memory, shortlist models, compare alternatives, then validate the top choice against prompts from the real application.',
-    },
-  ],
-  checklist: [
-    `Have you connected ${guide.title} to a measurable deployment bottleneck?`,
-    'Have you kept a baseline result before applying this technique?',
-    'Have you tested realistic prompt lengths and concurrency?',
-    'Have you documented model revision, runtime version, precision, and hardware?',
-    'Have you linked the decision to a fallback plan if quality or latency regresses?',
-  ],
-  faq: [
-    {
-      q: `How should I use ${guide.title} in a production decision?`,
-      a: 'Use it as one input in a measured deployment workflow. Confirm the impact on quality, latency, memory, cost, and reliability before treating it as a standard.',
-    },
-    {
-      q: 'What is the most common mistake?',
-      a: 'The most common mistake is testing a small demo and assuming the result holds for long prompts, higher concurrency, different hardware, or stricter output requirements.',
-    },
-  ],
-});
-
-// Genuine, topic-specific depth per guide. Guides that reach real length through
-// their own material must never fall through to depthExpansionFor(), whose sections
-// are identical across pages and read as duplicate/templated content. Add a slug
-// here to give that page bespoke depth instead of the generic boilerplate.
+// Genuine, topic-specific depth per guide.
+//
+// There used to be a depthExpansionFor() fallback that padded any guide under the
+// word floor with five generic sections and a generic checklist. It was removed:
+// the sections were identical across every page that hit it, which is duplicate
+// templated content and contributed to an AdSense "Low value content" rejection.
+// A guide that is too thin should now fail `npm run content:check` loudly rather
+// than be silently topped up with boilerplate. Add a slug here to give that page
+// real, bespoke depth instead.
 const TOPIC_DEPTH = {
   'what-is-vllm': {
     sections: [
@@ -1355,6 +1296,11 @@ const TOPIC_DEPTH = {
         heading: '10. The configuration knobs that decide fit',
         content:
           'Four settings govern most vLLM deployments. gpu-memory-utilization caps how much VRAM the KV cache pool may claim (leave headroom or you will OOM under load). max-model-len reserves cache for the worst-case context; setting it to the model maximum when you only send 4K prompts silently halves your concurrency. max-num-seqs bounds how many sequences run at once, and tensor-parallel-size shards the model across GPUs. Tune max-model-len to real prompt lengths first — it is the cheapest way to raise the number of concurrent users a card can hold.',
+      },
+      {
+        heading: '11. When vLLM is the wrong tool',
+        content:
+          'vLLM is optimized for one shape of problem: many concurrent text-generation requests against a GPU-resident model. Outside that shape it is often the worse choice. For a single-user desktop assistant, llama.cpp starts faster, runs from one GGUF file, and can offload layers to system RAM when the model does not quite fit — none of which vLLM does well, since it preallocates a large VRAM pool at startup and expects the whole model resident. For strictly offline batch scoring where latency is irrelevant, a plain Transformers loop with large batches is simpler to debug and avoids running a server at all. For embedding models, rerankers, and classifiers, vLLM adds a serving layer around workloads that are already cheap and stateless. And on non-NVIDIA hardware, support ranges from experimental to absent depending on release, so an Apple Silicon or CPU-only target usually points back to llama.cpp or ONNX Runtime. The honest test is whether concurrency is your actual bottleneck. If your GPU sits idle between requests, continuous batching has nothing to batch, and the operational cost of running a server buys you nothing over a simpler runtime.',
       },
     ],
     checklist: [
@@ -1383,6 +1329,11 @@ const TOPIC_DEPTH = {
         content:
           'Post-training quantization estimates the range of each weight or activation from a small calibration set. A handful of outlier channels carry disproportionate magnitude, and squashing them is where accuracy is lost. AWQ works by identifying and protecting the most salient weight channels; GPTQ minimizes layer-wise reconstruction error greedily. The practical consequence: a poorly chosen calibration set — wrong domain, too few samples — produces a model that benchmarks fine but fails on your actual prompts. Prefer published quants calibrated on general data, and always re-test on your workload.',
       },
+      {
+        heading: '11. Post-training quantization versus quantization-aware training',
+        content:
+          'Almost every quantized model you download is post-training quantized: the weights were trained in high precision and compressed afterward using a small calibration set. It is cheap, needs no training infrastructure, and is why thousands of community quants exist. Quantization-aware training instead simulates low precision during training or fine-tuning, so the model learns weights that survive rounding. It consistently produces better quality at aggressive bit widths, particularly below 4 bits, but it requires the training pipeline and compute that most teams consuming open models do not have. There is a practical middle ground worth knowing about: QLoRA fine-tunes adapters on top of a frozen 4-bit base, which recovers much of the quality gap for a specific task at a fraction of full training cost. The decision rule is straightforward. If you are deploying a general assistant on a published open model, post-training quantization is almost certainly what you want, and your effort belongs in picking a well-calibrated quant and testing it. If you are already fine-tuning for a narrow domain and precision is hurting you, folding quantization into that process is worth the complexity — but only after you have proved with a baseline that precision, and not the base model or the prompt, is the thing costing you accuracy.',
+      },
     ],
     checklist: [
       'Note whether the method is weight-only (GPTQ/AWQ) or full (W8A8/FP8) — they behave differently.',
@@ -1409,6 +1360,11 @@ const TOPIC_DEPTH = {
         heading: '10. Reading the K-quant suffix',
         content:
           'GGUF filenames encode the quantization scheme, and the modern "K-quant" family (Q4_K_M, Q5_K_M, Q6_K, Q8_0) is what most users should pick. K-quants assign mixed per-block precision — attention and feed-forward tensors that matter most keep more bits — which is why Q4_K_M beats the older flat Q4_0 at the same size. The _M and _S suffixes mean medium and small variants of that trade. Importance-matrix (imatrix) quants push this further by calibrating which weights to protect. For most hardware, Q4_K_M or Q5_K_M is the quality-per-gigabyte sweet spot.',
+      },
+      {
+        heading: '11. K-quants, I-quants, and importance matrices',
+        content:
+          'GGUF quant names encode more than a bit width. The legacy formats (Q4_0, Q4_1) apply a uniform scheme across every tensor and are largely superseded. K-quants (Q4_K_M, Q5_K_M, Q6_K) mix precision within the file, spending more bits on the tensors that matter most — attention output and feed-forward down-projections — and fewer elsewhere, which is why a Q4_K_M usually beats a legacy Q4_0 of similar size. The suffix matters too: _S, _M, and _L denote small, medium, and large variants of the same family, trading file size against fidelity. I-quants (IQ2, IQ3, IQ4) push further using a codebook approach and can produce genuinely usable sub-3-bit models, at the cost of more compute per token, which can make them slower on CPU even though they are smaller. Many modern quants are also built with an importance matrix, generated by running calibration text through the model to identify which weights carry the most signal. An imatrix quant at a given size generally outperforms a non-imatrix one, and repository names usually say so. The practical guidance: prefer Q4_K_M as a default, step up to Q5_K_M or Q6_K when memory allows and the task is precision-sensitive, and only reach for I-quants when you genuinely cannot fit anything else.',
       },
     ],
     checklist: [
@@ -1437,6 +1393,11 @@ const TOPIC_DEPTH = {
         content:
           'These three axes solve different problems. Tensor parallelism splits within a layer to cut per-GPU memory and latency, but needs fast interconnect. Pipeline parallelism assigns whole layer ranges to different GPUs; it tolerates slower links but introduces pipeline "bubbles" that hurt latency at low batch. Data parallelism replicates the full model to raise throughput and does nothing for a model that does not fit. Large clusters combine them — tensor parallel inside a node, pipeline across nodes — but for a single 8-GPU box, plain tensor parallelism is usually the simplest path to serving a 70B model.',
       },
+      {
+        heading: '11. Pipeline parallelism, and why the two are not interchangeable',
+        content:
+          'Tensor parallelism splits individual matrix operations across GPUs, so every device participates in every layer and they must synchronize several times per token. Pipeline parallelism instead assigns whole contiguous blocks of layers to each GPU, so a token passes through GPU 0, then GPU 1, and so on. The communication profiles are opposite. Tensor parallelism moves small tensors very frequently and is punishing over slow links, which is why it wants NVLink and generally stays inside a single node. Pipeline parallelism moves activations once per stage boundary, tolerates PCIe or even Ethernet, and therefore scales across nodes — but it introduces pipeline bubbles, because with a single request in flight most stages sit idle waiting their turn. That makes pipeline parallelism a throughput technique that hurts single-request latency, and tensor parallelism a latency technique that demands fast interconnect. Large deployments combine them: tensor-parallel within each node where the links are fast, pipeline-parallel across nodes where they are not. For most teams the decision is simpler than the theory suggests. If the model fits in one node, use tensor parallelism sized to a divisor of the attention head count. Only reach for pipeline stages when a single node genuinely cannot hold the model, and expect to feed it concurrent traffic to keep the bubbles filled.',
+      },
     ],
     checklist: [
       'Confirm the interconnect (NVLink vs PCIe) before choosing a tensor-parallel size.',
@@ -1446,6 +1407,10 @@ const TOPIC_DEPTH = {
       'Pin runtime and driver versions; sharded paths are the most version-sensitive.',
     ],
     faq: [
+      {
+        q: 'Can I mix different GPU models in a tensor-parallel group?',
+        a: 'Technically sometimes, practically no. Every rank synchronizes at each layer boundary, so the slowest card sets the pace and the fastest one idles. Mismatched VRAM is worse still, because the shard size is bounded by the smallest card. Keep a tensor-parallel group homogeneous.',
+      },
       {
         q: 'Why must the tensor-parallel size divide the number of attention heads?',
         a: 'Each GPU handles a whole-number slice of the attention heads. If the head count is not divisible by the tensor-parallel size, the heads cannot be split evenly and the runtime will reject the configuration.',
@@ -1464,6 +1429,11 @@ const TOPIC_DEPTH = {
         content:
           'Because kv_heads is a direct multiplier, grouped-query and multi-query attention are the biggest structural savings — a model with 8 KV heads instead of 64 uses an eighth of the cache. Beyond architecture, you can quantize the cache itself to FP8 or INT8 (supported in vLLM and TensorRT-LLM), enable sliding-window attention to bound the cache at long context, or reuse prefix cache for shared system prompts. Each lever trades something: FP8 cache can nick quality, sliding windows drop distant tokens. Pick the one that matches whether your constraint is context length, concurrency, or raw capacity.',
       },
+      {
+        heading: '11. Cache quantization, sliding windows, and the newer attention layouts',
+        content:
+          'Three architectural levers cut cache memory before you touch hardware. The first is cache quantization: storing keys and values in FP8 or INT8 rather than FP16 roughly halves the term, and most serving runtimes now expose it as a flag. Keys tolerate quantization worse than values, so runtimes often quantize them asymmetrically, and long-context retrieval is where quality degradation shows up first. The second is sliding-window attention, used by models such as Mistral and Gemma, where each token attends only to a fixed window of recent tokens. The cache stops growing once the window fills, which converts an unbounded memory cost into a constant one — at the price of genuinely losing access to distant tokens, so it suits chat far better than whole-document analysis. The third and largest lever is the attention layout itself. Multi-head attention stores a full key-value pair per attention head. Grouped-query attention shares each pair across a group of heads, cutting cache by the head-to-kv-head ratio, which is commonly eight to one. Multi-head latent attention, used by DeepSeek, compresses the pair into a shared low-rank latent and reduces it further still. This is why parameter count predicts cache size so poorly: two models of identical size can differ several-fold in cache footprint purely from their attention design, and checking that design is the highest-leverage thing you can do before committing to a card.',
+      },
     ],
     checklist: [
       'Compute cache size with the 2·layers·kv_heads·head_dim·seq·batch·bytes formula.',
@@ -1473,6 +1443,10 @@ const TOPIC_DEPTH = {
       'Reuse prefix cache for shared system prompts to reclaim concurrency.',
     ],
     faq: [
+      {
+        q: 'Should I quantize the KV cache to FP8?',
+        a: 'It is usually the cheapest large saving available, roughly halving cache memory, and most serving runtimes now support it. Keys tolerate it less well than values, and long-context retrieval is where degradation appears first, so validate on long-prompt tasks rather than short chat before enabling it in production.',
+      },
       {
         q: 'Does a bigger context window automatically use more memory?',
         a: 'Only when you fill it. The KV cache grows with the tokens actually present, so a 128K-capable model at a 2K prompt uses little cache — but the runtime may pre-reserve for max-model-len, so cap that setting to your real needs.',
@@ -1491,6 +1465,11 @@ const TOPIC_DEPTH = {
         content:
           'FlashAttention-2 improved GPU occupancy and parallelism; FlashAttention-3 targets Hopper-class hardware and FP8. Support is not universal: head dimensions above certain limits, some sliding-window or ALiBi variants, and older GPUs may not be covered, in which case the framework quietly falls back to a slower kernel. That silent fallback is the classic trap — your latency assumptions were built on FlashAttention but the run never used it. Check startup logs or profiler output to confirm the fast kernel is actually active for your model and precision. On multi-GPU serving, verify it again after tensor-parallel sharding, because some fused kernels only cover specific head-dimension and dtype combinations and quietly revert on the rest.',
       },
+      {
+        heading: '11. What changed between FlashAttention versions',
+        content:
+          'The name covers several generations with materially different hardware requirements, which is the usual source of confusion when an install fails or a speedup fails to appear. The original release established the core idea: tile the attention computation so intermediate matrices stay in fast on-chip SRAM instead of being written to and read back from high-bandwidth memory, and recompute cheap values during the backward pass rather than storing them. FlashAttention-2 reworked how work is partitioned across thread blocks and warps, cutting non-matmul operations and improving occupancy, which is where most of the practical throughput gain on Ampere-class hardware came from. FlashAttention-3 targets Hopper specifically, exploiting asynchronous tensor cores and FP8 paths, and consequently offers little or nothing on older cards. Alongside these sits FlashDecoding, aimed at the decode phase rather than prefill, which splits the sequence dimension across more parallel work so that generating one token at a time does not leave most of the GPU idle. Two practical consequences follow. Prefill and decode benefit from different variants, so a benchmark dominated by long prompts will report a very different result from one dominated by long generations. And version support is gated by GPU architecture and head dimension, so the most common real-world outcome is not an error but a silent fallback to a slower kernel — which is exactly why confirming the active kernel in the logs matters more than trusting the flag.',
+      },
     ],
     checklist: [
       'Confirm your GPU generation and head dimension are supported by the FA version.',
@@ -1500,6 +1479,10 @@ const TOPIC_DEPTH = {
       'Remember weights and KV cache are unchanged; FA only speeds attention.',
     ],
     faq: [
+      {
+        q: 'Why did enabling FlashAttention change nothing for me?',
+        a: 'Three common reasons: the runtime silently fell back to a standard kernel because the GPU generation or head dimension is unsupported; the prompts are short enough that attention was never the bottleneck; or the workload is decode-heavy, where per-token weight reads dominate and prefill optimizations barely register.',
+      },
       {
         q: 'Is FlashAttention an approximation?',
         a: 'No. It computes exact attention — the same result as the naive implementation — using tiling and an online softmax to avoid writing the full score matrix to memory. The gain is efficiency, not an accuracy trade.',
@@ -1518,6 +1501,11 @@ const TOPIC_DEPTH = {
         content:
           'Contiguous pre-allocation wastes memory two ways: internal fragmentation (a request reserved for max length but generated few tokens) and external fragmentation (free gaps too small to reuse). PagedAttention nearly eliminates both — external fragmentation drops to zero because any free block fits any sequence, and internal fragmentation is bounded to less than one block per sequence. In vLLM’s own measurements this pushed KV memory utilization from roughly 20–40% to over 90%, which is the concrete reason a paged runtime serves several times more concurrent requests on the same card. The same block-sharing mechanism also makes beam search and parallel sampling cheap: candidate sequences share the prompt’s physical blocks and only diverge where their tokens differ, instead of duplicating the entire cache per candidate.',
       },
+      {
+        heading: '11. Block size, copy-on-write, and preemption',
+        content:
+          'Three implementation details explain most of the behaviour operators actually observe. Block size sets the granularity of allocation, typically sixteen tokens. Smaller blocks waste less memory on the final partial block of each sequence but enlarge the block table and add lookup overhead; larger blocks reverse the trade. The default is well tuned for mixed traffic, and tuning it is rarely the first thing worth changing. Copy-on-write is what makes parallel sampling cheap: when one prompt generates several candidate completions, the shared prefix blocks are referenced rather than duplicated, and a block is copied only when two sequences actually diverge. The same mechanism powers prefix caching, where a common system prompt is stored once and reused across every request that starts with it — which is why keeping system prompts byte-identical across calls is a genuine throughput optimization rather than a style preference. Preemption is the failure path worth understanding in advance. When the cache pool is exhausted, the scheduler must reclaim blocks from running sequences, either swapping them to host memory or recomputing them later. Both are expensive, and the visible symptom is not an error but a sudden latency spike under load with throughput that collapses rather than degrading smoothly. If your p95 latency is stable and then falls off a cliff at a particular concurrency level, preemption is the first thing to check, and the fix is usually a lower max sequence count or a shorter served context rather than a bigger card.',
+      },
     ],
     checklist: [
       'Expect the largest gains on workloads with shared prefixes or many concurrent users.',
@@ -1527,6 +1515,10 @@ const TOPIC_DEPTH = {
       'Treat block size as a tunable; smaller blocks cut waste but add metadata overhead.',
     ],
     faq: [
+      {
+        q: 'Why does throughput collapse suddenly instead of degrading gradually?',
+        a: 'That signature points to preemption. Once the cache pool is exhausted the scheduler reclaims blocks from running sequences by swapping or recomputing them, which is far more expensive than normal execution. Lower the maximum sequence count or the served context length rather than assuming you need a larger card.',
+      },
       {
         q: 'What block size does PagedAttention use?',
         a: 'vLLM defaults to 16 tokens per block, and it is configurable. Smaller blocks reduce internal fragmentation but increase block-table metadata and lookup overhead, so the default is a balance for typical serving.',
@@ -1545,6 +1537,11 @@ const TOPIC_DEPTH = {
         content:
           'Graph replay assumes the same tensor shapes and memory addresses as capture, so serving stacks bucket requests into a small set of fixed batch sizes and pad to them; a captured graph exists per bucket. Prefill, where prompt lengths vary widely, is harder to graph and often uses piecewise or partial capture instead. The cost is memory: each captured graph reserves its own working set, so capturing many buckets can reduce the concurrency headroom you were trying to protect. Capture a few well-chosen batch sizes rather than every possible shape — a common compromise is to graph only the handful of batch sizes your scheduler actually produces under load, then let rare or oversized shapes fall back to normal eager execution without a captured graph.',
       },
+      {
+        heading: '11. Piecewise capture and the relationship to torch.compile',
+        content:
+          'Full-graph capture is the textbook description, but it is not how most production stacks actually work, because a decode step contains operations that resist capture — dynamic KV cache indexing, custom attention kernels, and anything that branches on runtime values. Piecewise capture is the practical answer: the runtime captures the long stretches that are shape-stable, typically the feed-forward and projection layers, and leaves the attention path to execute eagerly. That recovers most of the launch-overhead saving without demanding that the entire step be static. This is also where CUDA graphs meet torch.compile, and the two are complementary rather than competing. torch.compile traces the model into an intermediate representation and fuses operations, reducing the number of kernels that exist at all; CUDA graphs reduce the CPU cost of launching whichever kernels remain. Applying compilation first and capture second usually gives more than either alone. The cost is startup time and memory. Each captured graph and each compiled shape variant is stored, so a runtime that buckets batch sizes into eight variants pays that overhead eight times, and warmup can add tens of seconds before the first request is served. On a long-lived server that is irrelevant. On a scale-to-zero deployment where cold starts are user-visible, it can easily outweigh the per-token gain, which is why the same configuration can be clearly right in one deployment and clearly wrong in another.',
+      },
     ],
     checklist: [
       'Stabilize decode shapes (fixed batch buckets, padding) before enabling capture.',
@@ -1554,6 +1551,10 @@ const TOPIC_DEPTH = {
       'Apply CUDA graphs last, after model, precision, and batching are settled.',
     ],
     faq: [
+      {
+        q: 'Why did enabling graph capture reduce my concurrency?',
+        a: 'Each captured graph reserves memory, and a runtime that buckets several batch sizes stores one per bucket. That reservation comes out of the same pool as the KV cache, so if you were already near the memory limit the lost cache capacity can outweigh the launch-overhead saving.',
+      },
       {
         q: 'Do CUDA graphs help prefill or decode more?',
         a: 'Decode. The token-by-token decode loop repeats the same small kernels with stable shapes, which is ideal for graph replay. Prefill has variable prompt lengths and larger kernels, so launch overhead matters less and capture is harder.',
@@ -1572,6 +1573,11 @@ const TOPIC_DEPTH = {
         content:
           'At serving scale the experts are sharded across GPUs (expert parallelism), so after routing, tokens must be shipped to whichever GPU holds their chosen expert and the results shipped back — two all-to-all communication steps per MoE layer. This makes MoE inference bandwidth-sensitive in a way dense models are not: interconnect, not FLOPs, is frequently the bottleneck. It is also why a model advertising few active parameters can still demand a lot of VRAM and fast links — every expert must be resident even though each token only visits a couple.',
       },
+      {
+        heading: '11. Expert parallelism and the load-balance problem',
+        content:
+          'Because experts are independent feed-forward blocks, they can be distributed across GPUs — expert parallelism — rather than sharding every matrix the way tensor parallelism does. This is attractive for very large mixture-of-experts models, since it keeps each device holding a manageable slice of total parameters. The complication is that routing is data-dependent, so the work each GPU receives depends entirely on which experts the incoming tokens happen to select. When a batch skews toward a handful of popular experts, those devices become the bottleneck while others idle, and because every device must synchronize at the end of the layer, the slowest determines the step time. Training addresses this with auxiliary load-balancing losses that push the router toward even utilization, and with capacity factors that cap how many tokens any single expert may accept, dropping the overflow. At inference you inherit whatever balance the trained router produces, and your levers are cruder: larger batches average out the skew, and some runtimes replicate the hottest experts across multiple devices. Two practical consequences follow. Latency on mixture-of-experts models is more variable than on dense models of comparable size, because it depends on the routing pattern of the specific batch, which makes p95 a far more honest metric than the mean. And a mixture-of-experts model that benchmarks well on one domain can behave differently on another, since a shift in subject matter shifts the routing distribution — so evaluate across the domains you actually serve rather than a single representative set.',
+      },
     ],
     checklist: [
       'Size VRAM for all resident experts, not just the active-parameter count.',
@@ -1581,6 +1587,10 @@ const TOPIC_DEPTH = {
       'Check the config for num_experts and num_experts_per_tok before planning memory.',
     ],
     faq: [
+      {
+        q: 'Why is latency less predictable on mixture-of-experts models?',
+        a: 'Because routing is data-dependent. Which experts a batch activates depends on its content, so some steps concentrate work on a few devices while others spread it evenly. Every device synchronizes at the layer boundary, so the busiest one sets the step time. Track p95 rather than mean latency.',
+      },
       {
         q: 'What is the capacity factor in a mixture-of-experts model?',
         a: 'It caps how many tokens each expert will process in a batch, as a multiple of the average. Tokens beyond the cap are dropped or padded. Higher capacity reduces dropped tokens but costs memory and compute; it is a balance-versus-efficiency knob.',
@@ -1609,6 +1619,11 @@ const TOPIC_DEPTH = {
         content:
           'When you are unsure where to begin, use a ladder and stop at the first rung that meets your constraints. Start at BF16 or FP16 for maximum quality when memory allows; step to FP8 on Ada or Hopper hardware for near-identical quality with better throughput; drop to INT8 as a widely safe production midpoint; and move to 4-bit — GPTQ, AWQ, or a GGUF K-quant — only when memory or cost genuinely forces it. Descend one rung at a time and re-run your evaluation suite at each step, because the right stopping point depends on the specific model and task rather than a universal rule. Many toolkits also let you keep sensitive layers — the embeddings, the output head, or attention projections — at higher precision while quantizing the bulk of the weights, which recovers noticeable quality at almost no extra memory cost. Documenting which rung you chose, and why, makes the decision easy to revisit when a newer quantization method or a larger GPU shifts the trade-off later.',
       },
+      {
+        heading: 'Precision affects speed and quality through different mechanisms',
+        content:
+          'It is tempting to treat precision as a single dial where lower always means smaller, faster, and slightly worse. Memory does behave that way, but speed and quality do not, and conflating them causes most of the disappointment teams report after quantizing. Speed depends on where the bottleneck sits. Single-request decoding is memory-bandwidth-bound: the GPU reads the entire weight set to produce one token, so halving the bytes read genuinely can nearly halve the time. Large-batch prefill is compute-bound instead, and there a weight-only quantized model must dequantize back to FP16 before the matrix multiply, adding work — which is why an INT4 model sometimes benchmarks slower than FP16 at high batch sizes despite using a quarter of the memory. Quality degrades unevenly rather than uniformly. Conversational fluency survives aggressive quantization well, because many token choices are acceptable. Tasks with a single correct answer degrade first and most visibly: exact arithmetic, strict JSON adherence, tool-call argument construction, and long chains of dependent reasoning, where a small early error compounds. Long-context retrieval is another weak point, since attention over many tokens amplifies small numerical differences. The practical implication is that a single benchmark number cannot tell you whether a quantization is safe. Test the specific capability your product depends on, at the batch size and context length you actually serve, and treat perplexity or a general leaderboard score as a screening signal rather than evidence.',
+      },
     ],
     checklist: [
       'Compute weights + KV cache + overhead before committing to a precision.',
@@ -1618,6 +1633,10 @@ const TOPIC_DEPTH = {
       'Keep a higher-precision fallback and a defined rollback threshold.',
     ],
     faq: [
+      {
+        q: 'Why is my 4-bit model slower than FP16 at large batch sizes?',
+        a: 'Weight-only quantization stores compressed weights but dequantizes back to FP16 for the actual matrix multiply. At small batches you win because decoding is bandwidth-bound and you read fewer bytes. At large batches the work becomes compute-bound and the dequantization step is pure added overhead.',
+      },
       {
         q: 'Does 4-bit always halve quality?',
         a: 'No. For general chat it is often close to lossless, but for code, math, agentic loops, and strict JSON it can regress noticeably. Always measure on your own prompt suite rather than trusting a single benchmark.',
@@ -1646,6 +1665,11 @@ const TOPIC_DEPTH = {
         content:
           'The line items people forget are usually the ones that decide the real cost. On the closed side, budget for rate-limit headroom, retries, prompt-caching discounts, and the engineering time to adapt when the provider deprecates a model. On the open side, the GPU is rarely the largest number: staffing for on-call and upgrades, observability and load-testing infrastructure, and the effort to re-tune prompts and re-validate quality after every model update often dominate a twelve-month view. A useful exercise is to write both totals as fully loaded monthly figures — including people, not just compute — and compare them at your realistic traffic, then again at two and five times that traffic. That sensitivity check frequently flips the answer, because the option that is cheapest at launch is often not the one that stays cheapest as usage grows and reliability expectations rise.',
       },
+      {
+        heading: 'Read the licence, because "open" covers several different things',
+        content:
+          'The word open is applied to licences with materially different obligations, and the differences decide real product questions. True open-source licences such as Apache 2.0 and MIT — used by Mistral, Qwen, and several others — permit commercial use, modification, and redistribution with essentially only attribution required. Open-weight licences are more restrictive despite often being described the same way. The Llama community licence permits broad commercial use but adds an acceptable-use policy, naming and attribution requirements for derivative models, and a clause requiring a separate agreement above roughly seven hundred million monthly active users. Gemma carries its own use-based restrictions that survive redistribution and apply to anyone you pass the model to. Some widely used models are released under research-only or non-commercial terms, which prohibits exactly the deployment most teams have in mind. Three practical points follow. First, the licence travels with the weights, so a fine-tune of a restricted model inherits the restriction and your customers inherit it too. Second, the training data licence and the weights licence are separate questions, and permissive weights do not settle whether the training corpus creates exposure in your jurisdiction. Third, a quantized community upload does not relicense anything, whatever the repository card implies. If a model is load-bearing for your product, read the actual licence text before you build on it — this is one of the few areas where the cost of checking late is far higher than the cost of checking early.',
+      },
     ],
     checklist: [
       'Compute the break-even token volume before assuming open is cheaper.',
@@ -1655,6 +1679,10 @@ const TOPIC_DEPTH = {
       'Keep a portable evaluation suite so migration stays evidence-based.',
     ],
     faq: [
+      {
+        q: 'Does fine-tuning an open model change its licence obligations?',
+        a: 'No, the licence travels with the weights. A fine-tune of a Llama or Gemma model inherits that licence, including naming, attribution, and acceptable-use terms, and anyone you distribute the result to inherits them too. Quantizing or re-uploading a model does not relicense it either.',
+      },
       {
         q: 'At what scale does self-hosting beat an API?',
         a: 'When steady token volume exceeds the break-even point (monthly GPU + operations cost divided by API price per token) and traffic is predictable enough to keep the GPUs utilized. Spiky or low volume usually favors a managed API. Re-run the calculation whenever your pricing, traffic, or hardware costs change, because the break-even point moves with all three at once.',
@@ -1682,6 +1710,11 @@ const TOPIC_DEPTH = {
         heading: 'Check the license and context terms, not just quality',
         content:
           'Two models with similar benchmark scores can carry very different obligations. Llama ships under a community license with an acceptable-use policy and a monthly-active-user threshold that matters for large products; Qwen and Gemma have their own terms; and some coding-tuned forks add further restrictions. Before standardizing on a family, confirm the license permits your commercial and hosting use, and check the real usable context length rather than the advertised maximum, since long-context quality often falls off well before the stated limit. For coding specifically, verify the model supports the interaction mode you need — fill-in-the-middle for inline completion, or a chat template that plays well with your agent framework — because a mismatch there costs more day to day than a small benchmark gap.',
+      },
+      {
+        heading: 'Benchmark scores are the weakest evidence in a coding-model decision',
+        content:
+          'Coding leaderboards are the most quoted and least useful input to this choice. HumanEval and MBPP consist of short, self-contained functions with clear specifications, which is close to the easiest thing a coding model does and nothing like working inside an existing codebase. They are also old enough that contamination is a genuine concern: a model may have encountered the problems and their solutions during training, and a score can reflect recall rather than capability. Newer suites such as SWE-bench are considerably more honest, since they require navigating a real repository and producing a patch that passes existing tests, but they measure agentic behaviour over long contexts and so tell you little about a model used for inline completion. Four things predict day-to-day usefulness better than any score. Instruction adherence under constraint — whether the model respects your framework version, style, and stated boundaries instead of drifting to the most common pattern in its training data. Long-context reliability, since real tasks span multiple files and models degrade well before their advertised context limit. Tool and structured-output discipline, which decides whether the model works inside an agent loop or breaks it. And honest failure, meaning the model says it is unsure rather than inventing a plausible API that does not exist. The only reliable method is to assemble ten to twenty tasks from your own repository, including ones current tooling handles badly, and run each candidate at the quantization and context length you would actually deploy.',
       },
     ],
     checklist: [
@@ -1720,6 +1753,11 @@ const TOPIC_DEPTH = {
         content:
           'When a model almost fits, several levers recover headroom before you accept a smaller checkpoint. Quantizing the KV cache to FP8 or INT8 (supported in vLLM and TensorRT-LLM) can roughly halve cache memory at long context; choosing a grouped-query-attention model shrinks the cache structurally; and lowering the reserved maximum sequence length to the context you actually send stops the runtime pre-allocating for the worst case. Reducing batch size and enabling paged attention or prefix caching further raises effective capacity. Work through these first, because a 14B model that fits after cache quantization usually beats a 7B model that fit only because you gave up half the parameters — but re-run your quality tests after each change, since FP8 cache and aggressive context caps have their own small trade-offs.',
       },
+      {
+        heading: 'Offloading buys fit at a price most people underestimate',
+        content:
+          'When a model will not fit, the obvious escape is to keep part of it in system RAM and stream layers to the GPU as needed. Both llama.cpp and Accelerate support this, and it genuinely turns an impossible deployment into a working one. What the file-size arithmetic hides is the cost. GPU memory bandwidth is measured in hundreds of gigabytes per second and, on data-center cards, in terabytes. PCIe Gen4 x16 delivers roughly thirty-two gigabytes per second in practice. Any layer living in system RAM must cross that link for every single token, so the offloaded portion runs one to two orders of magnitude slower than the resident portion. The consequence is sharply non-linear: offloading ten percent of a model might cost you thirty percent of your speed, while offloading half can take a comfortable thirty tokens per second down to two or three — technically working, but unusable for anything interactive. This is why a smaller model at higher precision usually beats a larger model half in RAM. An 8B at Q5 running entirely on the GPU will feel dramatically better than a 32B with a third of its layers on the CPU, even though the larger model is stronger on paper. Treat offloading as a way to evaluate a model you are considering, or to run batch work where latency does not matter, rather than as a way to serve one. If you do use it, tune the resident layer count deliberately and measure tokens per second at each setting, because the useful range is narrower than it looks.',
+      },
     ],
     checklist: [
       'Compute usable VRAM as card total minus overhead minus KV cache.',
@@ -1729,6 +1767,10 @@ const TOPIC_DEPTH = {
       'Prefer dense models over MoE when VRAM is tight.',
     ],
     faq: [
+      {
+        q: 'Is a larger model with CPU offload better than a smaller model on GPU?',
+        a: 'Almost never for interactive use. Offloaded layers cross PCIe at roughly a tenth to a hundredth of GPU memory bandwidth on every token, so speed falls off a cliff. An 8B at Q5 running fully on the card will feel far better than a 32B with a third of its layers in system RAM.',
+      },
       {
         q: 'Can I run a 13B model on 8GB?',
         a: 'Only with aggressive 3-bit quantization and a very small context, and quality suffers noticeably on code and reasoning. A 7B model at 4-bit is usually the better choice on 8 GB because it leaves headroom for the KV cache and keeps quality closer to the full-precision model.',
@@ -1762,6 +1804,11 @@ const TOPIC_DEPTH = {
         content:
           'A single strong multilingual model is the simplest starting point, but at scale it can be worth routing by language or script. If one language shows persistently high correction rates, sending its traffic to a model specialized for that language — or to a different prompt and retrieval configuration — can lift quality without regressing the others. Weigh that gain against the added operational complexity of running and evaluating more than one path, and let per-language metrics, not intuition, decide when routing earns its keep.',
       },
+      {
+        heading: 'Tokenizer fertility is a cost and a context problem, not a curiosity',
+        content:
+          'Tokenizers are trained on a corpus, and that corpus is overwhelmingly English for most open models. The result is that identical meaning costs very different numbers of tokens depending on script. English text typically runs near one and a third tokens per word. Languages written in Latin script with rich morphology, such as Finnish or Turkish, run higher. Non-Latin scripts fare worst: Hindi, Thai, and Arabic frequently cost two to four times English, and a poorly covered script can degrade to near one token per character. This single ratio, usually called fertility, propagates into three separate problems. It is a direct cost multiplier, because per-token API pricing means the same document costs several times more to process in one language than another. It is a context problem, since a model advertising a 32K window offers materially less usable room in a high-fertility language — a document that fits comfortably in English may not fit at all. And it is a quality problem, because fragmenting words into many sub-word pieces gives the model a weaker signal to work with, which is part of why performance drops on low-resource languages even when the training data covered them. The practical step is cheap and worth doing before you commit: run a representative paragraph in each target language through each candidate tokenizer and compare token counts directly. Models with deliberately multilingual tokenizers, such as the Qwen and Gemma families, usually show markedly better ratios on non-Latin scripts than English-centric alternatives of the same size.',
+      },
     ],
     checklist: [
       'Measure tokenizer fertility (tokens per word) on each target script.',
@@ -1771,6 +1818,10 @@ const TOPIC_DEPTH = {
       'Track correction rate per language, not one global score.',
     ],
     faq: [
+      {
+        q: 'Why does the same document cost more in one language than another?',
+        a: 'Tokenizer fertility. Most tokenizers are trained on English-heavy corpora, so non-Latin scripts fragment into far more tokens for identical meaning, often two to four times as many. That multiplies per-token cost, consumes context faster, and weakens the signal the model has to work with.',
+      },
       {
         q: 'Is a bigger model always better multilingually?',
         a: 'No. Tokenizer coverage and language-specific training data usually matter more than raw size. A smaller model trained well on your languages can beat a larger English-centric one on both quality and cost, and it will often produce shorter, cheaper token sequences on non-Latin scripts as a bonus. Always confirm this on your own languages rather than assuming the larger model wins.',
@@ -1804,6 +1855,11 @@ const TOPIC_DEPTH = {
         content:
           'Tail latency is a product decision, not just an infrastructure metric. Set explicit per-stage timeouts, and decide in advance what happens when one is exceeded — return a partial streamed answer, retry on a faster model, or degrade gracefully to a cached or simpler response. An app that occasionally answers a little worse but always answers quickly usually feels better than one that is fast on average but stalls unpredictably. Measure how often each fallback fires, because a fallback that triggers constantly is really a capacity problem wearing a disguise.',
       },
+      {
+        heading: 'Prefill and decode are different bottlenecks, and they need different fixes',
+        content:
+          'Latency complaints almost always resolve to one of two phases, and the remedies barely overlap. Prefill processes the entire prompt in parallel to produce the first token. It is compute-bound, scales with prompt length, and is what time-to-first-token actually measures. Decode then produces tokens one at a time, each requiring a full pass over the model weights, which makes it memory-bandwidth-bound and largely independent of prompt length. That difference explains most confusing benchmark results. If a user complains the assistant is slow to start, the problem is prefill, and the fixes are prompt-side: shorten the system prompt, retrieve fewer chunks, enable prefix caching so a shared preamble is computed once, or move to a GPU with more compute. If they complain it types slowly once it starts, the problem is decode, and the fixes are different: a smaller model, a quantization that reduces bytes read per token, a card with higher memory bandwidth, or speculative decoding, where a small draft model proposes tokens that the large model verifies in batches. Batching cuts across both in an unintuitive way. Adding concurrent requests barely changes per-request decode speed, because the weight read is shared across the batch, which is why throughput scales far better than latency does. The practical discipline is to always report the two numbers separately. A single average latency figure hides which phase is actually hurting, and teams routinely optimize the wrong one for weeks as a result.',
+      },
     ],
     checklist: [
       'Measure time-to-first-token and tokens-per-second separately.',
@@ -1813,6 +1869,10 @@ const TOPIC_DEPTH = {
       'Optimize p95 latency and timeout rate, not the average.',
     ],
     faq: [
+      {
+        q: 'My assistant is slow to start but types quickly. What do I fix?',
+        a: 'That is a prefill problem, not a decode one. Shorten the system prompt, retrieve fewer chunks, or enable prefix caching so a shared preamble is computed once. Switching to a smaller model mainly speeds up decode and will barely move time-to-first-token.',
+      },
       {
         q: 'Does a smaller model always mean lower latency?',
         a: 'For raw decode rate yes, but if the smaller model fails more often and triggers retries or corrections, total task-completion time can rise. Optimize for successful-completion latency, not raw generation speed, and route only the requests the smaller model handles reliably to it while sending harder ones to a stronger model.',
@@ -1846,6 +1906,11 @@ const TOPIC_DEPTH = {
         content:
           'Part of building well is recognizing the ceiling. An 8 GB assistant is excellent for personal workflows, prototypes, private document Q&A, and internal tools with light traffic. It is the wrong choice for concurrent production traffic, very long documents, or tasks that genuinely need a large model — heavy multi-file code reasoning or complex agentic loops. When your logs show frequent truncation, rising correction rates, or queueing under real use, that is the signal to move to a larger GPU or a hosted API rather than fighting the memory limit with ever more aggressive quantization.',
       },
+      {
+        heading: 'What an 8 GB budget actually buys once the cache is counted',
+        content:
+          'Eight gigabytes sounds workable until the arithmetic is done honestly, and the gap between the model file size and the real requirement is where most local setups fail. Start by subtracting what you never get: the operating system and display stack claim several hundred megabytes to well over a gigabyte on a card also driving monitors, and the CUDA context costs a few hundred more. Call it seven gigabytes usable. A 7B model at Q4_K_M occupies roughly four and a half, which leaves about two and a half for the KV cache and activations. At 4K context that is comfortable. At 32K, on a model without grouped-query attention, the cache alone can exceed what remains, which is why a setup that works all afternoon fails on the first long document. Three configurations reliably work within this budget. A 7B or 8B at Q4_K_M with context capped near 8K is the best general-purpose option and handles chat, summarization, and light code assistance. A 3B or 4B at Q5 or Q6 trades some capability for a much larger context window and noticeably faster generation, which suits document work. And a 7B at Q3 exists but is rarely the right answer, since the quality drop usually exceeds what the extra headroom is worth. The single most useful habit on a card this size is to set the context length explicitly rather than accepting the model default, because most runtimes will happily allocate a cache far larger than you need and fail at load time for no visible reason.',
+      },
     ],
     checklist: [
       'Run a GGUF Q4_K_M 7B (or 3–4B for long context) via Ollama or llama.cpp.',
@@ -1855,6 +1920,10 @@ const TOPIC_DEPTH = {
       'Log corrections, truncations, and latency weekly before changing models.',
     ],
     faq: [
+      {
+        q: 'Why does my model fail to load even though the file is smaller than my VRAM?',
+        a: 'The file size is only the weights. You also pay for the KV cache at whatever context the runtime defaults to, plus activations, plus a few hundred megabytes of CUDA context and whatever the desktop is already using. Set the context length explicitly rather than accepting the model maximum.',
+      },
       {
         q: 'Ollama or llama.cpp directly on 8GB?',
         a: 'Ollama wraps llama.cpp with easy model management and is the better default. Drop to raw llama.cpp only when you need fine control over offloaded layers, KV-cache type, or a custom quantization.',
@@ -1877,6 +1946,11 @@ const TOPIC_DEPTH = {
         heading: 'Keep the source data fresh and scoped',
         content:
           'A RAG app is only as current as its index. Decide up front how documents get updated — scheduled re-ingestion, a webhook on source changes, or manual refresh — and re-embed whenever content or chunking changes so the vectors never drift from the truth. Keep the corpus scoped to what the app actually answers; adding unrelated documents dilutes retrieval precision and raises the chance of confidently citing the wrong source. Attach a last-updated timestamp to chunks so stale answers are diagnosable, and prune or version content that has been superseded rather than leaving contradictory passages in the index.',
+      },
+      {
+        heading: 'Retrieval quality fails before generation quality does',
+        content:
+          'When a small retrieval-augmented app gives wrong answers, the instinct is to blame the language model and reach for a bigger one. That is usually the wrong diagnosis. If the retrieved chunks do not contain the answer, no model can produce it, and a stronger model will simply produce a more confident wrong answer. Evaluate the two stages separately. Measure retrieval first, using recall at k: for a set of questions with known source passages, how often does the correct passage appear in the top k results? If that number is poor, generation is irrelevant until it improves. Three fixes address most retrieval failures. Hybrid search combines dense vector similarity with keyword matching, which matters because embeddings handle paraphrase well but reliably miss exact identifiers — product codes, error numbers, function names — that users actually search for. Reranking runs a cross-encoder over the top twenty or fifty candidates and reorders them; it is more expensive per query but consistently lifts precision, and retrieving broadly then reranking beats retrieving narrowly. Query rewriting expands the user question before embedding it, which helps most with short or conversational queries where the raw text carries little signal. Only once retrieval is sound does the generation stage deserve attention, and there the highest-value instruction is to answer strictly from the supplied context and to state plainly when that context is insufficient — turning a silent fabrication into a visible gap you can act on.',
       },
     ],
     checklist: [
@@ -1910,6 +1984,11 @@ const TOPIC_DEPTH = {
         content:
           'Most prompt failures in production are not wrong answers but confident answers to questions the model should have declined. Spell out what to do when the input is missing, ambiguous, or out of scope: refuse with a specific message, ask a clarifying question, or return a defined empty result. For retrieval-backed prompts, instruct the model to answer only from the provided context and to say plainly when that context is insufficient. Making the failure path as explicit as the success path is what separates a prompt that demos well from one that behaves predictably under the messy, unexpected inputs real users send.',
       },
+      {
+        heading: 'Constrain the output format in the decoder, not only in the prose',
+        content:
+          'Asking politely for JSON works most of the time, and most of the time is exactly the problem: a one-percent malformed-output rate is invisible in testing and a recurring incident in production. Prompt wording can raise adherence but cannot guarantee it, because nothing in the sampling process prevents the model from emitting a token that breaks the structure. The reliable fix operates a level lower. Constrained decoding — offered as structured or guided output by most serving stacks, and by libraries such as Outlines and llama.cpp grammars — masks the token distribution at each step so that only tokens permitted by a JSON schema or grammar can be sampled. Malformed output becomes impossible rather than unlikely, and the cost is a small amount of overhead plus some loss of flexibility. Where that is unavailable, two habits help materially. Prefill the opening token of the structure so the model continues rather than deciding how to begin, since preambles like a courteous sentence before the JSON are a common failure. And validate every response against the schema with a single bounded retry that feeds the parse error back, rather than assuming success. It is worth knowing that heavy constraint has a real cost: forcing a rigid schema can degrade reasoning quality, because the model cannot use intermediate tokens to work through the problem. The usual resolution is to let the model reason freely in a designated field, then constrain only the fields you will actually parse.',
+      },
     ],
     checklist: [
       'Order the prompt instruction, then context, then examples, with delimiters.',
@@ -1920,6 +1999,10 @@ const TOPIC_DEPTH = {
     ],
     faq: [
       {
+        q: 'Is asking for JSON in the prompt good enough?',
+        a: 'Not for production. Prompt wording raises adherence but cannot guarantee it, and a one-percent malformed rate is invisible in testing and recurrent in production. Use constrained or guided decoding so invalid tokens cannot be sampled at all, and validate every response with one bounded retry.',
+      },
+      {
         q: 'Where should the most important instruction go?',
         a: 'Near the start and restated near the end. Models attend most reliably to the beginning and end of a long prompt, so critical rules and the required output format should sit at the edges, not the middle.',
       },
@@ -1928,25 +2011,16 @@ const TOPIC_DEPTH = {
 };
 
 const ensureGuideDepth = (guide) => {
-  // Bespoke, per-topic depth wins over the generic expansion — even if the guide
-  // is already long — so these pages never carry the shared boilerplate.
+  // Applies this guide's bespoke depth, if any. There is deliberately no generic
+  // fallback — see the note above TOPIC_DEPTH.
   const topic = TOPIC_DEPTH[guide.slug];
-  if (topic) {
-    return {
-      ...guide,
-      sections: [...(guide.sections || []), ...topic.sections],
-      checklist: [...(guide.checklist || []), ...topic.checklist],
-      faq: [...(guide.faq || []), ...topic.faq],
-    };
-  }
+  if (!topic) return guide;
 
-  if (countGuideWords(guide) >= 900) return guide;
-  const expansion = depthExpansionFor(guide);
   return {
     ...guide,
-    sections: [...(guide.sections || []), ...expansion.sections],
-    checklist: [...(guide.checklist || []), ...expansion.checklist],
-    faq: [...(guide.faq || []), ...expansion.faq],
+    sections: [...(guide.sections || []), ...topic.sections],
+    checklist: [...(guide.checklist || []), ...topic.checklist],
+    faq: [...(guide.faq || []), ...topic.faq],
   };
 };
 

@@ -3,14 +3,15 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { CURATED_GPUS, CURATED_MODELS, canIRunPath } from '../../data/canIRunData';
+import { CURATED_GPUS, CURATED_MODELS, canIRunModelAnchorPath } from '../../data/canIRunData';
 
 export default function CanIRunPicker() {
   const router = useRouter();
   const [modelId, setModelId] = useState(CURATED_MODELS[1].id);
   const [gpuSlug, setGpuSlug] = useState(CURATED_GPUS[0].slug);
 
-  const go = () => router.push(canIRunPath(gpuSlug, modelId));
+  // Lands on the GPU hub, scrolled to this model's row in the precision matrix.
+  const go = () => router.push(canIRunModelAnchorPath(gpuSlug, modelId));
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">

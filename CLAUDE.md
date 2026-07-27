@@ -20,6 +20,7 @@ npm run lint     # eslint app src --ext .js,.jsx
 npm run content:check    # scripts/content-depth-check.mjs — asserts guides meet word/section/FAQ/source minimums
 npm run indexing:check   # scripts/model-indexing-check.mjs — indexable models must carry bespoke editorial
 npm run specs:check      # scripts/can-i-run-specs-check.mjs — CURATED_MODELS specs vs. the real HF config.json (network; HF_TOKEN optional)
+npm run ads:check        # scripts/ad-policy-check.mjs — asserts the ad loader stays off thin/behavioural routes
 
 # Firestore seeding (one-off content loaders)
 npm run seed:ai-inference-tutorial
@@ -89,6 +90,13 @@ SEO is centralized, not per-page ad-hoc, and one piece of it is a genuine trap:
 
 ### can-i-run: specs must be provable, not remembered
 `/can-i-run/[gpu]/[...model]` pages are indexed and state a confident numeric verdict ("needs 43 GB, your card has 24"). That verdict is computed from the architecture specs in `src/data/canIRunData.js` (`layers`, `kvHeads`, `headDim`, `hiddenSize`, `context`), so a single wrong value silently produces a **wrong answer on a page Google is ranking**. Never hand-type these from memory — `npm run specs:check` fetches each model's real `config.json` from Hugging Face and fails on any mismatch. Gated repos (Meta, Google) return 403 unless the `HF_TOKEN` account has accepted their license, and are reported as unverified rather than passing.
+
+### Ads are route-gated, and can-i-run has no per-combo pages
+Both of these exist because AdSense rejected the site for "Low value content" (July 2026), and both are easy to undo by accident:
+
+- **`src/lib/adPolicy.js` decides where the ad loader mounts.** `app/layout.jsx` renders `<AdSenseLoader>` (a client component, since the decision needs `usePathname`), which returns `null` unless `shouldServeAds(pathname)` passes. Google's Inventory value policy bars ads on low-value screens and on navigation/behavioural screens, so account pages, quiz pages, and routes whose body is fetched client-side are blocked. Allowed routes were picked by measuring **rendered** body text (~500-word floor) — not JSX source length, which is meaningless here because most pages compose their text from components and hooks. Adding a thin page under an allowed prefix like `/gpu` silently opts it into ads; `npm run ads:check` is what catches that.
+- **Site verification is deliberately *not* gated.** The `google-adsense-account` meta tag in `app/layout.jsx` and `public/ads.txt` are sitewide and unconditional. Don't move them behind the route gate.
+- **`/can-i-run/[gpu]/[...model]` no longer exists.** 38 GPUs × 38 models produced 1,444 near-identical pages — the scaled-content-abuse pattern in Google's spam policies. Each GPU hub (`/can-i-run/[gpu]`) now carries the full model × precision matrix, both capacity cliffs, and long-context headroom (~1,900 rendered words), and the old combo URLs permanently redirect to their hub via `next.config.mjs`. Link to a specific model's row with `canIRunModelAnchorPath()`, not by rebuilding a combo URL.
 
 ### Firebase / Firestore
 - `src/lib/firebase.js` — lazy singleton init; exports `db`/`auth` (or `null`).

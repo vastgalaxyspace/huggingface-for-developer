@@ -6,6 +6,10 @@ const commonSources = [
   { label: 'InnoAI GPU Picker', href: '/gpu/tools/gpu-picker' },
 ];
 
+// `checklist` is required and must be specific to the guide. It used to be five
+// hardcoded lines shared by all nine guides here, which meant a reader (or an
+// AdSense reviewer) opening two of these pages saw the same list twice — exactly
+// the cookie-cutter pattern Google's spam policies call out.
 const guide = ({
   slug,
   title,
@@ -13,6 +17,7 @@ const guide = ({
   description,
   takeaways,
   sections,
+  checklist,
   faq,
   related,
 }) => ({
@@ -30,13 +35,7 @@ const guide = ({
   keyTakeaways: takeaways,
   whatYouWillLearn: takeaways,
   sections,
-  checklist: [
-    'Identify the workload before choosing a runtime or model format.',
-    'Check whether the optimization changes quality, latency, memory, or all three.',
-    'Measure time to first token, tokens per second, p95 latency, and GPU memory.',
-    'Keep a full-precision or baseline run for comparison.',
-    'Document hardware, model revision, context length, and batch settings.',
-  ],
+  checklist,
   faq,
   sources: commonSources,
   related,
@@ -68,6 +67,13 @@ export const additionalGuides = [
       { heading: '7. How it relates to other tools', content: 'vLLM sits beside tools such as TensorRT-LLM, llama.cpp, Hugging Face Text Generation Inference, and custom Transformers servers. llama.cpp is excellent for GGUF and local workflows. TensorRT-LLM can be powerful when NVIDIA-specific optimization is worth the complexity. vLLM is often a practical middle path because it is flexible, widely adopted, and friendly to OpenAI-compatible application code.' },
       { heading: '8. Practical recommendation', content: 'Use vLLM when you are ready to move from experiments to a real service. Choose it for concurrency, streaming, batching, and memory-aware serving. Do not choose it only because it is popular. First confirm the model is supported, the GPU has enough memory, the desired quantization format is practical, and your evaluation set shows acceptable answer quality under the exact serving configuration.' },
     ],
+    checklist: [
+      'Confirm your model architecture appears in the vLLM supported-models list before planning around it.',
+      'Size gpu_memory_utilization deliberately — vLLM preallocates the KV cache pool at startup.',
+      'Set max_model_len to the context you actually serve, not the model maximum.',
+      'Load-test with concurrent requests, not a single prompt; the batching gains only appear under concurrency.',
+      'Record time to first token separately from tokens per second — prefill and decode scale differently.',
+    ],
     faq: [
       { q: 'Is vLLM a model?', a: 'No. vLLM is a serving engine for running compatible language models efficiently.' },
       { q: 'Does vLLM reduce VRAM usage?', a: 'It can reduce KV cache waste during serving, but model weights and active cache still require VRAM.' },
@@ -95,6 +101,13 @@ export const additionalGuides = [
       { heading: '6. Quality testing', content: 'A practical test set should include normal prompts, edge cases, long-context prompts, structured output, refusal-sensitive prompts, and examples where the model previously made mistakes. Score both correctness and formatting. If the quantized model is almost as good but much cheaper to serve, it may be the right production choice. If it saves memory but breaks high-value tasks, keep it for low-risk routing or choose a less aggressive format.' },
       { heading: '7. Operational risks', content: 'Quantized variants can lag behind base-model releases, may have unclear provenance, and sometimes use settings that are not obvious from the filename. Teams should document the exact repository, revision, quantization method, calibration assumptions, runtime, and GPU. This matters for debugging because changing any one of those can change behavior. Treat the quantized artifact as a deployment dependency, not just a compressed copy.' },
       { heading: '8. Recommendation', content: 'Use quantization when memory or cost blocks deployment, but preserve a baseline. Start with INT8 when quality is critical, test 4-bit when fit or cost is the main constraint, and choose GGUF, AWQ, or GPTQ based on the runtime you actually plan to use. Never approve a quantized model only because the VRAM estimate looks attractive.' },
+    ],
+    checklist: [
+      'Capture an FP16 or BF16 baseline on your own prompts before quantizing anything.',
+      'Pick the format from the runtime you will actually deploy: GGUF for llama.cpp, AWQ or GPTQ for GPU serving.',
+      'Try INT8 first when output quality is critical; reach for 4-bit when fit or cost is the binding constraint.',
+      'Re-test structured output, tool calling, and code generation specifically — they degrade before chat does.',
+      'Pin the exact repo, revision, and quantization method in your deployment config, not just the model name.',
     ],
     faq: [
       { q: 'Does quantization always make inference faster?', a: 'No. Speed depends on kernels, runtime, hardware, batch size, and memory bandwidth.' },
@@ -124,6 +137,13 @@ export const additionalGuides = [
       { heading: '7. Evaluation workflow', content: 'Start with a model family and size that matches your hardware. Test two or three quantization levels using the same prompts. Record memory, speed, answer quality, and formatting reliability. If a smaller GGUF variant fails important tasks, do not assume prompt tweaks will fix it. Try a larger quantization level or a smaller base model at higher precision.' },
       { heading: '8. Practical recommendation', content: 'Use GGUF when deployment simplicity and local control matter most. Choose the highest quantization level your hardware can handle comfortably, then reduce only if speed or memory is unacceptable. Keep notes about runtime version, context length, thread settings, GPU layers, and model revision so future results can be reproduced.' },
     ],
+    checklist: [
+      'Read the quantization label in the filename (Q4, Q5, Q8) rather than judging the model by file size alone.',
+      'Start at the highest quantization your RAM and VRAM hold comfortably, then step down only if speed forces it.',
+      'Tune n_gpu_layers deliberately — partial offload can be slower than pure CPU if the split is wrong.',
+      'Set the context window explicitly; llama.cpp will happily allocate a cache far larger than you need.',
+      'Record runtime version, thread count, GPU layer count, and model revision so a result can be reproduced.',
+    ],
     faq: [
       { q: 'Is GGUF only for CPU?', a: 'No. GGUF runtimes can use CPU, GPU, or partial GPU offload depending on hardware and settings.' },
       { q: 'Is GGUF better than AWQ?', a: 'They serve different workflows. GGUF is common for llama.cpp/local use, while AWQ is common for GPU serving.' },
@@ -151,6 +171,13 @@ export const additionalGuides = [
       { heading: '6. Failure modes', content: 'Common problems include out-of-memory errors despite sharding, slow generation due to communication overhead, uneven GPU utilization, unsupported quantized formats, and unexpected latency spikes under concurrency. These issues are easier to diagnose when you log model revision, tensor parallel size, context length, batch settings, GPU type, and interconnect topology.' },
       { heading: '7. Measurement strategy', content: 'Measure baseline single-GPU or quantized performance first if possible. Then test tensor parallel sizes such as two, four, or eight GPUs. Track throughput, latency, memory per GPU, and utilization. Watch for cases where adding GPUs increases throughput but hurts p95 latency. Production systems often need a balance rather than maximum aggregate tokens per second.' },
       { heading: '8. Practical recommendation', content: 'Use tensor parallelism when model quality or throughput justifies multi-GPU complexity. For many teams, the simpler path is a smaller model, quantization, or routing between small and large models. When tensor parallelism is necessary, choose hardware with strong interconnects, keep runtime versions pinned, and test representative prompts before committing spend.' },
+    ],
+    checklist: [
+      'Check whether quantization alone clears the memory gap before adding a second GPU.',
+      'Confirm the interconnect topology — NVLink versus PCIe changes the outcome more than GPU count does.',
+      'Set tensor parallel size to a divisor of the attention head count, or the runtime will reject the config.',
+      'Compare p95 latency across TP sizes, not just aggregate throughput; more GPUs can worsen tail latency.',
+      'Verify your quantization format is supported under sharding — several are single-GPU only.',
     ],
     faq: [
       { q: 'Does tensor parallelism make inference linearly faster?', a: 'Not usually. Communication overhead prevents perfect scaling.' },
@@ -180,6 +207,13 @@ export const additionalGuides = [
       { heading: '7. Product decisions', content: 'KV cache optimization often becomes a product decision. You may cap document size, summarize earlier turns, retrieve fewer chunks, or route long prompts to a larger GPU. These choices affect user experience and cost. Make the limits explicit in application design instead of discovering them through out-of-memory errors.' },
       { heading: '8. Practical recommendation', content: 'Treat KV cache as part of the deployment budget from day one. Estimate it for expected context and concurrency, then confirm with runtime measurements. If memory is tight, consider smaller models, lower precision, shorter context, smarter retrieval, or paged cache runtimes before adding expensive GPUs.' },
     ],
+    checklist: [
+      'Compute cache size from layers x kv-heads x head-dim x 2 x precision x tokens — not from parameter count.',
+      'Prefer models with grouped-query attention; the cache shrinks by the head-to-kv-head ratio.',
+      'Budget for concurrency: every simultaneous request carries its own cache.',
+      'Test at your worst-case prompt length, not your average one.',
+      'Cap served context explicitly in config so a long conversation degrades gracefully instead of OOM-ing.',
+    ],
     faq: [
       { q: 'Why does memory grow during generation?', a: 'The runtime stores attention keys and values for active tokens so future tokens can reuse them.' },
       { q: 'Does quantizing weights reduce KV cache?', a: 'Not necessarily. Cache precision is separate and depends on runtime support.' },
@@ -207,6 +241,13 @@ export const additionalGuides = [
       { heading: '6. Measurement strategy', content: 'Measure time to first token, full response latency, GPU memory, and throughput before and after enabling FlashAttention. Use fixed model revision, precision, prompt length, and batch size. If results are inconsistent, check whether the optimized kernel is actually active. Small benchmark scripts can mislead if they do not match production request shapes.' },
       { heading: '7. Common mistakes', content: 'A common mistake is assuming FlashAttention makes any model cheap to run. It helps with a specific bottleneck, but model weights, KV cache, sampling, network overhead, and application code still matter. Another mistake is comparing different model versions or prompt lengths while attributing all performance differences to the attention kernel.' },
       { heading: '8. Practical recommendation', content: 'Use FlashAttention when your runtime supports it and attention is a bottleneck, especially for longer contexts. Treat it as one optimization in a stack that may include vLLM, PagedAttention, quantization, batching, and CUDA graphs. Keep a clear baseline so you can prove the gain on your own workload.' },
+    ],
+    checklist: [
+      'Confirm the optimized kernel is actually active in runtime logs — silent fallback is the usual trap.',
+      'Check GPU generation support before planning around it; kernel availability varies by architecture.',
+      'Benchmark at your real prompt lengths — short prompts often show no gain at all.',
+      'Verify compatibility with your attention variant (sliding-window and GQA have their own requirements).',
+      'Attribute gains carefully: measure with model, precision, and batch size held fixed.',
     ],
     faq: [
       { q: 'Is FlashAttention only for training?', a: 'No. It can help both training and inference depending on runtime support.' },
@@ -236,6 +277,13 @@ export const additionalGuides = [
       { heading: '7. Debugging cache pressure', content: 'Symptoms of cache pressure include out-of-memory errors under concurrency, sudden latency spikes, queue growth, or lower-than-expected throughput for long prompts. Collect prompt length, output length, active sequence count, and memory metrics. Without those logs, teams often blame the model when the actual problem is serving configuration.' },
       { heading: '8. Practical recommendation', content: 'Use PagedAttention-capable runtimes when concurrency and varied sequence lengths are expected. Pair it with explicit context limits, realistic load tests, and memory estimates. If your workload is single-user local inference, the benefits may be less visible; if it is a production API, they can be decisive.' },
     ],
+    checklist: [
+      'Log active sequence count alongside memory — cache pressure is invisible without it.',
+      'Tune the cache block size only after establishing a baseline; defaults are reasonable for most traffic.',
+      'Exploit prefix reuse by keeping system prompts byte-identical across requests.',
+      'Load-test with a realistic mix of prompt lengths, since uniform-length tests hide the exact waste paging fixes.',
+      'Remember paging reduces waste but cannot exceed physical VRAM — capacity planning still comes first.',
+    ],
     faq: [
       { q: 'Is PagedAttention the same as FlashAttention?', a: 'No. PagedAttention manages KV cache allocation; FlashAttention optimizes attention computation.' },
       { q: 'Does it help short prompts?', a: 'It may, but the largest benefits usually appear with concurrency and variable lengths.' },
@@ -264,6 +312,13 @@ export const additionalGuides = [
       { heading: '7. Failure modes', content: 'Common problems include capture errors, excessive padding, increased memory reservation, incompatibility with dynamic shapes, and confusing benchmark results. If graph capture increases memory enough to reduce concurrency, the net result may be negative. Treat it as a production tuning option, not a default assumption.' },
       { heading: '8. Practical recommendation', content: 'Use CUDA graphs after the basic deployment is stable. First choose the model, runtime, precision, and batching strategy. Then test graph capture on representative traffic. Keep rollback simple because graph-related issues can appear only under specific shapes or concurrency levels.' },
     ],
+    checklist: [
+      'Stabilize batch and sequence shapes first — graph capture needs them, and bucketing is how you get them.',
+      'Confirm capture succeeded in runtime logs rather than assuming the flag took effect.',
+      'Watch reserved memory after enabling capture; extra reservation can cost you more concurrency than it saves.',
+      'Measure per-token decode latency and p95, since launch overhead is what graphs actually address.',
+      'Keep the disable path one config change away — graph faults often surface only at specific shapes.',
+    ],
     faq: [
       { q: 'Do CUDA graphs improve quality?', a: 'No. They are a performance optimization and should preserve model outputs.' },
       { q: 'Are they NVIDIA-specific?', a: 'CUDA graphs are part of NVIDIA CUDA; other platforms have different mechanisms.' },
@@ -291,6 +346,13 @@ export const additionalGuides = [
       { heading: '6. Risks and evaluation', content: 'MoE models can show uneven latency, expert imbalance, and surprising memory requirements. Evaluate with representative prompts across domains because routing behavior can vary by task. Measure not only average speed but p95 latency and GPU utilization. Also check whether quantization supports the MoE layers cleanly.' },
       { heading: '7. Comparison with dense models', content: 'Dense models are simpler to deploy and reason about because every token uses the same main parameter path. MoE models can be more efficient for capability, but they add routing and expert-management complexity. For small teams, a dense model may be easier unless the MoE model offers a clear quality or cost advantage on measured tasks.' },
       { heading: '8. Practical recommendation', content: 'Consider MoE when quality requirements exceed compact dense models and your runtime supports the architecture well. Do not assume active-parameter count equals memory requirement. Use the config fields for number of experts and active experts per token, then verify memory and latency on the target serving stack.' },
+    ],
+    checklist: [
+      'Size memory from total parameters, not active parameters — every expert has to be resident.',
+      'Read num_experts and num_experts_per_tok from config.json instead of inferring from the model name.',
+      'Evaluate across task domains, because routing behaviour shifts with subject matter.',
+      'Check quantization support for the expert layers specifically; MoE support lags dense support.',
+      'Compare against a dense model of equal memory footprint before accepting the serving complexity.',
     ],
     faq: [
       { q: 'Does MoE mean only active experts are stored?', a: 'No. Active experts reduce compute per token, but resident memory can still include many or all experts.' },

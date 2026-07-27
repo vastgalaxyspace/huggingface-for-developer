@@ -1,10 +1,19 @@
 import { getAllGuides } from '../src/data/guidesContent.js';
 
-const MIN_TOTAL_WORDS = 900;
+// Raised from 900 to 1,200 after AdSense rejected the site for "Low value
+// content". At 900 most guides clustered within a few words of the floor, which
+// reads as written-to-a-quota rather than written to cover the topic.
+const MIN_TOTAL_WORDS = 1200;
 const MIN_SECTION_COUNT = 3;
 const MIN_FAQ_COUNT = 2;
 const MIN_CHECKLIST_COUNT = 3;
 const MIN_SOURCE_COUNT = 2;
+
+// No single sentence may be shared by more than this many guides. Nine guides
+// once opened with the same five checklist lines verbatim, so a reader comparing
+// two pages saw an identical list — the cookie-cutter pattern Google's spam
+// policies call out. Cross-page duplication is now a build failure, not a habit.
+const MAX_SHARED_SENTENCE_USES = 1;
 
 const countWords = (value = '') =>
   String(value)
@@ -43,8 +52,35 @@ const analyzeGuide = (guide) => {
   };
 };
 
-const results = getAllGuides().map(analyzeGuide);
+/**
+ * Find checklist lines, section bodies, or FAQ answers reused across guides.
+ * Short fragments are ignored — only sentence-length text is a duplication signal.
+ */
+const findDuplicates = (guides) => {
+  const seen = new Map();
+  for (const guide of guides) {
+    const texts = [
+      ...(guide.checklist || []),
+      ...(guide.sections || []).map((s) => s.content),
+      ...(guide.faq || []).map((f) => f.a),
+    ];
+    for (const raw of texts) {
+      const text = String(raw || '').trim();
+      if (countWords(text) < 8) continue;
+      if (!seen.has(text)) seen.set(text, new Set());
+      seen.get(text).add(guide.slug);
+    }
+  }
+  return [...seen.entries()]
+    .filter(([, slugs]) => slugs.size > MAX_SHARED_SENTENCE_USES)
+    .map(([text, slugs]) => ({ text, slugs: [...slugs] }))
+    .sort((a, b) => b.slugs.length - a.slugs.length);
+};
+
+const allGuides = getAllGuides();
+const results = allGuides.map(analyzeGuide);
 const failed = results.filter((item) => !item.pass);
+const duplicates = findDuplicates(allGuides);
 
 console.log('\nContent Depth Check\n');
 for (const item of results) {
@@ -52,6 +88,15 @@ for (const item of results) {
   console.log(
     `[${status}] ${item.slug} | words=${item.totalWords} | sections=${item.sectionCount} | faq=${item.faqCount} | checklist=${item.checklistCount}`
   );
+}
+
+if (duplicates.length > 0) {
+  console.log('\nDuplicate text shared across guides:\n');
+  for (const { text, slugs } of duplicates) {
+    console.log(`- used by ${slugs.length} (${slugs.join(', ')}):`);
+    console.log(`    "${text.slice(0, 100)}${text.length > 100 ? '…' : ''}"`);
+  }
+  process.exitCode = 1;
 }
 
 if (failed.length > 0) {

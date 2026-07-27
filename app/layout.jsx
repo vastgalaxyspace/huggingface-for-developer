@@ -1,5 +1,6 @@
 import Script from 'next/script';
 import { AppProviders } from '../src/components/providers/AppProviders';
+import AdSenseLoader from '../src/components/ads/AdSenseLoader';
 import Header from '../src/components/layout/Header';
 import Footer from '../src/components/layout/Footer';
 import {
@@ -155,14 +156,12 @@ export default function RootLayout({ children }) {
         ) : null}
       </head>
       <body>
-        {ADSENSE_CLIENT ? (
-          <Script
-            id="google-adsense"
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
-            strategy="afterInteractive"
-            crossOrigin="anonymous"
-          />
-        ) : null}
+        {/* Route-gated: the loader mounts only where src/lib/adPolicy.js allows it.
+            Google's Inventory value policy bars ads on low-value screens and on
+            navigation/behavioural screens, so account, quiz, and client-rendered
+            shell routes are excluded. Verification is unaffected — the
+            google-adsense-account meta tag above and /ads.txt are both sitewide. */}
+        <AdSenseLoader client={ADSENSE_CLIENT} />
         <Script
           id="website-schema"
           type="application/ld+json"

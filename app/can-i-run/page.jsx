@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import CanIRunPicker from '../../src/components/can-i-run/CanIRunPicker';
 import { evaluateModelOnGpu } from '../../src/utils/canIRunEngine';
-import { CURATED_GPUS, CURATED_MODELS, canIRunGpuPath, canIRunPath } from '../../src/data/canIRunData';
+import { CURATED_GPUS, CURATED_MODELS, canIRunGpuPath, canIRunModelAnchorPath } from '../../src/data/canIRunData';
 import { pageMetadata } from '../../src/lib/seo';
 
 export const metadata = pageMetadata({
@@ -46,7 +46,8 @@ export default function CanIRunIndexPage() {
         <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
           <h2 className="text-2xl font-black tracking-tight text-gray-900">Popular models at a glance</h2>
           <p className="mt-2 text-sm leading-7 text-gray-600">
-            Best precision each model fits at on common GPUs. Tap any cell for the full breakdown.
+            Best precision each model fits at on common GPUs. Tap any cell to jump to that model&apos;s full
+            per-precision breakdown on the GPU&apos;s page.
           </p>
           <div className="mt-5 overflow-x-auto rounded-xl border border-gray-200">
             <table className="min-w-full text-left text-sm">
@@ -67,7 +68,7 @@ export default function CanIRunIndexPage() {
                       const mark = VERDICT_MARK[r.headline];
                       return (
                         <td key={g.slug} className="px-4 py-3">
-                          <Link href={canIRunPath(g.slug, m.id)} className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold ${mark.cls} hover:opacity-80`}>
+                          <Link href={canIRunModelAnchorPath(g.slug, m.id)} className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold ${mark.cls} hover:opacity-80`}>
                             {mark.label}
                           </Link>
                         </td>
@@ -85,7 +86,7 @@ export default function CanIRunIndexPage() {
           </p>
         </section>
 
-        {/* Per-GPU hubs. Also the crawl path into every model × GPU combo. */}
+        {/* Per-GPU hubs. Each carries the full matrix for that card. */}
         <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
           <h2 className="text-2xl font-black tracking-tight text-gray-900">Browse by GPU</h2>
           <p className="mt-2 text-sm leading-7 text-gray-600">

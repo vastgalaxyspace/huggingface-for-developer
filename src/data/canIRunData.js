@@ -297,31 +297,23 @@ export function modelById(id) {
   return CURATED_MODELS.find((model) => model.id.toLowerCase() === normalized.toLowerCase()) || null;
 }
 
-export function modelPathSegments(id) {
-  return id.split('/').map(encodeURIComponent);
-}
-
-export function canIRunPath(gpuSlug, modelId) {
-  return `/can-i-run/${gpuSlug}/${modelPathSegments(modelId).join('/')}`;
-}
-
-// Per-GPU hub page ("What can I run on an RTX 4090?"). Parent of every
-// canIRunPath() combo for that card.
+// Per-GPU hub page ("What can I run on an RTX 4090?"). Every model × GPU answer
+// lives on this one page as a row; there are no per-combo pages.
 export function canIRunGpuPath(gpuSlug) {
   return `/can-i-run/${gpuSlug}`;
 }
 
-// All curated indexable combinations (model × GPU).
-export function getCuratedCombos() {
-  const combos = [];
-  for (const gpu of CURATED_GPUS) {
-    for (const model of CURATED_MODELS) {
-      combos.push({ gpu, model });
-    }
-  }
-  return combos;
+// Stable anchor for a model's row inside a GPU hub page, so the index matrix and
+// the picker can deep-link straight to the row that answers the question.
+export function modelAnchor(modelId) {
+  return String(modelId).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-export function isCuratedCombo(gpuSlug, modelId) {
-  return Boolean(gpuBySlug(gpuSlug) && modelById(modelId));
+// Deep link to one model's row on a GPU hub page. This replaced the former
+// /can-i-run/{gpu}/{model} route: 38 GPUs x 38 models produced 1,444 near-identical
+// pages, which is the "scaled content abuse" pattern in Google's spam policies and
+// the cited cause of an AdSense "low value content" rejection. The same answers now
+// live on 38 substantive pages instead.
+export function canIRunModelAnchorPath(gpuSlug, modelId) {
+  return `${canIRunGpuPath(gpuSlug)}#${modelAnchor(modelId)}`;
 }

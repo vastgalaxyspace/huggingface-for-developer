@@ -6,16 +6,22 @@ import {
   CURATED_GPUS,
   CURATED_MODELS,
   canIRunGpuPath,
-  canIRunPath,
   gpuBySlug,
+  modelAnchor,
 } from '../../../src/data/canIRunData';
 import { absoluteUrl, pageMetadata } from '../../../src/lib/seo';
 
-// One hub page per curated GPU. This is the parent of every
-// /can-i-run/{gpu}/{model} combo, so it is also how crawlers reach them.
+// One page per curated GPU, and the only page in this section. Each carries the
+// complete model x precision matrix for that card, so the answer to "can I run X
+// on this GPU?" is a row here rather than a separate near-identical URL.
 export async function generateStaticParams() {
   return CURATED_GPUS.map((gpu) => ({ gpu: gpu.slug }));
 }
+
+// Context lengths used by the headroom table. A fit at 4K frequently becomes an
+// OOM at 32K because the KV cache term grows linearly with prompt length, which
+// is the single most common surprise when sizing a card.
+const CONTEXT_STEPS = [4096, 16384, 32768];
 
 export async function generateMetadata({ params }) {
   const { gpu: gpuSlug } = await params;
@@ -51,25 +57,51 @@ export async function generateMetadata({ params }) {
   };
 }
 
-// Split the curated models into the three verdict buckets for this card,
-// largest model first so the most capable option is the headline.
-function bucketModels(gpu) {
+/**
+ * Evaluate every curated model against this card and derive the analysis the page
+ * needs: verdict buckets, the two capacity cliffs, and long-context headroom.
+ */
+function analyse(gpu) {
   const evaluated = CURATED_MODELS.map((model) => ({
     model,
     result: evaluateModelOnGpu(model, gpu.vram),
   })).sort((a, b) => b.model.paramsB - a.model.paramsB);
 
-  return {
+  const buckets = {
     full: evaluated.filter((e) => e.result.headline === 'yes-full'),
     quantized: evaluated.filter((e) => e.result.headline === 'yes-quantized'),
     no: evaluated.filter((e) => e.result.headline === 'no'),
   };
+
+  // Two cliffs matter when sizing a card: the point where full precision stops
+  // being an option, and the point where the card stops working at all.
+  const cliffs = {
+    largestFp16: buckets.full[0] || null,
+    largestAny: buckets.full[0] || buckets.quantized[0] || null,
+    smallestFailure: buckets.no.length ? buckets.no[buckets.no.length - 1] : null,
+  };
+
+  // Long-context headroom for the biggest models that fit, where the KV cache
+  // growth actually bites. Smaller models rarely change verdict across contexts.
+  const runnable = [...buckets.full, ...buckets.quantized].sort(
+    (a, b) => b.model.paramsB - a.model.paramsB,
+  );
+  const headroom = runnable.slice(0, 6).map(({ model, result }) => ({
+    model,
+    bestPrecision: result.bestPrecision,
+    steps: CONTEXT_STEPS.map((ctx) => {
+      const r = evaluateModelOnGpu(model, gpu.vram, ctx);
+      const row = r.rows.find((x) => x.precision === result.bestPrecision) || r.rows[r.rows.length - 1];
+      return { ctx, totalGB: row.totalGB, status: row.status };
+    }),
+  }));
+
+  return { evaluated, buckets, cliffs, headroom };
 }
 
-function buildFaq(gpu, buckets) {
+function buildFaq(gpu, buckets, cliffs) {
   const runnable = buckets.full.length + buckets.quantized.length;
-  const biggest = buckets.full[0] || buckets.quantized[0] || null;
-  const biggestNo = buckets.no[0] || null;
+  const { largestAny, largestFp16, smallestFailure } = cliffs;
 
   const faq = [
     {
@@ -78,10 +110,10 @@ function buildFaq(gpu, buckets) {
     },
     {
       q: `What is the largest LLM the ${gpu.name} can run?`,
-      a: biggest
-        ? `${biggest.model.label} (${biggest.model.paramsB}B parameters) is the largest model that fits, using about ${
-            biggest.result.rows.find((r) => r.precision === biggest.result.bestPrecision)?.totalGB
-          } GB at ${biggest.result.rows.find((r) => r.precision === biggest.result.bestPrecision)?.label}.`
+      a: largestAny
+        ? `${largestAny.model.label} (${largestAny.model.paramsB}B parameters) is the largest model that fits, using about ${
+            largestAny.result.rows.find((r) => r.precision === largestAny.result.bestPrecision)?.totalGB
+          } GB at ${largestAny.result.rows.find((r) => r.precision === largestAny.result.bestPrecision)?.label}.`
         : `No model in our curated set fits on a single ${gpu.name} at ${gpu.vram} GB, even at 4-bit.`,
     },
     {
@@ -92,28 +124,51 @@ function buildFaq(gpu, buckets) {
           : `Every model that fits this card runs in full FP16, so quantization is optional and mainly useful for freeing memory for longer context.`,
     },
     {
+      q: `Where does the ${gpu.name} stop keeping up?`,
+      a: largestFp16
+        ? `Full precision runs out after ${largestFp16.model.label} at ${largestFp16.model.paramsB}B parameters. ${
+            smallestFailure
+              ? `The card stops working entirely at ${smallestFailure.model.label} (${smallestFailure.model.paramsB}B), which needs about ${smallestFailure.result.rows[smallestFailure.result.rows.length - 1].totalGB} GB even at 4-bit.`
+              : `Everything larger still fits once quantized.`
+          }`
+        : `Nothing in the tracked set runs in FP16 on ${gpu.vram} GB, so quantization is mandatory on this card.`,
+    },
+    {
       q: `Why does the VRAM number here differ from the model size?`,
       a: `Model weights are only part of the cost. Every estimate here also adds the KV cache, which stores attention keys and values for each token in the context window and grows as your prompt gets longer. These figures use a ${REFERENCE_CONTEXT.toLocaleString()}-token context and leave about 10% headroom for activations and fragmentation.`,
     },
+    {
+      q: `Will these models still fit at 32K context?`,
+      a: `Not always. The weights stay constant but the KV cache scales linearly with context, so a model sitting near the limit at ${REFERENCE_CONTEXT.toLocaleString()} tokens can exceed ${gpu.vram} GB well before 32K. The long-context table above recomputes the largest fitting models at 4K, 16K, and 32K so you can see which ones lose their headroom first.`,
+    },
   ];
 
-  if (biggestNo) {
+  if (smallestFailure) {
     faq.push({
-      q: `Can the ${gpu.name} run ${biggestNo.model.label}?`,
-      a: `No. Even at 4-bit, ${biggestNo.model.label} needs about ${
-        biggestNo.result.rows[biggestNo.result.rows.length - 1].totalGB
-      } GB, which is more than the ${gpu.vram} GB available. You would need roughly ${biggestNo.result.gpusNeeded}× ${gpu.name} with tensor parallelism, or a single larger card.`,
+      q: `Can the ${gpu.name} run ${smallestFailure.model.label}?`,
+      a: `No. Even at 4-bit, ${smallestFailure.model.label} needs about ${
+        smallestFailure.result.rows[smallestFailure.result.rows.length - 1].totalGB
+      } GB, which is more than the ${gpu.vram} GB available. You would need roughly ${smallestFailure.result.gpusNeeded}× ${gpu.name} with tensor parallelism, or a single larger card.`,
     });
   }
 
   return faq;
 }
 
-function ModelTable({ entries, gpu, emptyText }) {
-  if (entries.length === 0) {
-    return <p className="mt-4 text-sm leading-7 text-gray-500">{emptyText}</p>;
-  }
+const STATUS_CELL = {
+  fits: 'bg-green-50 text-green-800',
+  tight: 'bg-amber-50 text-amber-800',
+  no: 'bg-red-50 text-red-700',
+};
 
+const STATUS_WORD = { fits: 'fits', tight: 'tight', no: 'over' };
+
+/**
+ * The full model x precision matrix. This is the page's centrepiece: it carries
+ * every answer the retired per-combo pages used to give, on one screen, so the
+ * numbers can be compared across models instead of one URL at a time.
+ */
+function PrecisionMatrix({ evaluated }) {
   return (
     <div className="mt-5 overflow-x-auto rounded-xl border border-gray-200">
       <table className="min-w-full text-left text-sm">
@@ -121,35 +176,39 @@ function ModelTable({ entries, gpu, emptyText }) {
           <tr>
             <th className="px-4 py-3">Model</th>
             <th className="px-4 py-3 whitespace-nowrap">Params</th>
-            <th className="px-4 py-3 whitespace-nowrap">Precision</th>
-            <th className="px-4 py-3 whitespace-nowrap">Total VRAM</th>
-            <th className="px-4 py-3 whitespace-nowrap">% of {gpu.vram} GB</th>
-            <th className="px-4 py-3" />
+            <th className="px-4 py-3 whitespace-nowrap">FP16</th>
+            <th className="px-4 py-3 whitespace-nowrap">INT8</th>
+            <th className="px-4 py-3 whitespace-nowrap">4-bit</th>
+            <th className="px-4 py-3 whitespace-nowrap">KV @ {(REFERENCE_CONTEXT / 1024).toFixed(0)}K</th>
+            <th className="px-4 py-3 whitespace-nowrap">Verdict</th>
           </tr>
         </thead>
         <tbody>
-          {entries.map(({ model, result }) => {
-            const row =
-              result.rows.find((r) => r.precision === result.bestPrecision) ||
-              result.rows[result.rows.length - 1];
-            return (
-              <tr key={model.id} className="border-t border-gray-100">
-                <td className="px-4 py-3 font-semibold text-gray-900">{model.label}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-gray-600">{model.paramsB}B</td>
-                <td className="px-4 py-3 whitespace-nowrap text-gray-600">{row.label}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-gray-600">{row.totalGB} GB</td>
-                <td className="px-4 py-3 whitespace-nowrap text-gray-600">{row.utilization}%</td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <Link
-                    href={canIRunPath(gpu.slug, model.id)}
-                    className="text-xs font-bold uppercase tracking-[0.12em] text-[#23425f] hover:text-[#18324f]"
-                  >
-                    Details
-                  </Link>
+          {evaluated.map(({ model, result }) => (
+            <tr key={model.id} id={modelAnchor(model.id)} className="scroll-mt-24 border-t border-gray-100">
+              <td className="px-4 py-3 font-semibold text-gray-900">{model.label}</td>
+              <td className="px-4 py-3 whitespace-nowrap text-gray-600">{model.paramsB}B</td>
+              {result.rows.map((row) => (
+                <td key={row.precision} className="px-4 py-3 whitespace-nowrap">
+                  <span className={`inline-block rounded px-2 py-1 text-xs font-bold ${STATUS_CELL[row.status]}`}>
+                    {row.totalGB} GB
+                  </span>
                 </td>
-              </tr>
-            );
-          })}
+              ))}
+              <td className="px-4 py-3 whitespace-nowrap text-gray-600">{result.kvGB} GB</td>
+              <td className="px-4 py-3 whitespace-nowrap text-xs font-bold uppercase tracking-[0.1em]">
+                {result.headline === 'yes-full' ? (
+                  <span className="text-green-700">Runs in FP16</span>
+                ) : result.headline === 'yes-quantized' ? (
+                  <span className="text-amber-700">
+                    Needs {result.rows.find((r) => r.precision === result.bestPrecision)?.label}
+                  </span>
+                ) : (
+                  <span className="text-red-600">Needs {result.gpusNeeded}× cards</span>
+                )}
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
@@ -161,9 +220,9 @@ export default async function GpuHubPage({ params }) {
   const gpu = gpuBySlug(gpuSlug);
   if (!gpu) notFound();
 
-  const buckets = bucketModels(gpu);
+  const { evaluated, buckets, cliffs, headroom } = analyse(gpu);
   const runnable = buckets.full.length + buckets.quantized.length;
-  const faq = buildFaq(gpu, buckets);
+  const faq = buildFaq(gpu, buckets, cliffs);
 
   const faqSchema = {
     '@context': 'https://schema.org',
@@ -218,38 +277,109 @@ export default async function GpuHubPage({ params }) {
         </section>
 
         <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
-          <h2 className="text-2xl font-black tracking-tight text-gray-900">Runs at full FP16 precision</h2>
+          <h2 className="text-2xl font-black tracking-tight text-gray-900">
+            Every model on the {gpu.name}, at every precision
+          </h2>
           <p className="mt-2 text-sm leading-7 text-gray-600">
-            These models fit without quantization, so you keep full output quality.
+            Total VRAM for each model at FP16, INT8, and 4-bit, including the KV cache at{' '}
+            {REFERENCE_CONTEXT.toLocaleString()} tokens. Green fits with headroom, amber fits but leaves under 10%
+            spare, red exceeds the card&apos;s {gpu.vram} GB. Models are ordered largest first, so the row where the
+            colours change is the capacity limit of this card.
           </p>
-          <ModelTable
-            entries={buckets.full}
-            gpu={gpu}
-            emptyText={`No tracked model fits the ${gpu.name} in FP16 — every option needs quantization on ${gpu.vram} GB.`}
-          />
+          <PrecisionMatrix evaluated={evaluated} />
+          <p className="mt-4 text-xs leading-6 text-gray-500">
+            Weights scale with precision — roughly 2 bytes per parameter at FP16, 1 at INT8, 0.5 at 4-bit — but the KV
+            cache column does not. It stays in FP16 regardless of how the weights are quantized, which is why 4-bit
+            stops helping once the cache alone approaches the card&apos;s capacity.
+          </p>
         </section>
 
         <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
-          <h2 className="text-2xl font-black tracking-tight text-gray-900">Runs with quantization</h2>
-          <p className="mt-2 text-sm leading-7 text-gray-600">
-            These need an INT8 or 4-bit build (GPTQ, AWQ, or GGUF). Quality stays close to full precision for most
-            chat work, but re-test structured output and tool calling before shipping.
+          <h2 className="text-2xl font-black tracking-tight text-gray-900">Where this card hits its limit</h2>
+          <p className="mt-4 text-sm leading-7 text-gray-600">
+            {cliffs.largestFp16 ? (
+              <>
+                Full precision on the {gpu.name} runs out after{' '}
+                <strong className="font-semibold text-gray-900">{cliffs.largestFp16.model.label}</strong> at{' '}
+                {cliffs.largestFp16.model.paramsB}B parameters, which uses about{' '}
+                {cliffs.largestFp16.result.rows[0].totalGB} GB of the available {gpu.vram} GB. That is the first cliff,
+                and it is the one that costs you output quality rather than the ability to run at all.
+              </>
+            ) : (
+              <>
+                No model in the tracked set runs in FP16 on {gpu.vram} GB, so quantization is not optional on this card
+                — it is the entry requirement. Plan on a GPTQ, AWQ, or GGUF build from the start.
+              </>
+            )}{' '}
+            {cliffs.smallestFailure ? (
+              <>
+                The second cliff is harder. {cliffs.smallestFailure.model.label} needs roughly{' '}
+                {cliffs.smallestFailure.result.rows[cliffs.smallestFailure.result.rows.length - 1].totalGB} GB even at
+                4-bit, past the point where quantization can rescue it. Below that size you are choosing a precision;
+                above it you are choosing a different card, or roughly {cliffs.smallestFailure.result.gpusNeeded} of
+                these with tensor parallelism.
+              </>
+            ) : (
+              <>
+                There is no hard cliff here: every model in the tracked set fits this card at some precision, so the
+                only decision left is how much quality you are willing to trade for memory.
+              </>
+            )}
           </p>
-          <ModelTable
-            entries={buckets.quantized}
-            gpu={gpu}
-            emptyText={`Nothing extra is unlocked by quantization here — everything that fits already runs in FP16.`}
-          />
+          <p className="mt-4 text-sm leading-7 text-gray-600">
+            The practical reading is that VRAM is a step function, not a slider. Between the two cliffs, dropping from
+            FP16 to INT8 costs very little measurable quality on most chat and summarization work, and 4-bit is usually
+            acceptable too — but structured output, tool calling, and code generation degrade first and degrade
+            quietly, so re-run your own evaluations after quantizing rather than trusting the benchmark deltas.
+          </p>
         </section>
 
-        {buckets.no.length > 0 ? (
+        {headroom.length > 0 ? (
           <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
-            <h2 className="text-2xl font-black tracking-tight text-gray-900">Too large for this card</h2>
+            <h2 className="text-2xl font-black tracking-tight text-gray-900">What happens at longer context</h2>
             <p className="mt-2 text-sm leading-7 text-gray-600">
-              These exceed {gpu.vram} GB even at 4-bit. You would need multiple cards with tensor parallelism, a
-              larger GPU, or a smaller model.
+              The table above assumes a {REFERENCE_CONTEXT.toLocaleString()}-token prompt. Weights do not change with
+              context but the KV cache grows linearly with it, so a model that fits comfortably on a short prompt can
+              run out of memory in a long conversation. These are the largest models that fit the {gpu.name},
+              recomputed at their best precision as context grows.
             </p>
-            <ModelTable entries={buckets.no} gpu={gpu} emptyText="" />
+            <div className="mt-5 overflow-x-auto rounded-xl border border-gray-200">
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-gray-50 text-xs uppercase tracking-[0.1em] text-gray-500">
+                  <tr>
+                    <th className="px-4 py-3">Model</th>
+                    {CONTEXT_STEPS.map((ctx) => (
+                      <th key={ctx} className="px-4 py-3 whitespace-nowrap">
+                        {(ctx / 1024).toFixed(0)}K tokens
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {headroom.map(({ model, steps }) => (
+                    <tr key={model.id} className="border-t border-gray-100">
+                      <td className="px-4 py-3 font-semibold text-gray-900">{model.label}</td>
+                      {steps.map((step) => (
+                        <td key={step.ctx} className="px-4 py-3 whitespace-nowrap">
+                          <span
+                            className={`inline-block rounded px-2 py-1 text-xs font-bold ${STATUS_CELL[step.status]}`}
+                          >
+                            {step.totalGB} GB · {STATUS_WORD[step.status]}
+                          </span>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-4 text-sm leading-7 text-gray-600">
+              Any row that turns amber or red before the last column is a model you can demo but cannot ship on this
+              card at that context. Two levers help before you buy more hardware: switch to a model with grouped-query
+              attention, which cuts the cache by the ratio of attention heads to key-value heads, or cap the served
+              context below the model&apos;s maximum. Batching works against you here — every concurrent request
+              carries its own cache, so serving four users at 8K costs roughly the same as one user at 32K.
+            </p>
           </section>
         ) : null}
 
@@ -264,20 +394,33 @@ export default async function GpuHubPage({ params }) {
             total leaves about 10% headroom.
           </p>
           <p className="mt-4 text-sm leading-7 text-gray-600">
-            The practical consequence is that the table above is a starting point, not a guarantee. A model listed as
-            fitting at {REFERENCE_CONTEXT.toLocaleString()} tokens can still run out of memory once conversations get
-            long or several requests run at once, because the KV cache term grows with both. If you plan to use long
-            context or serve concurrent users, size with the{' '}
+            These are architecture-aware estimates, not benchmarks. Each model&apos;s layer count, key-value head
+            count, and head dimension are read from its published config rather than assumed from parameter count,
+            which matters because two 7B models with different attention layouts can differ by several gigabytes of
+            cache. What the estimates cannot capture is runtime overhead: vLLM preallocates a large block of VRAM by
+            design, llama.cpp can offload part of the model to system RAM, and driver and framework versions each take
+            their own cut. Treat a comfortable fit as a green light and a tight fit as something to verify on the
+            actual card before committing.
+          </p>
+          <p className="mt-4 text-sm leading-7 text-gray-600">
+            For numbers at your own context length, batch size, and quantization scheme, use the{' '}
             <Link href="/gpu/tools/vram-calculator" className="font-semibold text-[#23425f] hover:text-[#18324f]">
               VRAM Calculator
-            </Link>{' '}
-            at your real context length before committing.
+            </Link>
+            . To work the problem the other way — starting from a model and finding the cheapest card that runs it —
+            use the{' '}
+            <Link href="/gpu/tools/gpu-picker" className="font-semibold text-[#23425f] hover:text-[#18324f]">
+              GPU Picker
+            </Link>
+            .
           </p>
         </section>
 
         {siblingGpus.length > 0 ? (
           <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
-            <h2 className="text-2xl font-black tracking-tight text-gray-900">Compare other {gpu.tier.toLowerCase()} GPUs</h2>
+            <h2 className="text-2xl font-black tracking-tight text-gray-900">
+              Compare other {gpu.tier.toLowerCase()} GPUs
+            </h2>
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {siblingGpus.map((g) => (
                 <Link
