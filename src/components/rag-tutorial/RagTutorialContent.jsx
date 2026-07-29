@@ -2,7 +2,6 @@
 
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -91,7 +90,6 @@ const markdownComponents = {
 };
 
 export default function RagTutorialContent({ tutorial }) {
-  const router = useRouter();
   const { auth } = useContext(AppContext);
   const chapters = useMemo(() => tutorial.chapters || [], [tutorial]);
   const [activeChapter, setActiveChapter] = useState(0);
@@ -193,39 +191,15 @@ export default function RagTutorialContent({ tutorial }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  if (auth.loading) {
-    return (
-      <div className="flex min-h-[calc(100vh-78px)] items-center justify-center bg-[var(--page-bg)] px-6 text-center">
-        <div>
-          <p className="section-kicker mb-3">RAG Tutorial</p>
-          <h1 className="text-2xl font-black tracking-tight text-[var(--text-strong)]">Checking your account...</h1>
-        </div>
-      </div>
-    );
-  }
+  // NOTE: no sign-in wall, and no blocking loader for signed-out readers.
+  //
+  // The tutorial body is server-fetched by the page and the content is public;
+  // only reading-progress sync needs an account. This component previously
+  // returned a "Sign in to start the tutorial" card to every signed-out visitor,
+  // so Googlebot saw ~83 words and the page landed in "Crawled - currently not
+  // indexed". Gate progress, never the lesson.
 
-  if (!auth.user) {
-    return (
-      <div className="flex min-h-[calc(100vh-78px)] items-center justify-center bg-[var(--page-bg)] px-6 text-center">
-        <div className="max-w-md rounded-[24px] border border-[var(--border-soft)] bg-white p-8 shadow-sm">
-          <p className="section-kicker mb-3">RAG Tutorial</p>
-          <h1 className="text-2xl font-black tracking-tight text-[var(--text-strong)]">Sign in to start the tutorial</h1>
-          <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">
-            Your reading progress is saved to your account so you can continue from any device.
-          </p>
-          <button
-            type="button"
-            onClick={() => router.push("/login?next=/ai-tutorials/rag")}
-            className="mt-6 inline-flex rounded-xl bg-[var(--accent)] px-5 py-3 text-sm font-bold text-white hover:bg-[var(--accent-strong)]"
-          >
-            Sign in to continue
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (progressLoading || !progressReady) {
+  if (auth.user && (progressLoading || !progressReady)) {
     return (
       <div className="flex min-h-[calc(100vh-78px)] items-center justify-center bg-[var(--page-bg)] px-6 text-center">
         <div>
@@ -339,11 +313,35 @@ export default function RagTutorialContent({ tutorial }) {
             </p>
           </div>
 
-          <article className="rounded-[22px] border border-[var(--border-soft)] bg-white px-6 py-7 shadow-sm md:px-9 md:py-9">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-              {section?.content || ""}
-            </ReactMarkdown>
-          </article>
+          {/* All sections are rendered and the inactive ones hidden with CSS, so a
+              reader still moves through one at a time while the whole tutorial is
+              present in the server HTML. Rendering only the active section made
+              this page look like a stub to crawlers. */}
+          {chapters.map((chap, cIdx) =>
+            (chap.sections || []).map((sec, sIdx) => {
+              const isActiveSection = cIdx === activeChapter && sIdx === activeSection;
+              return (
+                <article
+                  key={`${cIdx}-${sIdx}`}
+                  className={
+                    isActiveSection
+                      ? 'rounded-[22px] border border-[var(--border-soft)] bg-white px-6 py-7 shadow-sm md:px-9 md:py-9'
+                      : 'hidden'
+                  }
+                  aria-hidden={isActiveSection ? undefined : 'true'}
+                >
+                  {!isActiveSection ? (
+                    <h2 className="text-2xl font-black tracking-tight text-[var(--text-strong)]">
+                      {sec.title}
+                    </h2>
+                  ) : null}
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                    {sec.content || ''}
+                  </ReactMarkdown>
+                </article>
+              );
+            }),
+          )}
 
           <div className="mt-8 flex flex-col gap-3 border-t border-[var(--border-soft)] pt-6 sm:flex-row sm:justify-between">
             {previous ? (

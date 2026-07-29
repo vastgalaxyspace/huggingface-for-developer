@@ -1,6 +1,11 @@
 import Link from 'next/link';
 import AIUpdatesList from '../../src/components/ai-updates/AIUpdatesList';
+import { getAiUpdatesFromFirestore } from '../../src/lib/aiUpdatesFirestore';
 import { pageMetadata } from '../../src/lib/seo';
+
+// Rebuild hourly so new updates appear without a deploy, while the feed still
+// ships inside the server HTML rather than being fetched after hydration.
+export const revalidate = 3600;
 
 export const metadata = pageMetadata({
   title: 'AI Updates',
@@ -10,7 +15,9 @@ export const metadata = pageMetadata({
   keywords: ['AI updates', 'model news', 'open-source AI', 'Hugging Face updates'],
 });
 
-export default function AIUpdatesPage() {
+export default async function AIUpdatesPage() {
+  const updates = await getAiUpdatesFromFirestore();
+
   return (
     <div className="shell-container py-10">
       <div className="mx-auto max-w-5xl">
@@ -37,7 +44,7 @@ export default function AIUpdatesPage() {
         </header>
 
         <div className="mt-8">
-          <AIUpdatesList />
+          <AIUpdatesList initialUpdates={updates} />
         </div>
       </div>
     </div>

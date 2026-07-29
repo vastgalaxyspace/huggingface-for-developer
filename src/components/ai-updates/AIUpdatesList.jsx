@@ -60,7 +60,12 @@ const getCategoryLabel = (value) => {
 const formatUpdateDate = (update) => {
   if (update?.date) return update.date;
 
-  const createdAt = update?.createdAt?.toDate?.();
+  // createdAt is a Firestore Timestamp when this component fetches for itself,
+  // but an ISO string when the server passed it down (Timestamps are not
+  // serializable across the boundary). Handle both.
+  const raw = update?.createdAt;
+  const createdAt =
+    typeof raw?.toDate === "function" ? raw.toDate() : raw ? new Date(raw) : null;
   if (!createdAt || Number.isNaN(createdAt.getTime())) return "Unknown date";
 
   return createdAt.toLocaleDateString("en-US", {
@@ -84,12 +89,17 @@ const mapUpdateDocs = (querySnapshot) =>
     ...doc.data(),
   }));
 
-export default function AIUpdatesList() {
-  const [updates, setUpdates] = useState([]);
+export default function AIUpdatesList({ initialUpdates = null }) {
+  // Seeded from the server fetch so the feed is in the server HTML. The client
+  // fetch below only runs when the page could not supply anything.
+  const hasInitial = Array.isArray(initialUpdates) && initialUpdates.length > 0;
+  const [updates, setUpdates] = useState(hasInitial ? initialUpdates : []);
   const [activeFilter, setActiveFilter] = useState("all");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!hasInitial);
 
   useEffect(() => {
+    if (hasInitial) return;
+
     async function fetchUpdates() {
       if (!db) {
         setUpdates(FALLBACK_UPDATES);
@@ -121,7 +131,7 @@ export default function AIUpdatesList() {
     }
 
     fetchUpdates();
-  }, []);
+  }, [hasInitial]);
 
   if (loading) {
     return (

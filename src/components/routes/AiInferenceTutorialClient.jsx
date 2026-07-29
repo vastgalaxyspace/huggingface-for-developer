@@ -1,7 +1,6 @@
 "use client";
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { CheckCircle, ChevronRight, ChevronLeft, ArrowLeft, Menu, X } from 'lucide-react';
 import { AppContext } from '../providers/AppContext';
 import { getTutorialFromFirestore } from '../../lib/tutorialsFirestore';
@@ -126,23 +125,29 @@ function CodeBlock({ code }) {
   );
 }
 
-export default function TutorialPage() {
-  const router = useRouter();
+export default function TutorialPage({ initialTutorial = null }) {
   const { auth } = useContext(AppContext);
   const [activeChapter, setActiveChapter] = useState(0);
   const [activeSection, setActiveSection] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  // Seeded from the server fetch, so there is no loading state (and no empty
+  // HTML) on first paint for either a reader or a crawler.
+  const [isLoading, setIsLoading] = useState(!initialTutorial);
   const [progressLoading, setProgressLoading] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [progressError, setProgressError] = useState('');
   const [readSections, setReadSections] = useState([]);
-  const [tutorial, setTutorial] = useState({
-    title: 'AI Inference Tutorial',
-    chapters: [],
-  });
+  const [tutorial, setTutorial] = useState(
+    initialTutorial || {
+      title: 'AI Inference Tutorial',
+      chapters: [],
+    },
+  );
 
   useEffect(() => {
+    // The page already server-fetched this; only fall back if it could not.
+    if (initialTutorial) return undefined;
+
     let isMounted = true;
 
     async function fetchTutorial() {
@@ -169,7 +174,7 @@ export default function TutorialPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [initialTutorial]);
 
   useEffect(() => {
     if (auth.loading) return;
@@ -254,39 +259,16 @@ export default function TutorialPage() {
 
   const isLastSection = activeSection >= chapterSections.length - 1 && activeChapter >= chapters.length - 1;
 
-  if (auth.loading) {
-    return (
-      <div className="flex min-h-[calc(100vh-78px)] items-center justify-center bg-[var(--page-bg)] px-6 text-center">
-        <div>
-          <p className="section-kicker mb-3">AI Inference Tutorial</p>
-          <h1 className="text-2xl font-black tracking-tight text-[var(--text-strong)]">Checking your account...</h1>
-        </div>
-      </div>
-    );
-  }
+  // NOTE: there is deliberately no sign-in wall here.
+  //
+  // This component used to return a "Sign in to start the tutorial" card whenever
+  // auth.user was absent, which meant Googlebot — always signed out — saw ~84 words
+  // and nothing else. The page sat in Search Console's "Crawled - currently not
+  // indexed" bucket as a result. The lesson content is public; only progress
+  // tracking, the final test, and the certificate require an account. Keep it that
+  // way. (The same fix was applied to /gpu/learning/[slug] in f9dfd57.)
 
-  if (!auth.user) {
-    return (
-      <div className="flex min-h-[calc(100vh-78px)] items-center justify-center bg-[var(--page-bg)] px-6 text-center">
-        <div className="max-w-md rounded-[24px] border border-[var(--border-soft)] bg-white p-8 shadow-sm">
-          <p className="section-kicker mb-3">AI Inference Tutorial</p>
-          <h1 className="text-2xl font-black tracking-tight text-[var(--text-strong)]">Sign in to start the tutorial</h1>
-          <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">
-            Your reading progress, quiz result, and certificate are saved to your account.
-          </p>
-          <button
-            type="button"
-            onClick={() => router.push('/login?next=/ai-inference/tutorial')}
-            className="mt-6 inline-flex rounded-xl bg-[var(--accent)] px-5 py-3 text-sm font-bold text-white hover:bg-[var(--accent-strong)]"
-          >
-            Sign in to continue
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading || progressLoading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-[calc(100vh-78px)] items-center justify-center bg-[var(--page-bg)] px-6 text-center">
         <div>
@@ -411,20 +393,47 @@ export default function TutorialPage() {
       {/* Right Content Area */}
       <main className="flex-1 min-w-0 bg-[var(--page-bg)]">
         <div className="w-full px-6 py-10 md:py-16 md:px-12 lg:px-20">
+          {/* Every section is rendered into the DOM and the inactive ones are
+              hidden with CSS, rather than only the active one being mounted.
+              A reader still sees one section at a time, but the full lesson is
+              present in the server HTML for crawlers — the same approach used by
+              /gpu/learning/[slug]. Rendering one section made this page look like
+              a ~84-word stub to Google. */}
+          {chapters.map((chap, cIdx) =>
+            (chap.sections || []).map((sec, sIdx) => {
+              const isActiveSection = cIdx === activeChapter && sIdx === activeSection;
+              return (
+                <article
+                  key={`${cIdx}-${sIdx}`}
+                  className={isActiveSection ? 'animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden'}
+                  aria-hidden={isActiveSection ? undefined : 'true'}
+                >
+                  <div className="mb-4 text-[var(--text-muted)] font-semibold tracking-wide text-sm uppercase flex items-center gap-2">
+                    Chapter {chap.number}: {chap.title}
+                  </div>
+                  {/* Only the visible section owns the h1; the rest are h2 so the
+                      document keeps a single top-level heading. */}
+                  {isActiveSection ? (
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--text-strong)] mb-8 tracking-tight">
+                      {sec.title}
+                    </h1>
+                  ) : (
+                    <h2 className="text-3xl md:text-4xl font-extrabold text-[var(--text-strong)] mb-8 tracking-tight">
+                      {sec.title}
+                    </h2>
+                  )}
+
+                  <div className="prose max-w-none text-[var(--text-main)]">
+                    {renderContent(sec.content)}
+                    {sec.code && <CodeBlock code={sec.code} />}
+                  </div>
+                </article>
+              );
+            }),
+          )}
+
           {section && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="mb-4 text-[var(--text-muted)] font-semibold tracking-wide text-sm uppercase flex items-center gap-2">
-                Chapter {chapter.number}: {chapter.title}
-              </div>
-              <h1 className="text-3xl md:text-4xl font-extrabold text-[var(--text-strong)] mb-8 tracking-tight">
-                {section.title}
-              </h1>
-
-              <div className="prose max-w-none text-[var(--text-main)]">
-                {renderContent(section.content)}
-                {section.code && <CodeBlock code={section.code} />}
-              </div>
-
+            <div>
               {isLastSection ? (
                 <div className="mt-12 rounded-2xl border border-[var(--border-soft)] bg-white p-6 shadow-sm">
                   <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent)]">Final test</p>
@@ -432,13 +441,15 @@ export default function TutorialPage() {
                     AI Inference MCQ
                   </h2>
                   <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">
-                    The final test is now on a separate page with 10 MCQ questions. Your current progress is {progressPercent}%.
+                    {auth.user
+                      ? `The final test is now on a separate page with 10 MCQ questions. Your current progress is ${progressPercent}%.`
+                      : 'The final test is a separate page with 10 MCQ questions. Sign in to track your progress through the tutorial, take the test, and earn a certificate.'}
                   </p>
                   <Link
-                    href="/ai-inference/tutorial/test"
+                    href={auth.user ? '/ai-inference/tutorial/test' : '/login?next=/ai-inference/tutorial'}
                     className="mt-5 inline-flex rounded-xl bg-[var(--accent)] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[var(--accent-strong)]"
                   >
-                    Open final test
+                    {auth.user ? 'Open final test' : 'Sign in to take the test'}
                   </Link>
                 </div>
               ) : null}

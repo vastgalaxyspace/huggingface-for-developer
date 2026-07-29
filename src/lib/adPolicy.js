@@ -19,9 +19,14 @@
 
 // Exact paths. Used where a subtree contains pages that would not qualify.
 const ALLOWED_EXACT = new Set([
-  '/', //                      1,044 words
-  '/ai-tutorials', //            587 words — index only; the subtree is client-rendered
-  '/coding-model-analysis', // 1,843 words
+  '/', //                        1,044 words
+  '/ai-tutorials', //              587 words — index only; the subtree varies
+  '/ai-tutorials/rag', //        4,366 words — all chapters now server-rendered
+  '/ai-inference/tutorial', //   9,028 words — all chapters now server-rendered
+  '/coding-model-analysis', //   1,843 words
+  '/compare', //                 ~1,400 words — tool plus server-rendered editorial
+  '/recommender', //             1,041 words — tool plus server-rendered editorial
+  '/validation-lab', //            722 words — tool plus server-rendered editorial
 ]);
 
 // Whole subtrees, verified page by page.
@@ -36,8 +41,12 @@ const ALLOWED_PREFIXES = [
 const BLOCKED = new Set([
   '/gpu/test', //                     85 words — quiz screen
   '/ai-inference/tutorial/test', //   86 words — quiz screen
-  '/ai-tutorials/rag', //             83 words — body fetched client-side
-  '/ai-inference/tutorial', //        84 words — body fetched client-side
+  // /ai-updates is long enough now that it is server-rendered, but it stays off
+  // ads deliberately: it is an aggregated feed of third-party announcements, and
+  // Google's Inventory value policy specifically bars ads on screens carrying
+  // content from others without substantial added commentary. Revisit only if the
+  // entries grow into genuine original analysis.
+  '/ai-updates',
   '/login',
   '/profile',
   '/favorites',

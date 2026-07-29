@@ -27,12 +27,9 @@ const MUST_BLOCK = [
   '/favorites',
   '/gpu/test',
   '/ai-inference/tutorial/test',
-  '/ai-tutorials/rag',
-  '/ai-inference/tutorial',
+  // Aggregated third-party announcements: substantial in length, but not our
+  // commentary. See the note in src/lib/adPolicy.js.
   '/ai-updates',
-  '/validation-lab',
-  '/recommender',
-  '/compare',
   '/contact',
   '/privacy',
   '/terms',
@@ -58,6 +55,12 @@ const MUST_ALLOW = [
   '/gpu/tools/gpu-picker',
   '/coding-model-analysis',
   '/ai-tutorials',
+  // Previously client-rendered shells, now server-rendered with real content.
+  '/ai-tutorials/rag',
+  '/ai-inference/tutorial',
+  '/compare',
+  '/recommender',
+  '/validation-lab',
 ];
 
 /** Walk app/ and derive the static route for every page.jsx. */
