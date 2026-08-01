@@ -309,7 +309,8 @@ export const guides = [
     description: 'A practical precision guide with memory estimates, benchmark-backed comparisons, and deployment recommendations.',
     category: 'Deployment',
     readTime: '12 min read',
-    lastUpdated: '2026-04-20',
+    lastUpdated: '2026-08-01',
+    publishedDate: '2026-04-20',
     keyTakeaways: [
       'Precision is the main deployment lever for memory, speed, cost, and quality.',
       'FP16/BF16 preserve quality; INT8 is a common production midpoint; INT4 and GGUF are strongest for constrained hardware.',
@@ -385,7 +386,8 @@ export const guides = [
     description: 'Choose between open and closed models by looking beyond benchmark quality to lifecycle cost, governance, portability, and operational ownership.',
     category: 'Strategy',
     readTime: '8 min read',
-    lastUpdated: '2026-04-12',
+    lastUpdated: '2026-08-01',
+    publishedDate: '2026-04-12',
     keyTakeaways: [
       'Closed APIs usually reduce launch friction and operational overhead.',
       'Open models improve control over latency, retention policy, and deployment environment.',
@@ -449,7 +451,8 @@ export const guides = [
     description: 'A complete coding-model analysis covering tools, benchmarks, prompts, automation, and agentic workflows.',
     category: 'Comparisons',
     readTime: '8 min read',
-    lastUpdated: '2026-04-12',
+    lastUpdated: '2026-08-01',
+    publishedDate: '2026-04-12',
     keyTakeaways: [
       'Coding model selection should include workflow fit, not only benchmark rank.',
       'Tooling ecosystem and IDE integration strongly affect developer productivity.',
@@ -528,7 +531,8 @@ export const guides = [
     description: 'Plan realistic model choices for 8GB, 16GB, and 24GB VRAM machines without overcommitting on context length, concurrency, or precision.',
     category: 'Hardware Planning',
     readTime: '8 min read',
-    lastUpdated: '2026-04-12',
+    lastUpdated: '2026-08-01',
+    publishedDate: '2026-04-12',
     keyTakeaways: [
       'VRAM is the first hard limit for local and self-hosted inference.',
       'Context length, batch size, and concurrency can break otherwise safe-looking plans.',
@@ -592,7 +596,8 @@ export const guides = [
     description: 'Build multilingual AI systems for English and Indian languages with stronger evaluation, prompt design, and language-specific feedback loops.',
     category: 'Localization',
     readTime: '8 min read',
-    lastUpdated: '2026-04-12',
+    lastUpdated: '2026-08-01',
+    publishedDate: '2026-04-12',
     keyTakeaways: [
       'Language quality varies sharply by task, domain vocabulary, and script complexity.',
       'Translation benchmarks alone are not enough for multilingual product decisions.',
@@ -656,7 +661,8 @@ export const guides = [
     description: 'Reduce response time by treating latency as a whole-system problem across model choice, prompt size, routing, and serving architecture.',
     category: 'Performance',
     readTime: '7 min read',
-    lastUpdated: '2026-04-12',
+    lastUpdated: '2026-08-01',
+    publishedDate: '2026-04-12',
     keyTakeaways: [
       'Latency is an end-to-end system metric, not just a model benchmark.',
       'Prompt size and retrieval payload often dominate perceived speed.',
@@ -720,7 +726,8 @@ export const guides = [
     description: 'Build a practical local AI assistant on an 8GB GPU by keeping scope narrow, defaults conservative, and quality measurement honest.',
     category: 'Tutorials',
     readTime: '10 min read',
-    lastUpdated: '2026-04-12',
+    lastUpdated: '2026-08-01',
+    publishedDate: '2026-04-12',
     keyTakeaways: [
       'Scope narrowly first so the assistant is useful instead of overloaded.',
       'Use conservative context and concurrency limits on 8GB hardware.',
@@ -784,7 +791,8 @@ export const guides = [
     description: 'A practical end-to-end RAG deployment flow covering ingestion, retrieval tuning, answer grounding, and production monitoring.',
     category: 'Tutorials',
     readTime: '10 min read',
-    lastUpdated: '2026-04-12',
+    lastUpdated: '2026-08-01',
+    publishedDate: '2026-04-12',
     keyTakeaways: [
       'Ingestion quality is the foundation of every useful RAG system.',
       'Retrieval tuning usually matters more than model swaps in the early stages.',
@@ -848,7 +856,8 @@ export const guides = [
     description: 'Reusable prompt structures for reliability, maintainability, and easier testing in real product workflows.',
     category: 'Prompting',
     readTime: '8 min read',
-    lastUpdated: '2026-04-12',
+    lastUpdated: '2026-08-01',
+    publishedDate: '2026-04-12',
     keyTakeaways: [
       'A simple role-task-constraints-format structure is still the strongest default.',
       'Clear output schemas reduce ambiguity more than extra stylistic instructions.',

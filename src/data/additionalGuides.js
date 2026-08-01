@@ -26,7 +26,11 @@ const guide = ({
   description,
   category,
   readTime: '12 min read',
-  lastUpdated: '2026-05-13',
+  // All nine of these guides gained a bespoke section, FAQ, and checklist in the
+  // 2026-08-01 depth pass, so lastUpdated moves while publishedDate stays put.
+  // The sitemap reads lastUpdated, and leaving it in May told Google there was
+  // nothing new to re-crawl on pages that had just been substantially rewritten.
+  lastUpdated: '2026-08-01',
   publishedDate: '2026-05-13',
   author: 'Dhiraj',
   reviewedBy: 'InnoAI Technical Review',
