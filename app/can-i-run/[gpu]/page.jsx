@@ -9,7 +9,7 @@ import {
   gpuBySlug,
   modelAnchor,
 } from '../../../src/data/canIRunData';
-import { absoluteUrl, pageMetadata } from '../../../src/lib/seo';
+import { absoluteUrl, breadcrumbSchema, pageMetadata } from '../../../src/lib/seo';
 
 // One page per curated GPU, and the only page in this section. Each carries the
 // complete model x precision matrix for that card, so the answer to "can I run X
@@ -236,9 +236,16 @@ export default async function GpuHubPage({ params }) {
 
   const siblingGpus = CURATED_GPUS.filter((g) => g.slug !== gpu.slug && g.tier === gpu.tier).slice(0, 8);
 
+  const breadcrumb = breadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Can I Run', path: '/can-i-run' },
+    { name: gpu.name, path: canIRunGpuPath(gpu.slug) },
+  ]);
+
   return (
     <div className="bg-gray-100 py-8 md:py-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       <div className="shell-container space-y-6">
         <Link
           href="/can-i-run"

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, Cpu, Layers, MemoryStick } from 'lucide-react';
-import { pageMetadata } from '../../../src/lib/seo';
+import { breadcrumbSchema, pageMetadata } from '../../../src/lib/seo';
 
 export const metadata = pageMetadata({
   title: 'GPU Hardware Fundamentals',
@@ -32,8 +32,15 @@ export default function GpuHardwarePage() {
     },
   ];
 
+  const breadcrumb = breadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'GPU', path: '/gpu' },
+    { name: 'Hardware Fundamentals', path: '/gpu/hardware' },
+  ]);
+
   return (
     <div className="bg-[#f2f6fb] py-8 md:py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       <div className="shell-container space-y-10">
         <section className="overflow-hidden rounded-[20px] border border-[#d7dfe8] bg-white shadow-[0_12px_30px_rgba(31,45,61,0.08)]">
           <div className="gpu-grid-light px-6 py-8 md:px-10 md:py-10">

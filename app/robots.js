@@ -5,6 +5,9 @@ export default function robots() {
     rules: {
       userAgent: '*',
       allow: '/',
+      // JSON API routes are not content and should not spend crawl budget or
+      // surface in results. Everything user-facing lives outside /api.
+      disallow: '/api/',
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,

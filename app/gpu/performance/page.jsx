@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import RooflineAnalyzerClient from '../../../src/components/roofline/RooflineAnalyzerClient';
-import { pageMetadata } from '../../../src/lib/seo';
+import { breadcrumbSchema, pageMetadata } from '../../../src/lib/seo';
 import Link from 'next/link';
 
 export const metadata = pageMetadata({
@@ -12,8 +12,15 @@ export const metadata = pageMetadata({
 });
 
 export default function GpuPerformancePage() {
+  const breadcrumb = breadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'GPU', path: '/gpu' },
+    { name: 'Performance Analysis', path: '/gpu/performance' },
+  ]);
+
   return (
     <div className="bg-slate-100 py-8 md:py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       <div className="shell-container space-y-6">
         <section className="rounded-[24px] border border-[var(--border-soft)] bg-white px-6 py-8 shadow-[0_12px_30px_rgba(31,45,61,0.08)] sm:px-10">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-faint)]">Performance / Bottleneck Analysis</p>
