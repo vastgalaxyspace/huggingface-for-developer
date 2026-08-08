@@ -1,7 +1,12 @@
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { notFound } from 'next/navigation';
-import { evaluateModelOnGpu, REFERENCE_CONTEXT } from '../../../src/utils/canIRunEngine';
+import {
+  decodeSpeedBand,
+  estimateDecodeSpeed,
+  evaluateModelOnGpu,
+  REFERENCE_CONTEXT,
+} from '../../../src/utils/canIRunEngine';
 import {
   CURATED_GPUS,
   CURATED_MODELS,
@@ -62,10 +67,16 @@ export async function generateMetadata({ params }) {
  * needs: verdict buckets, the two capacity cliffs, and long-context headroom.
  */
 function analyse(gpu) {
-  const evaluated = CURATED_MODELS.map((model) => ({
-    model,
-    result: evaluateModelOnGpu(model, gpu.vram),
-  })).sort((a, b) => b.model.paramsB - a.model.paramsB);
+  const evaluated = CURATED_MODELS.map((model) => {
+    const result = evaluateModelOnGpu(model, gpu.vram);
+    // Speed is quoted at the best precision the card can actually run, because
+    // that is the configuration a reader would deploy. Models that do not fit at
+    // all get no figure — a speed for something you cannot load is noise.
+    const tokensPerSec = result.bestPrecision
+      ? estimateDecodeSpeed(model.paramsB, gpu.bandwidth, result.bestPrecision)
+      : null;
+    return { model, result, tokensPerSec, speedBand: decodeSpeedBand(tokensPerSec) };
+  }).sort((a, b) => b.model.paramsB - a.model.paramsB);
 
   const buckets = {
     full: evaluated.filter((e) => e.result.headline === 'yes-full'),
@@ -99,9 +110,10 @@ function analyse(gpu) {
   return { evaluated, buckets, cliffs, headroom };
 }
 
-function buildFaq(gpu, buckets, cliffs) {
+function buildFaq(gpu, buckets, cliffs, evaluated) {
   const runnable = buckets.full.length + buckets.quantized.length;
   const { largestAny, largestFp16, smallestFailure } = cliffs;
+  const fastest = evaluated.filter((e) => e.tokensPerSec).sort((a, b) => b.tokensPerSec - a.tokensPerSec)[0];
 
   const faq = [
     {
@@ -134,6 +146,18 @@ function buildFaq(gpu, buckets, cliffs) {
         : `Nothing in the tracked set runs in FP16 on ${gpu.vram} GB, so quantization is mandatory on this card.`,
     },
     {
+      q: `How fast do these models actually generate on the ${gpu.name}?`,
+      a: `Decoding is limited by memory bandwidth, not compute. The ${gpu.name} peaks at about ${gpu.bandwidth.toLocaleString()} GB/s, and each token requires reading the whole model once, so speed is roughly that bandwidth divided by the model's size in bytes — at about 60% realized efficiency for a single request.${
+        fastest
+          ? ` ${fastest.model.label} is the quickest tracked model here at roughly ${fastest.tokensPerSec} tokens per second.`
+          : ''
+      } Quantizing helps twice over: 4-bit weights are a quarter the bytes of FP16, so they generate roughly four times faster.`,
+    },
+    {
+      q: `Is more VRAM or more bandwidth better for LLM inference?`,
+      a: `VRAM decides whether a model runs at all; bandwidth decides how fast it runs once it does. They are not interchangeable, and cards can be strong in one and weak in the other — an L4 has the same 24 GB as an RTX 4090 but roughly a third of the bandwidth, so it fits the same models and generates far more slowly. Size for VRAM first, then check the speed column to see whether the result is usable.`,
+    },
+    {
       q: `Why does the VRAM number here differ from the model size?`,
       a: `Model weights are only part of the cost. Every estimate here also adds the KV cache, which stores attention keys and values for each token in the context window and grows as your prompt gets longer. These figures use a ${REFERENCE_CONTEXT.toLocaleString()}-token context and leave about 10% headroom for activations and fragmentation.`,
     },
@@ -163,6 +187,22 @@ const STATUS_CELL = {
 
 const STATUS_WORD = { fits: 'fits', tight: 'tight', no: 'over' };
 
+const SPEED_CELL = {
+  fast: 'text-green-700',
+  usable: 'text-green-700',
+  slow: 'text-amber-700',
+  impractical: 'text-red-600',
+};
+
+// Plain-language read on the number, so a reader does not have to know what
+// counts as a usable generation speed.
+const SPEED_WORD = {
+  fast: 'faster than reading',
+  usable: 'fine for chat',
+  slow: 'batch only',
+  impractical: 'unusable',
+};
+
 /**
  * The full model x precision matrix. This is the page's centrepiece: it carries
  * every answer the retired per-combo pages used to give, on one screen, so the
@@ -180,11 +220,12 @@ function PrecisionMatrix({ evaluated }) {
             <th className="px-4 py-3 whitespace-nowrap">INT8</th>
             <th className="px-4 py-3 whitespace-nowrap">4-bit</th>
             <th className="px-4 py-3 whitespace-nowrap">KV @ {(REFERENCE_CONTEXT / 1024).toFixed(0)}K</th>
+            <th className="px-4 py-3 whitespace-nowrap">Speed</th>
             <th className="px-4 py-3 whitespace-nowrap">Verdict</th>
           </tr>
         </thead>
         <tbody>
-          {evaluated.map(({ model, result }) => (
+          {evaluated.map(({ model, result, tokensPerSec, speedBand }) => (
             <tr key={model.id} id={modelAnchor(model.id)} className="scroll-mt-24 border-t border-gray-100">
               <td className="px-4 py-3 font-semibold text-gray-900">{model.label}</td>
               <td className="px-4 py-3 whitespace-nowrap text-gray-600">{model.paramsB}B</td>
@@ -196,6 +237,16 @@ function PrecisionMatrix({ evaluated }) {
                 </td>
               ))}
               <td className="px-4 py-3 whitespace-nowrap text-gray-600">{result.kvGB} GB</td>
+              <td className="px-4 py-3 whitespace-nowrap">
+                {tokensPerSec ? (
+                  <span className={`text-xs font-bold ${SPEED_CELL[speedBand]}`}>
+                    ~{tokensPerSec} tok/s
+                    <span className="block text-[10px] font-normal text-gray-400">{SPEED_WORD[speedBand]}</span>
+                  </span>
+                ) : (
+                  <span className="text-xs text-gray-400">&mdash;</span>
+                )}
+              </td>
               <td className="px-4 py-3 whitespace-nowrap text-xs font-bold uppercase tracking-[0.1em]">
                 {result.headline === 'yes-full' ? (
                   <span className="text-green-700">Runs in FP16</span>
@@ -222,7 +273,7 @@ export default async function GpuHubPage({ params }) {
 
   const { evaluated, buckets, cliffs, headroom } = analyse(gpu);
   const runnable = buckets.full.length + buckets.quantized.length;
-  const faq = buildFaq(gpu, buckets, cliffs);
+  const faq = buildFaq(gpu, buckets, cliffs, evaluated);
 
   const faqSchema = {
     '@context': 'https://schema.org',
@@ -297,7 +348,34 @@ export default async function GpuHubPage({ params }) {
           <p className="mt-4 text-xs leading-6 text-gray-500">
             Weights scale with precision — roughly 2 bytes per parameter at FP16, 1 at INT8, 0.5 at 4-bit — but the KV
             cache column does not. It stays in FP16 regardless of how the weights are quantized, which is why 4-bit
-            stops helping once the cache alone approaches the card&apos;s capacity.
+            stops helping once the cache alone approaches the card&apos;s capacity. Speed is quoted at the best
+            precision each model actually runs at on this card, for a single request.
+          </p>
+        </section>
+
+        <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+          <h2 className="text-2xl font-black tracking-tight text-gray-900">Fitting is not the same as usable</h2>
+          <p className="mt-4 text-sm leading-7 text-gray-600">
+            A model can fit the {gpu.name} and still be too slow to use, which is the gap the speed column closes.
+            Generating text is memory-bandwidth-bound rather than compute-bound: producing each token requires reading
+            every weight once, so throughput is roughly the card&apos;s bandwidth divided by the bytes those weights
+            occupy. The {gpu.name} moves about {gpu.bandwidth.toLocaleString()} GB/s at peak, and a well-optimized
+            runtime realizes roughly 60% of that on a single stream once attention, sampling, and kernel launch
+            overhead are counted.
+          </p>
+          <p className="mt-4 text-sm leading-7 text-gray-600">
+            Two consequences follow. Quantization buys speed as well as memory — dropping from FP16 to 4-bit quarters
+            the bytes read per token and so roughly quadruples generation speed, which is often the stronger argument
+            for it. And bandwidth, not TFLOPS, is the spec that predicts how a card feels: a GPU with more compute but
+            slower memory will generate text more slowly on the same model. As a rough guide, above 30 tokens per
+            second output arrives faster than most people read, 10 to 30 is comfortable for chat but sluggish for long
+            answers, and below about 3 the model is only practical for background or batch work.
+          </p>
+          <p className="mt-4 text-xs leading-6 text-gray-500">
+            These are single-request estimates and deliberately conservative. Serving several users at once raises
+            total throughput well above these figures, because one weight read is shared across the whole batch, while
+            each individual response gets no faster. Speculative decoding and heavily tuned runtimes can also beat
+            them. Treat the numbers as a floor for interactive use rather than a benchmark result.
           </p>
         </section>
 

@@ -12,6 +12,7 @@
     "indexing:check": "node scripts/model-indexing-check.mjs",
     "specs:check": "node scripts/can-i-run-specs-check.mjs",
     "ads:check": "node scripts/ad-policy-check.mjs",
+    "bandwidth:check": "node scripts/gpu-bandwidth-check.mjs",
     "seed:ai-inference-tutorial": "node scripts/seed-ai-inference-tutorial.mjs",
     "seed:gpu-tutorial": "node scripts/seed-gpu-tutorial.mjs",
     "seed:ai-updates": "node scripts/seed-ai-updates.mjs"

@@ -10,49 +10,61 @@
 // Only `vram` (GB) feeds the fit verdict; `tier`/`vendor` are descriptive metadata
 // and are not consumed by the can-i-run engine or pages. VRAM figures are the
 // standard advertised on-board memory for each card's mainstream variant.
+//
+// `bandwidth` is peak theoretical memory bandwidth in GB/s and feeds only the
+// tokens-per-second estimate (estimateDecodeSpeed in canIRunEngine). Single-stream
+// decoding is memory-bandwidth-bound, so this — not TFLOPS — is what sets generation
+// speed. Three provenance groups, all checked by `npm run bandwidth:check`:
+//   - 22 cards also appear in src/data/gpuPickerData.js and are cross-validated
+//     against that copy, so a typo in either file fails the check.
+//   - H100 and A100 80GB ship in SXM and PCIe variants whose bandwidth differs by
+//     up to 40%. The SXM figure is used (the dominant data-center form factor) and
+//     the pages say so; do not "correct" these to PCIe without updating the copy.
+//   - 12 consumer cards have no second copy in this repo. They are published vendor
+//     specs and are the only entries a human should re-check by hand.
 export const CURATED_GPUS = [
   // Consumer — NVIDIA
-  { slug: 'rtx-5090', name: 'RTX 5090', vram: 32, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-5080', name: 'RTX 5080', vram: 16, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-5070-ti', name: 'RTX 5070 Ti', vram: 16, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-5070', name: 'RTX 5070', vram: 12, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-5060-ti-16gb', name: 'RTX 5060 Ti 16GB', vram: 16, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-4090', name: 'RTX 4090', vram: 24, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-4080', name: 'RTX 4080', vram: 16, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-4070-ti-super', name: 'RTX 4070 Ti SUPER', vram: 16, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-4070-super', name: 'RTX 4070 SUPER', vram: 12, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-4070-ti', name: 'RTX 4070 Ti', vram: 12, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-4070', name: 'RTX 4070', vram: 12, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-4060-ti-16gb', name: 'RTX 4060 Ti 16GB', vram: 16, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-4060-ti-8gb', name: 'RTX 4060 Ti 8GB', vram: 8, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-4060', name: 'RTX 4060', vram: 8, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-3090', name: 'RTX 3090', vram: 24, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-3080', name: 'RTX 3080', vram: 10, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-3070', name: 'RTX 3070', vram: 8, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-3060-ti', name: 'RTX 3060 Ti', vram: 8, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-3060', name: 'RTX 3060', vram: 12, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-3050', name: 'RTX 3050', vram: 8, tier: 'Consumer', vendor: 'NVIDIA' },
-  { slug: 'rtx-2080-ti', name: 'RTX 2080 Ti', vram: 11, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-5090', name: 'RTX 5090', vram: 32, bandwidth: 1792, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-5080', name: 'RTX 5080', vram: 16, bandwidth: 960, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-5070-ti', name: 'RTX 5070 Ti', vram: 16, bandwidth: 896, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-5070', name: 'RTX 5070', vram: 12, bandwidth: 672, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-5060-ti-16gb', name: 'RTX 5060 Ti 16GB', vram: 16, bandwidth: 448, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-4090', name: 'RTX 4090', vram: 24, bandwidth: 1008, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-4080', name: 'RTX 4080', vram: 16, bandwidth: 717, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-4070-ti-super', name: 'RTX 4070 Ti SUPER', vram: 16, bandwidth: 672, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-4070-super', name: 'RTX 4070 SUPER', vram: 12, bandwidth: 504, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-4070-ti', name: 'RTX 4070 Ti', vram: 12, bandwidth: 504, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-4070', name: 'RTX 4070', vram: 12, bandwidth: 504, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-4060-ti-16gb', name: 'RTX 4060 Ti 16GB', vram: 16, bandwidth: 288, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-4060-ti-8gb', name: 'RTX 4060 Ti 8GB', vram: 8, bandwidth: 288, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-4060', name: 'RTX 4060', vram: 8, bandwidth: 272, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-3090', name: 'RTX 3090', vram: 24, bandwidth: 936, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-3080', name: 'RTX 3080', vram: 10, bandwidth: 760, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-3070', name: 'RTX 3070', vram: 8, bandwidth: 448, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-3060-ti', name: 'RTX 3060 Ti', vram: 8, bandwidth: 448, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-3060', name: 'RTX 3060', vram: 12, bandwidth: 360, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-3050', name: 'RTX 3050', vram: 8, bandwidth: 224, tier: 'Consumer', vendor: 'NVIDIA' },
+  { slug: 'rtx-2080-ti', name: 'RTX 2080 Ti', vram: 11, bandwidth: 616, tier: 'Consumer', vendor: 'NVIDIA' },
   // Consumer — AMD Radeon (ROCm / Vulkan via llama.cpp)
-  { slug: 'rx-7900-xtx', name: 'Radeon RX 7900 XTX', vram: 24, tier: 'Consumer', vendor: 'AMD' },
-  { slug: 'rx-7900-xt', name: 'Radeon RX 7900 XT', vram: 20, tier: 'Consumer', vendor: 'AMD' },
-  { slug: 'rx-7800-xt', name: 'Radeon RX 7800 XT', vram: 16, tier: 'Consumer', vendor: 'AMD' },
-  { slug: 'rx-9070-xt', name: 'Radeon RX 9070 XT', vram: 16, tier: 'Consumer', vendor: 'AMD' },
+  { slug: 'rx-7900-xtx', name: 'Radeon RX 7900 XTX', vram: 24, bandwidth: 960, tier: 'Consumer', vendor: 'AMD' },
+  { slug: 'rx-7900-xt', name: 'Radeon RX 7900 XT', vram: 20, bandwidth: 800, tier: 'Consumer', vendor: 'AMD' },
+  { slug: 'rx-7800-xt', name: 'Radeon RX 7800 XT', vram: 16, bandwidth: 624, tier: 'Consumer', vendor: 'AMD' },
+  { slug: 'rx-9070-xt', name: 'Radeon RX 9070 XT', vram: 16, bandwidth: 645, tier: 'Consumer', vendor: 'AMD' },
   // Workstation
-  { slug: 'rtx-6000-ada', name: 'RTX 6000 Ada', vram: 48, tier: 'Workstation', vendor: 'NVIDIA' },
-  { slug: 'rtx-a6000', name: 'RTX A6000', vram: 48, tier: 'Workstation', vendor: 'NVIDIA' },
-  { slug: 'rtx-a5000', name: 'RTX A5000', vram: 24, tier: 'Workstation', vendor: 'NVIDIA' },
-  { slug: 'rtx-a4000', name: 'RTX A4000', vram: 16, tier: 'Workstation', vendor: 'NVIDIA' },
+  { slug: 'rtx-6000-ada', name: 'RTX 6000 Ada', vram: 48, bandwidth: 960, tier: 'Workstation', vendor: 'NVIDIA' },
+  { slug: 'rtx-a6000', name: 'RTX A6000', vram: 48, bandwidth: 768, tier: 'Workstation', vendor: 'NVIDIA' },
+  { slug: 'rtx-a5000', name: 'RTX A5000', vram: 24, bandwidth: 768, tier: 'Workstation', vendor: 'NVIDIA' },
+  { slug: 'rtx-a4000', name: 'RTX A4000', vram: 16, bandwidth: 448, tier: 'Workstation', vendor: 'NVIDIA' },
   // Data center
-  { slug: 'h200', name: 'H200 141GB', vram: 141, tier: 'Data center', vendor: 'NVIDIA' },
-  { slug: 'h100', name: 'H100 80GB', vram: 80, tier: 'Data center', vendor: 'NVIDIA' },
-  { slug: 'a100-80gb', name: 'A100 80GB', vram: 80, tier: 'Data center', vendor: 'NVIDIA' },
-  { slug: 'a100-40gb', name: 'A100 40GB', vram: 40, tier: 'Data center', vendor: 'NVIDIA' },
-  { slug: 'l40s', name: 'NVIDIA L40S', vram: 48, tier: 'Data center', vendor: 'NVIDIA' },
-  { slug: 'a10g', name: 'NVIDIA A10G', vram: 24, tier: 'Data center', vendor: 'NVIDIA' },
-  { slug: 'l4', name: 'NVIDIA L4', vram: 24, tier: 'Data center', vendor: 'NVIDIA' },
-  { slug: 'v100-32gb', name: 'Tesla V100 32GB', vram: 32, tier: 'Data center', vendor: 'NVIDIA' },
-  { slug: 't4', name: 'Tesla T4', vram: 16, tier: 'Data center', vendor: 'NVIDIA' },
+  { slug: 'h200', name: 'H200 141GB', vram: 141, bandwidth: 4800, tier: 'Data center', vendor: 'NVIDIA' },
+  { slug: 'h100', name: 'H100 80GB', vram: 80, bandwidth: 3350, tier: 'Data center', vendor: 'NVIDIA' },
+  { slug: 'a100-80gb', name: 'A100 80GB', vram: 80, bandwidth: 2000, tier: 'Data center', vendor: 'NVIDIA' },
+  { slug: 'a100-40gb', name: 'A100 40GB', vram: 40, bandwidth: 1555, tier: 'Data center', vendor: 'NVIDIA' },
+  { slug: 'l40s', name: 'NVIDIA L40S', vram: 48, bandwidth: 864, tier: 'Data center', vendor: 'NVIDIA' },
+  { slug: 'a10g', name: 'NVIDIA A10G', vram: 24, bandwidth: 600, tier: 'Data center', vendor: 'NVIDIA' },
+  { slug: 'l4', name: 'NVIDIA L4', vram: 24, bandwidth: 300, tier: 'Data center', vendor: 'NVIDIA' },
+  { slug: 'v100-32gb', name: 'Tesla V100 32GB', vram: 32, bandwidth: 900, tier: 'Data center', vendor: 'NVIDIA' },
+  { slug: 't4', name: 'Tesla T4', vram: 16, bandwidth: 300, tier: 'Data center', vendor: 'NVIDIA' },
 ];
 
 export const CURATED_MODELS = [

@@ -2,7 +2,9 @@
 // Pure functions, no React. Reuses the corrected VRAM engine so the weight and
 // KV-cache math stays consistent with the calculator.
 
-import { calculateVRAM, calculateKVCacheVRAM } from './vramCalculator';
+// Explicit .js extension so plain Node ESM (the scripts/ checks) can import this
+// module, not just the bundler. Same reason as src/lib/modelEditorial.js.
+import { calculateVRAM, calculateKVCacheVRAM } from './vramCalculator.js';
 
 // Reference context length used for the headline verdict. A short, realistic prompt
 // length; the page also explains how longer context changes the result.
@@ -30,6 +32,65 @@ function verdict(totalGB, gpuVram) {
   if (totalGB <= gpuVram * 0.9) return 'fits';
   if (totalGB <= gpuVram) return 'tight';
   return 'no';
+}
+
+// Fraction of peak memory bandwidth a real decode loop achieves. Peak is a
+// marketing number nobody hits; well-optimized runtimes land around 55-70% on a
+// single stream once kernel launch overhead, attention, and sampling are counted.
+// 0.6 matches the estimate already used by the GPU picker (useGpuPicker.js), so the
+// two tools do not contradict each other.
+const DECODE_BANDWIDTH_EFFICIENCY = 0.6;
+
+// Fixed per-token cost that does not shrink with the model: sampling, detokenization,
+// kernel launch and scheduling. Pure bandwidth math ignores it and therefore predicts
+// absurd figures for small models on fast cards — a 3B at 4-bit on an H200 comes out
+// near 1,800 tok/s, where real single-stream decoding tops out in the hundreds because
+// this overhead, not memory, becomes the limit. 2 ms keeps the ceiling near 500 tok/s.
+const DECODE_OVERHEAD_SECONDS = 0.002;
+
+const BYTES_PER_PARAM = { fp16: 2, int8: 1, int4: 0.5 };
+
+/**
+ * Estimate single-stream decode speed in tokens per second.
+ *
+ * Generating one token requires reading every weight once, so decode is bound by
+ * memory bandwidth rather than compute. Time per token is that read plus a fixed
+ * overhead that does not scale with model size:
+ *
+ *   seconds/token ~= bytes read / (bandwidth x efficiency) + fixed overhead
+ *   tokens/sec     = 1 / seconds per token
+ *
+ * This is why quantizing speeds generation up roughly in proportion to the bytes
+ * saved, and why a card with more TFLOPS but less bandwidth can generate slower.
+ * The overhead term is what stops small models on fast cards from reporting
+ * thousands of tokens per second. Batched serving behaves differently — the weight
+ * read is amortized across the batch — so this is explicitly the single-user number.
+ *
+ * @param {number} paramsB - Active parameters in billions.
+ * @param {number} bandwidthGBs - Peak memory bandwidth in GB/s.
+ * @param {string} precision - 'fp16' | 'int8' | 'int4'.
+ * @returns {number|null} Estimated tokens/sec, or null if inputs are unusable.
+ */
+export function estimateDecodeSpeed(paramsB, bandwidthGBs, precision = 'fp16') {
+  const bytesPerParam = BYTES_PER_PARAM[precision];
+  if (!bytesPerParam || !(paramsB > 0) || !(bandwidthGBs > 0)) return null;
+
+  const bytesPerToken = paramsB * 1e9 * bytesPerParam;
+  const usableBytesPerSec = bandwidthGBs * 1e9 * DECODE_BANDWIDTH_EFFICIENCY;
+  const secondsPerToken = bytesPerToken / usableBytesPerSec + DECODE_OVERHEAD_SECONDS;
+  const tokensPerSec = 1 / secondsPerToken;
+
+  // Sub-1 tok/s is real but the exact figure is meaningless at that point.
+  return tokensPerSec < 1 ? Number(tokensPerSec.toFixed(1)) : Math.round(tokensPerSec);
+}
+
+/** Rough usability banding for a decode-speed estimate. */
+export function decodeSpeedBand(tokensPerSec) {
+  if (tokensPerSec === null) return null;
+  if (tokensPerSec >= 30) return 'fast'; // faster than most people read
+  if (tokensPerSec >= 10) return 'usable'; // fine for chat, sluggish for long output
+  if (tokensPerSec >= 3) return 'slow'; // batch work only
+  return 'impractical';
 }
 
 /**
