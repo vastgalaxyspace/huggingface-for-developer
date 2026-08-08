@@ -1,4 +1,5 @@
 import Script from 'next/script';
+import { Inter } from 'next/font/google';
 import { AppProviders } from '../src/components/providers/AppProviders';
 import AdSenseLoader from '../src/components/ads/AdSenseLoader';
 import Header from '../src/components/layout/Header';
@@ -12,6 +13,15 @@ import {
   SITE_URL,
 } from '../src/lib/seo';
 import './globals.css';
+
+// Self-hosted at build time, so there is no request to fonts.googleapis.com on the
+// critical path. Exposed as --font-inter, which app/coding-model-analysis's CSS
+// module already references; the global font-family stays Aptos/Manrope.
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-KV1HD9TCT7';
 // AdSense publisher ID (ca-pub-...). Drives both the loader script and the
@@ -137,7 +147,7 @@ const organizationSchema = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" data-scroll-behavior="smooth">
+    <html lang="en" data-scroll-behavior="smooth" className={inter.variable}>
       {/* Plain <script> tags, not next/script: Search Console's Google Analytics
           verification reads the raw server HTML and requires the gtag snippet in
           <head>. next/script with strategy="afterInteractive" injects into <body>

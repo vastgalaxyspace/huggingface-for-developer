@@ -1,4 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+/* Inter is loaded via next/font/google in app/layout.jsx, which self-hosts it and
+   exposes it as --font-inter (what app/coding-model-analysis/page.module.css has
+   always asked for). It used to be pulled in here with an @import of a remote
+   stylesheet, which is the slowest possible way to load a font: the browser had to
+   fetch and parse this file, then discover the import, then do DNS + TLS + fetch to
+   fonts.googleapis.com. Lighthouse measured 750 ms of render-blocking for 1.3 KiB,
+   on every page — even though the global font-family below is Aptos/Manrope and only
+   one page actually uses Inter. */
 @import "tailwindcss";
 
 :root {
