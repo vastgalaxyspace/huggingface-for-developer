@@ -167,7 +167,7 @@ const formatCertificateDate = (value) => {
 
 const getLogoDataUrl = async () => {
   try {
-    const response = await fetch("/images/innoai logo main.png");
+    const response = await fetch("/images/innoai-logo-512.png");
     const blob = await response.blob();
 
     return await new Promise((resolve) => {
@@ -691,7 +691,7 @@ function CertificateDocument({ certificate }) {
         <header className="relative z-10 flex items-center justify-between gap-6 text-left">
           <div className="flex items-center gap-3">
             <NextImage
-              src="/images/innoai logo main.png"
+              src="/images/innoai-logo-512.png"
               alt="InnoAI AI Explorer"
               width={72}
               height={56}

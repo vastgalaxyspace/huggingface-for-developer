@@ -68,10 +68,14 @@ export const metadata = {
   ...(GOOGLE_SITE_VERIFICATION
     ? { verification: { google: GOOGLE_SITE_VERIFICATION } }
     : {}),
+  // Sized icon files, not the 1445x1344 / 601 KiB master. Browsers fetch the
+  // favicon on first paint, so pointing these at the full-resolution logo made
+  // every mobile visitor download 601 KiB to render a 32px tab icon — the whole
+  // of Lighthouse's "Improve image delivery: 600 KiB" finding.
   icons: {
-    icon: '/images/innoai logo main.png',
-    shortcut: '/images/innoai logo main.png',
-    apple: '/images/innoai logo main.png',
+    icon: '/images/innoai-logo-96.png',
+    shortcut: '/images/innoai-logo-96.png',
+    apple: '/images/innoai-logo-256.png',
   },
   openGraph: {
     type: 'website',
@@ -128,7 +132,7 @@ const organizationSchema = {
   '@type': 'Organization',
   name: SITE_NAME,
   url: SITE_URL,
-  logo: absoluteUrl('/images/innoai logo main.png'),
+  logo: absoluteUrl('/images/innoai-logo-512.png'),
 };
 
 export default function RootLayout({ children }) {

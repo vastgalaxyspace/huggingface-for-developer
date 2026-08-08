@@ -304,7 +304,12 @@ const JSON_LD_FAQ = {
 const FeatureItem = ({ icon, text }) => {
   const Icon = icon;
   return (
-    <div className="group flex cursor-default items-center justify-center gap-3 px-3 py-5 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] transition-colors sm:py-6 sm:text-xs sm:tracking-[0.24em]">
+    // role="listitem": the parent grid declares role="list", which is only valid
+    // if its direct children are list items.
+    <div
+      role="listitem"
+      className="group flex cursor-default items-center justify-center gap-3 px-3 py-5 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] transition-colors sm:py-6 sm:text-xs sm:tracking-[0.24em]"
+    >
       <Icon className="h-4 w-4 shrink-0 text-[var(--text-faint)] group-hover:text-[var(--accent)] transition-colors" />
       <span>{text}</span>
     </div>
@@ -1111,6 +1116,11 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
                     className="w-full rounded-[20px] border border-[var(--border-soft)] bg-white px-12 py-4 text-base font-medium text-[var(--text-main)] shadow-[0_16px_40px_rgba(48,67,95,0.08)] outline-none transition-all placeholder:text-[var(--text-faint)] focus:border-[var(--border-strong)] focus:ring-4 focus:ring-[rgba(53,87,132,0.08)] sm:rounded-[22px] sm:px-16 sm:py-5 sm:text-lg"
                     placeholder="Search models by name, task, or architecture…"
                     disabled={loading}
+                    // role="combobox" is required for these three attributes to be
+                    // valid. Without it Lighthouse flags "[aria-*] attributes do not
+                    // match their roles" and the accessibility tree is malformed for
+                    // screen readers and agent browsers alike.
+                    role="combobox"
                     aria-autocomplete="list"
                     aria-controls="search-suggestions"
                     aria-expanded={showSuggestions}
@@ -1216,8 +1226,15 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
         </section>
 
         {/* ══ 2. TRUST BAR ═══════════════════════════════════════════════════ */}
-        <div className="border-y border-[var(--border-soft)] bg-[rgba(255,255,255,0.6)]" role="list" aria-label="Platform highlights">
-          <div className="shell-container grid grid-cols-2 divide-y divide-[var(--border-soft)] md:grid-cols-4 md:divide-x md:divide-y-0">
+        {/* role="list" must sit on the element whose direct children are the items.
+            It was on the outer wrapper, whose only child is the grid div, so the
+            list had no listitem children — an invalid accessibility tree. */}
+        <div className="border-y border-[var(--border-soft)] bg-[rgba(255,255,255,0.6)]">
+          <div
+            className="shell-container grid grid-cols-2 divide-y divide-[var(--border-soft)] md:grid-cols-4 md:divide-x md:divide-y-0"
+            role="list"
+            aria-label="Platform highlights"
+          >
             <FeatureItem icon={Terminal} text="CLI Access" />
             <FeatureItem icon={CheckCircle} text="Verified Models" />
             <FeatureItem icon={Cloud} text="Direct Weights" />
@@ -1426,13 +1443,15 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
           </div>
 
           {/* ── Active filter pills ───────────────────────────────────────── */}
+          {/* No list roles below: role="listitem" on a <button> replaces its button
+              role, so assistive tech stops announcing these as clickable. A labelled
+              group conveys the same grouping without breaking the controls. */}
           {totalActiveCount > 0 && (
-            <div className="mb-5 flex flex-wrap items-center gap-2" role="list" aria-label="Active filters">
+            <div className="mb-5 flex flex-wrap items-center gap-2" role="group" aria-label="Active filters">
               {Object.entries(filters).flatMap(([type, values]) =>
                 values.map((value) => (
                   <button
                     key={`${type}-${value}`}
-                    role="listitem"
                     onClick={() => toggleFilter(type, value)}
                     className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-bold text-[var(--accent)] hover:bg-[rgba(53,87,132,0.15)] transition-colors"
                   >
