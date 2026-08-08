@@ -110,6 +110,12 @@ const PRIMARY_NAV_ITEMS = [
         icon: MemoryStick,
       },
       {
+        href: '/gpu/tools/fine-tuning-calculator',
+        title: 'Fine-Tuning Calculator',
+        description: 'Full, LoRA, and QLoRA training memory',
+        icon: MemoryStick,
+      },
+      {
         href: '/gpu/tools/gpu-picker',
         title: 'GPU Picker',
         description: 'Hardware selection for deployment',
@@ -275,12 +281,13 @@ const Header = () => {
         <div className="flex min-w-0 items-center gap-4 lg:gap-8 xl:gap-12">
           <Link href="/" prefetch={false} className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center sm:h-12 sm:w-12">
+              {/* 256px source rather than the 1445px master, and optimization left
+                  on so Next serves a ~2 KiB WebP at the 48px it actually renders. */}
               <Image
-                src="/images/innoai logo main.png"
+                src="/images/innoai-logo-256.png"
                 alt="InnoAI logo"
                 width={48}
                 height={48}
-                unoptimized
                 className="h-full w-full object-contain object-center"
                 priority
               />

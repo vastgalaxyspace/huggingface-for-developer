@@ -35,6 +35,7 @@ const routes = [
   { path: '/gpu/execution', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/gpu/performance', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/gpu/tools/vram-calculator', priority: 0.9, changeFrequency: 'weekly' },
+  { path: '/gpu/tools/fine-tuning-calculator', priority: 0.9, changeFrequency: 'weekly' },
   { path: '/gpu/tools/gpu-picker', priority: 0.9, changeFrequency: 'weekly' },
   { path: '/gpu/tools/cost-calculator', priority: 0.85, changeFrequency: 'weekly' },
   { path: '/gpu/tools/roofline-model-analyzer', priority: 0.8, changeFrequency: 'weekly' },

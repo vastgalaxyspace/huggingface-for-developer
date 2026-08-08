@@ -66,6 +66,13 @@ export default function GpuPage() {
       href: "/gpu/tools/vram-calculator",
     },
     {
+      icon: MemoryStick,
+      name: "Fine-Tuning VRAM Calculator",
+      body: "Compare full fine-tuning, LoRA, and QLoRA memory before starting a training run.",
+      cta: "Open Fine-Tuning Tool",
+      href: "/gpu/tools/fine-tuning-calculator",
+    },
+    {
       icon: Gauge,
       name: "Kernel Occupancy Estimator",
       body: "Model active warps and identify register/shared-memory pressure quickly.",
