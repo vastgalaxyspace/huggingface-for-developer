@@ -3,7 +3,7 @@
 import { useContext } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { LogOut, Mail, ShieldCheck, User } from 'lucide-react';
+import { LogOut, Mail } from 'lucide-react';
 import { AppContext } from '../providers/AppContext';
 
 export default function ProfilePageClient() {
@@ -80,10 +80,8 @@ export default function ProfilePageClient() {
             </div>
           </div>
 
-          <div className="grid gap-4 p-6 sm:grid-cols-3 sm:p-8">
-            <ProfileField icon={User} label="User ID" value={profile?.uid} />
+          <div className="p-6 sm:p-8">
             <ProfileField icon={Mail} label="Email" value={profile?.email || 'No email'} />
-            <ProfileField icon={ShieldCheck} label="Provider" value={profile?.providerId || 'password'} />
           </div>
         </section>
       </div>
