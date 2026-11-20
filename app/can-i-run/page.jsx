@@ -25,18 +25,10 @@ export default function CanIRunIndexPage() {
   );
 
   return (
-    <div className="bg-gray-100 py-8 md:py-12">
+    <div className="pb-12">
       <div className="shell-container space-y-6">
-        <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
-          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Compatibility checker</p>
-          <h1 className="mt-3 text-4xl font-black tracking-tight text-gray-900 md:text-5xl">
-            Can I run this AI model on my GPU?
-          </h1>
-          <p className="mt-4 max-w-3xl text-sm leading-7 text-gray-600">
-            Pick a model and a GPU to get an instant, architecture-aware answer: whether it fits in full FP16,
-            needs 8-bit or 4-bit quantization, or requires more than one card. Every estimate accounts for model
-            weights plus the KV cache — the memory term most calculators ignore.
-          </p>
+        <section className="page-intro"><h1>Can my GPU run it?</h1>
+          <p>Choose a model and graphics card to see which precisions fit, including memory for the KV cache.</p>
           <div className="mt-6">
             <CanIRunPicker />
           </div>

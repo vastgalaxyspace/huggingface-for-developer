@@ -1,19 +1,14 @@
 "use client";
 import Link from 'next/link';
+import Image from 'next/image';
+import { modelPath } from '../lib/modelIndexing';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   AlignLeft,
-  ArrowRight,
   BarChart3,
-  Briefcase,
-  Building2,
-  CheckCircle,
   ChevronDown,
-  Cloud,
   Code2,
   Cpu,
-  FlaskConical,
-  Gauge,
   Heart,
   Image as ImageIcon,
   MessageSquare,
@@ -24,7 +19,6 @@ import {
   Sparkles,
   Terminal,
   TrendingUp,
-  Workflow,
   X,
   Zap,
   Laptop,
@@ -157,95 +151,6 @@ const SORT_OPTIONS = [
   { id: 'parameters', label: 'Parameter Size' },
 ];
 
-const coreTools = [
-  {
-    href: '/compare',
-    icon: BarChart3,
-    title: 'LLM Comparison',
-    body: 'Compare architecture, VRAM, context window, downloads, licenses, and deployment signals side by side.',
-    cta: 'Compare Models',
-  },
-  {
-    href: '/validation-lab',
-    icon: FlaskConical,
-    title: 'Model Validation Lab',
-    body: 'Generate prompt tests, runtime snippets, VRAM warnings, and notes before committing to a model.',
-    cta: 'Validate Models',
-  },
-  {
-    href: '/recommender',
-    icon: Sparkles,
-    title: 'AI Model Recommender',
-    body: 'Match open-source models to your use case, hardware limits, budget, and deployment preferences.',
-    cta: 'Open Recommender',
-  },
-  {
-    href: '/gpu/tools/vram-calculator',
-    icon: Cpu,
-    title: 'VRAM Calculator',
-    body: 'Estimate memory requirements for 7B, 13B, 70B, quantized, and longer-context workloads before deployment.',
-    cta: 'Estimate VRAM',
-  },
-  {
-    href: '/gpu/tools/gpu-picker',
-    icon: Cloud,
-    title: 'GPU Sizing Tool',
-    body: 'Choose the right GPU for inference, fine-tuning, or production serving with practical hardware guidance.',
-    cta: 'Pick a GPU',
-  },
-  {
-    href: '/gpu',
-    icon: Workflow,
-    title: 'GPU Learning Hub',
-    body: 'Learn how GPU architecture, execution, memory, and performance affect real AI deployment decisions.',
-    cta: 'Explore GPU Hub',
-  },
-  {
-    href: '/ai-updates',
-    icon: TrendingUp,
-    title: 'AI Updates',
-    body: 'Follow the latest AI model updates, releases, and ecosystem changes from one place.',
-    cta: 'Read Updates',
-  },
-  {
-    href: '/guides',
-    icon: AlignLeft,
-    title: 'Deployment Guides',
-    body: 'Read practical guides on model selection, RAG, quantization, and low-latency production architecture.',
-    cta: 'Browse Guides',
-  },
-];
-
-const audienceGroups = [
-  {
-    icon: Code2,
-    title: 'Developers',
-    body: 'Search models quickly, inspect technical details, and shortlist candidates for apps or APIs.',
-  },
-  {
-    icon: FlaskConical,
-    title: 'Researchers',
-    body: 'Review model families, capabilities, context windows, and licensing for evaluation and benchmarking.',
-  },
-  {
-    icon: Building2,
-    title: 'Startups',
-    body: 'Compare models by cost, VRAM estimates, and deployment fit before choosing infrastructure.',
-  },
-  {
-    icon: Briefcase,
-    title: 'ML Engineers',
-    body: 'Handle GPU sizing, LLM comparison, and production planning built for practical inference decisions.',
-  },
-];
-
-const workflowMetrics = [
-  { label: 'Task fit', value: 'Use case', icon: Workflow },
-  { label: 'Memory plan', value: 'VRAM', icon: Cpu },
-  { label: 'License check', value: 'Risk', icon: ShieldCheck },
-  { label: 'Serving plan', value: 'Latency', icon: Gauge },
-];
-
 const faqItems = [
   {
     question: 'How much VRAM do I need for a 7B model?',
@@ -301,163 +206,6 @@ const JSON_LD_FAQ = {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-const FeatureItem = ({ icon, text }) => {
-  const Icon = icon;
-  return (
-    // role="listitem": the parent grid declares role="list", which is only valid
-    // if its direct children are list items.
-    <div
-      role="listitem"
-      className="group flex cursor-default items-center justify-center gap-3 px-3 py-5 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] transition-colors sm:py-6 sm:text-xs sm:tracking-[0.24em]"
-    >
-      <Icon className="h-4 w-4 shrink-0 text-[var(--text-faint)] group-hover:text-[var(--accent)] transition-colors" />
-      <span>{text}</span>
-    </div>
-  );
-};
-
-const SectionHeading = ({ kicker, title, body, id }) => (
-  <div className="mx-auto max-w-3xl text-center">
-    <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]">{kicker}</p>
-    <h2 id={id} className="mt-3 text-3xl font-black tracking-tight text-[var(--text-strong)] sm:text-4xl">
-      {title}
-    </h2>
-    <p className="mt-4 text-base leading-7 text-[var(--text-muted)] sm:text-lg">{body}</p>
-  </div>
-);
-
-const CardLink = ({ href, icon, title, body, cta }) => {
-  const Icon = icon;
-  return (
-    <Link
-      href={href}
-      aria-label={`${title} — ${cta}`}
-      className="group rounded-[24px] border border-[var(--border-soft)] bg-white p-6 shadow-[0_12px_32px_rgba(48,67,95,0.06)] transition-all hover:-translate-y-1 hover:border-[var(--border-strong)] hover:shadow-[0_18px_38px_rgba(48,67,95,0.1)]"
-    >
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]">
-        <Icon className="h-5 w-5" />
-      </div>
-      <h3 className="mt-5 text-xl font-black tracking-tight text-[var(--text-strong)]">{title}</h3>
-      <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">{body}</p>
-      <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-[var(--accent)]">
-        {cta}
-        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-      </span>
-    </Link>
-  );
-};
-
-const AudienceCard = ({ icon, title, body }) => {
-  const Icon = icon;
-  return (
-    <div className="rounded-[24px] border border-[var(--border-soft)] bg-[rgba(255,255,255,0.86)] p-6">
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--panel-muted)] text-[var(--accent)]">
-        <Icon className="h-5 w-5" />
-      </div>
-      <h3 className="mt-5 text-xl font-black tracking-tight text-[var(--text-strong)]">{title}</h3>
-      <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">{body}</p>
-    </div>
-  );
-};
-
-const StepCard = ({ number, title, body }) => (
-  <div className="rounded-[24px] border border-[var(--border-soft)] bg-white p-6 shadow-[0_12px_28px_rgba(48,67,95,0.06)]">
-    <div className="inline-flex rounded-full bg-[var(--accent-soft)] px-3 py-1 text-sm font-black text-[var(--accent)]">
-      {number}
-    </div>
-    <h3 className="mt-5 text-xl font-black tracking-tight text-[var(--text-strong)]">{title}</h3>
-    <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">{body}</p>
-  </div>
-);
-
-const WorkflowVisual = () => (
-  <div className="mx-auto mt-8 max-w-5xl rounded-[26px] border border-[var(--border-soft)] bg-white/88 p-4 text-left shadow-[0_16px_42px_rgba(48,67,95,0.08)] sm:mt-10 sm:p-5">
-    <div className="grid gap-3 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-center">
-      {[
-        {
-          title: 'Discover',
-          body: 'Search by model family, task, popularity, license, and hardware limits.',
-          icon: Search,
-        },
-        {
-          title: 'Compare',
-          body: 'Review context, parameters, downloads, license posture, and deployment signals.',
-          icon: BarChart3,
-        },
-        {
-          title: 'Deploy',
-          body: 'Estimate VRAM, choose GPUs, and validate fit before production work starts.',
-          icon: Cpu,
-        },
-      ].map((item, index) => {
-        const Icon = item.icon;
-        return (
-          <div key={item.title} className="rounded-[20px] border border-[var(--border-soft)] bg-[var(--panel-muted)] p-5">
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[var(--accent)] shadow-sm">
-                <Icon className="h-5 w-5" />
-              </span>
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-faint)]">
-                  Step {index + 1}
-                </p>
-                <h3 className="text-lg font-black text-[var(--text-strong)]">{item.title}</h3>
-              </div>
-            </div>
-            <p className="mt-4 text-sm leading-7 text-[var(--text-muted)]">{item.body}</p>
-          </div>
-        );
-      }).flatMap((node, index, nodes) =>
-        index < nodes.length - 1
-          ? [
-              node,
-              <div key={`connector-${index}`} className="hidden h-px w-8 bg-[var(--border-strong)] lg:block" />,
-            ]
-          : [node]
-      )}
-    </div>
-
-    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      {workflowMetrics.map((metric) => {
-        const Icon = metric.icon;
-        return (
-          <div key={metric.label} className="flex items-center gap-3 rounded-2xl border border-[var(--border-soft)] bg-white px-4 py-3">
-            <Icon className="h-4 w-4 text-[var(--accent)]" />
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--text-faint)]">{metric.label}</p>
-              <p className="text-sm font-black text-[var(--text-strong)]">{metric.value}</p>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  </div>
-);
-
-const FaqCard = ({ question, answer }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="rounded-[24px] border border-[var(--border-soft)] bg-white overflow-hidden">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left"
-      >
-        <h3 className="text-base font-semibold tracking-tight text-[var(--text-strong)]">{question}</h3>
-        <ChevronDown
-          className={`h-4 w-4 shrink-0 text-[var(--accent)] transition-transform ${open ? 'rotate-180' : ''}`}
-        />
-      </button>
-      {open && (
-        <div className="px-6 pb-5">
-          <p className="text-sm leading-7 text-[var(--text-muted)]">{answer}</p>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/** Resolves a pipeline label to an icon component */
 const getPipelineIcon = (pText = '') => {
   if (pText.includes('Image') || pText.includes('Vision') || pText.includes('Detection')) return ImageIcon;
   if (pText.includes('Speech') || pText.includes('Audio')) return Mic;
@@ -466,22 +214,6 @@ const getPipelineIcon = (pText = '') => {
   if (pText.includes('Generation') || pText.includes('Text') || pText.includes('Code')) return Terminal;
   return MessageSquare;
 };
-
-/** Compact pill badge */
-const Badge = ({ children, variant = 'accent' }) => {
-  const styles = {
-    accent: 'bg-[var(--accent-soft)] text-[var(--accent)]',
-    muted: 'bg-[var(--panel-muted)] text-[var(--text-main)]',
-    green: 'bg-[rgba(34,197,94,0.1)] text-[rgb(21,128,61)]',
-  };
-  return (
-    <span className={`inline-block rounded-full px-3 py-1 text-[11px] font-bold tracking-[0.12em] ${styles[variant]}`}>
-      {children}
-    </span>
-  );
-};
-
-// ─── Pagination Component ─────────────────────────────────────────────────────
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   if (totalPages <= 1) return null;
@@ -684,47 +416,8 @@ const FilterDropdown = ({ type, label, options, selected, onToggle, onClear, des
   );
 };
 
-const formatUpdatedLabel = (value, nowMs) => {
-  if (!value) return 'Updated recently';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Updated recently';
-
-  if (typeof nowMs !== 'number') return 'Updated recently';
-
-  const diffMs = nowMs - date.getTime();
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  if (diffMinutes < 1) return 'Updated just now';
-  if (diffMinutes < 60) return `Updated ${diffMinutes}m ago`;
-
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `Updated ${diffHours}h ago`;
-
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) return `Updated ${diffDays}d ago`;
-
-  return `Updated ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-};
-
-const formatUpdatedTitle = (value, hydrated) => {
-  if (!value) return undefined;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return undefined;
-  if (!hydrated) return date.toISOString();
-
-  return date.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
-};
-
-// ─── Main Component ───────────────────────────────────────────────────────────
-
 const HomePage = ({ onSearch, loading, initialModels = [] }) => {
-  const [hydrated, setHydrated] = useState(false);
+
   const [popularModels, setPopularModels] = useState(initialModels);
   const [modelsLoading, setModelsLoading] = useState(initialModels.length === 0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -757,7 +450,8 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
   const MODELS_PER_PAGE = 15;
 
   useEffect(() => {
-    setHydrated(true);
+    const query = new URLSearchParams(window.location.search).get('q');
+    if (query) setSearchQuery(query);
   }, []);
 
   // ── Data fetching ────────────────────────────────────────────────────────
@@ -787,23 +481,27 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
   useEffect(() => {
     if (searchQuery.length < 2) {
       setSuggestions([]);
+      setShowSuggestions(false);
+      setSearchLoading(false);
       setSelectedIndex(-1);
       return;
     }
+    const controller = new AbortController();
     const timer = setTimeout(async () => {
       setSearchLoading(true);
       try {
-        const results = await searchModels(searchQuery, 10);
+        const results = await searchModels(searchQuery, 10, { signal: controller.signal });
+        if (controller.signal.aborted) return;
         setSuggestions(results);
         setShowSuggestions(true);
         setSelectedIndex(-1);
       } catch {
         setSuggestions([]);
       } finally {
-        setSearchLoading(false);
+        if (!controller.signal.aborted) setSearchLoading(false);
       }
     }, 300);
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); controller.abort(); };
   }, [searchQuery]);
 
   // ── Outside click ────────────────────────────────────────────────────────
@@ -844,12 +542,12 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
         if (selectedIndex >= 0 && suggestions[selectedIndex]) {
           handleSuggestionSelect(suggestions[selectedIndex].id);
         } else if (searchQuery.trim()) {
-          onSearch(searchQuery.trim());
+          handleSuggestionSelect(searchQuery.includes('/') ? searchQuery.trim() : suggestions[0].id);
           setShowSuggestions(false);
         }
         return;
       }
-    } else if (e.key === 'Enter' && searchQuery.trim()) {
+    } else if (e.key === 'Enter' && searchQuery.includes('/')) {
       e.preventDefault();
       onSearch(searchQuery.trim());
     }
@@ -916,7 +614,7 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
       });
 
     if (advancedFilters.maxVram)
-      result = result.filter((m) => (m.vramEstimates?.fp16 || 0) <= Number(advancedFilters.maxVram));
+      result = result.filter((m) => Number(m.vramEstimates?.fp16) > 0 && Number(m.vramEstimates.fp16) <= Number(advancedFilters.maxVram));
 
     if (advancedFilters.minContext)
       result = result.filter((m) => (m.config?.max_position_embeddings || 0) >= Number(advancedFilters.minContext));
@@ -1015,91 +713,12 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
 
       <div>
 
-        {/* ══ 1. HERO ════════════════════════════════════════════════════════ */}
-        <section aria-labelledby="hero-heading" className="shell-container pb-8 pt-8 sm:pt-12 lg:pt-16">
-          <div className="editorial-panel soft-grid overflow-visible rounded-[28px] px-4 py-8 sm:rounded-[36px] sm:px-8 sm:py-12 lg:px-12 lg:py-14">
-            <div className="grid gap-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:items-center">
-              <div className="text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-soft)] bg-white px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-[var(--accent)] shadow-sm">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Model discovery, comparison, and GPU planning
-                </div>
-                <h1
-                  id="hero-heading"
-                  className="mx-auto mt-5 max-w-4xl text-3xl font-black tracking-tight text-[var(--text-strong)] sm:text-5xl lg:mx-0 lg:text-[4.6rem] lg:leading-[1]"
-                >
-                  Choose AI models with confidence before you deploy
-                </h1>
-                <p className="mx-auto mt-4 max-w-3xl text-base font-medium leading-relaxed text-[var(--text-muted)] sm:mt-6 sm:text-xl lg:mx-0 lg:text-[1.6rem] lg:leading-[1.35]">
-                  Search 500,000+ open-source models, compare deployment tradeoffs, estimate VRAM, and plan GPUs from one calm workspace.
-                </p>
-                <p className="mx-auto mt-4 max-w-4xl text-sm leading-7 text-[var(--text-muted)] sm:mt-5 sm:text-lg sm:leading-8 lg:mx-0">
-                InnoAI is a{' '}
-                <strong className="text-[var(--text-strong)]">Hugging Face model explorer</strong> built for faster{' '}
-                <strong className="text-[var(--text-strong)]">LLM comparison</strong>, accurate{' '}
-                <strong className="text-[var(--text-strong)]">VRAM calculator</strong> planning, smarter{' '}
-                <strong className="text-[var(--text-strong)]">AI model recommender</strong> workflows, and practical{' '}
-                <strong className="text-[var(--text-strong)]">GPU sizing</strong> for deployment.
-              </p>
-
-                <div className="mt-6 grid gap-3 text-left sm:grid-cols-3">
-                  {[
-                    ['Compare', 'Shortlist models by specs, license, and use case.'],
-                    ['Size', 'Estimate memory and GPU fit before spending.'],
-                    ['Decide', 'Move from research to a practical deployment plan.'],
-                  ].map(([title, body]) => (
-                    <div key={title} className="rounded-2xl border border-[var(--border-soft)] bg-white/88 p-4 shadow-sm">
-                      <p className="text-sm font-black text-[var(--text-strong)]">{title}</p>
-                      <p className="mt-1 text-xs leading-6 text-[var(--text-muted)]">{body}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-[28px] border border-[var(--border-soft)] bg-white/90 p-5 shadow-[0_18px_48px_rgba(48,67,95,0.1)]">
-                <div className="flex items-center justify-between gap-4 border-b border-[var(--border-soft)] pb-4">
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--text-faint)]">Decision snapshot</p>
-                    <h2 className="mt-1 text-xl font-black text-[var(--text-strong)]">From model to hardware</h2>
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]">
-                    <Workflow className="h-5 w-5" />
-                  </div>
-                </div>
-                <div className="mt-5 space-y-4">
-                  {[
-                    ['Model fit', 'Task, context, quality target', '88%'],
-                    ['Hardware fit', 'VRAM, batch size, concurrency', '74%'],
-                    ['Production fit', 'License, latency, cost controls', '81%'],
-                  ].map(([label, detail, width]) => (
-                    <div key={label}>
-                      <div className="flex items-center justify-between gap-3 text-sm">
-                        <span className="font-bold text-[var(--text-strong)]">{label}</span>
-                        <span className="text-xs font-semibold text-[var(--text-muted)]">{detail}</span>
-                      </div>
-                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--panel-muted)]">
-                        <div className="h-full rounded-full bg-[var(--accent)]" style={{ width }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-                  {[
-                    ['500K+', 'Models'],
-                    ['12', 'Guides'],
-                    ['7', 'Tools'],
-                  ].map(([value, label]) => (
-                    <div key={label} className="rounded-2xl bg-[var(--panel-muted)] px-3 py-4">
-                      <p className="text-lg font-black text-[var(--text-strong)]">{value}</p>
-                      <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--text-faint)]">{label}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
+        <section className="shell-container studio-hero" aria-labelledby="hero-heading">
+          <div className="hero-copy">
+            <h1 id="hero-heading">Model <em>explorer.</em></h1>
+            <p className="hero-summary">Explore open models, compare their capabilities, and find the hardware to run them.</p>
               {/* Search */}
-              <div className="relative z-[80] mx-auto mt-8 max-w-4xl sm:mt-12" ref={searchContainerRef}>
+              <div className="hero-search relative z-[80]" ref={searchContainerRef}>
                 <div className="group relative">
                   <label htmlFor="model-search" className="sr-only">
                     Search open-source AI models
@@ -1114,7 +733,7 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
                     onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                     onKeyDown={handleKeyDown}
                     className="w-full rounded-[20px] border border-[var(--border-soft)] bg-white px-12 py-4 text-base font-medium text-[var(--text-main)] shadow-[0_16px_40px_rgba(48,67,95,0.08)] outline-none transition-all placeholder:text-[var(--text-faint)] focus:border-[var(--border-strong)] focus:ring-4 focus:ring-[rgba(53,87,132,0.08)] sm:rounded-[22px] sm:px-16 sm:py-5 sm:text-lg"
-                    placeholder="Search models by name, task, or architecture…"
+                    placeholder="Search Hugging Face models…"
                     disabled={loading}
                     // role="combobox" is required for these three attributes to be
                     // valid. Without it Lighthouse flags "[aria-*] attributes do not
@@ -1122,6 +741,7 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
                     // screen readers and agent browsers alike.
                     role="combobox"
                     aria-autocomplete="list"
+                    aria-activedescendant={showSuggestions && selectedIndex >= 0 ? `model-option-${selectedIndex}` : undefined}
                     aria-controls="search-suggestions"
                     aria-expanded={showSuggestions}
                   />
@@ -1165,6 +785,7 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
                               return (
                                 <button
                                   key={model.id}
+                                  id={`model-option-${index}`}
                                   role="option"
                                   aria-selected={isSelected}
                                   onClick={() => handleSuggestionSelect(model.id)}
@@ -1222,89 +843,30 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
                   )}
                 </div>
               </div>
+            <div className="example-models"><span>Try</span>{[
+              ['Llama 3.3', 'meta-llama/Llama-3.3-70B-Instruct'],
+              ['Qwen3', 'Qwen/Qwen3-32B'],
+              ['DeepSeek-R1', 'deepseek-ai/DeepSeek-R1'],
+            ].map(([name, id]) => <Link key={id} href={modelPath(id)} prefetch={false}>{name}</Link>)}</div>
           </div>
+          <figure className="hardware-plate">
+            <Image src="/images/memory-stack.webp" alt="Exploded view of a GPU compute module" width={1140} height={855} sizes="(max-width: 680px) 100vw, 45vw" loading="eager" />
+            <figcaption><Cpu size={15} aria-hidden="true" /> GPU compute module <span>Exploded view</span></figcaption>
+          </figure>
         </section>
-
-        {/* ══ 2. TRUST BAR ═══════════════════════════════════════════════════ */}
-        {/* role="list" must sit on the element whose direct children are the items.
-            It was on the outer wrapper, whose only child is the grid div, so the
-            list had no listitem children — an invalid accessibility tree. */}
-        <div className="border-y border-[var(--border-soft)] bg-[rgba(255,255,255,0.6)]">
-          <div
-            className="shell-container grid grid-cols-2 divide-y divide-[var(--border-soft)] md:grid-cols-4 md:divide-x md:divide-y-0"
-            role="list"
-            aria-label="Platform highlights"
-          >
-            <FeatureItem icon={Terminal} text="CLI Access" />
-            <FeatureItem icon={CheckCircle} text="Verified Models" />
-            <FeatureItem icon={Cloud} text="Direct Weights" />
-            <FeatureItem icon={BarChart3} text="Usage Metrics" />
+        <nav className="shell-container workbenches" aria-label="Model planning tools">
+          {[
+            [<BarChart3 aria-hidden="true" />, '/compare', 'Compare models', 'Review specs side by side'],
+            [<Cpu aria-hidden="true" />, '/gpu/tools/vram-calculator', 'VRAM calculator', 'Estimate GPU memory'],
+            [<SlidersHorizontal aria-hidden="true" />, '/recommender', 'Model recommender', 'Find a fit for your workload'],
+          ].map(([icon, href, title, detail]) => <Link href={href} key={href}><i>{icon}</i><span><strong>{title}</strong><small>{detail}</small></span></Link>)}
+        </nav>
+        <section className="shell-container catalog" id="search" aria-labelledby="explorer-heading">
+          <div className="catalog-heading"><h2 id="explorer-heading">Trending models</h2><span>Hugging Face catalog</span></div>
+          <div className="preset-tabs" aria-label="Quick filters">
+            <button aria-pressed={totalActiveCount === 0} onClick={clearAllFilters}>All models</button>
+            {QUICK_PRESETS.map(preset => <button key={preset.id} title={preset.description} aria-pressed={activePreset === preset.id} onClick={() => applyPreset(preset)}>{preset.label}</button>)}
           </div>
-        </div>
-
-        {/* ══ 3. MODEL EXPLORER (MAIN FEATURE — above the fold on desktop) ══ */}
-        <section aria-labelledby="workflow-visual-heading" className="shell-container py-10 sm:py-14">
-          <SectionHeading
-            id="workflow-visual-heading"
-            kicker="Decision Flow"
-            title="A smoother path from browsing to deployment"
-            body="The interface is organized around the questions users actually ask: what model fits the task, what hardware it needs, and what risks matter before launch."
-          />
-          <WorkflowVisual />
-        </section>
-
-        <section aria-labelledby="explorer-heading" className="shell-container py-10 sm:py-14">
-          <div className="mb-7">
-            <SectionHeading
-              id="explorer-heading"
-              kicker="Live Model Explorer"
-              title="Browse trending open-source AI models"
-              body="Filter by architecture, parameter size, license, and pipeline. Sort by downloads, likes, or recency to build your shortlist."
-            />
-          </div>
-
-          {/* ── Quick Preset Bento Grid ──────────────────────────────────────── */}
-          <div className="mb-8" aria-label="Quick filter presets">
-            <h2 className="mb-4 text-[13px] font-bold uppercase tracking-[0.18em] text-[var(--text-faint)]">
-              Start Here: Curated Categories
-            </h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:gap-4">
-              {QUICK_PRESETS.map((preset) => {
-                const Icon = preset.icon;
-                const isActive = activePreset === preset.id;
-                return (
-                  <button
-                    key={preset.id}
-                    onClick={() => applyPreset(preset)}
-                    aria-pressed={isActive}
-                    title={preset.description}
-                    className={`group relative flex flex-col items-start gap-4 overflow-hidden rounded-2xl border p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
-                      isActive
-                        ? 'border-[var(--accent)] bg-[var(--accent)] text-white shadow-md'
-                        : 'border-[var(--border-soft)] bg-white hover:border-[var(--accent)] hover:bg-[var(--panel-muted)]'
-                    }`}
-                  >
-                    <div className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${isActive ? 'bg-white/20' : 'bg-[var(--accent-soft)] group-hover:bg-[var(--accent)]'}`}>
-                      <Icon className={`h-5 w-5 transition-colors ${isActive ? 'text-white' : 'text-[var(--accent)] group-hover:text-white'}`} />
-                    </div>
-                    <div className="relative z-10">
-                      <div className={`text-sm font-bold sm:text-[15px] ${isActive ? 'text-white' : 'text-[var(--text-strong)] group-hover:text-[var(--accent)]'}`}>
-                        {preset.label}
-                      </div>
-                      <div className={`mt-1.5 hidden text-xs leading-relaxed sm:block ${isActive ? 'text-white/80' : 'text-[var(--text-muted)]'}`}>
-                        {preset.description}
-                      </div>
-                    </div>
-                    {isActive && <X className="absolute right-4 top-4 h-4 w-4 opacity-70 transition-opacity hover:opacity-100" />}
-                    {isActive && (
-                      <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-white/10 to-transparent" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {/* ── Filter Bar ───────────────────────────────────────────────── */}
           <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             {/* Left: primary filters */}
@@ -1491,102 +1053,20 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
           )}
 
           {/* ── Model Table ───────────────────────────────────────────────── */}
-          <div className="editorial-panel overflow-hidden rounded-[28px]">
-
-            <div className="grid grid-cols-1 gap-4 p-4 sm:p-5 lg:grid-cols-2 lg:gap-5 lg:p-6 xl:grid-cols-3">
-              {modelsLoading ? (
-                <div className="col-span-full px-6 py-20 text-center text-[var(--text-muted)]">
-                  <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-[3px] border-[var(--accent)] border-t-transparent" />
-                  <div className="text-lg font-medium">Loading trending models…</div>
-                </div>
-              ) : displayModels.length === 0 ? (
-                <div className="col-span-full px-6 py-20 text-center">
-                  <Filter className="mx-auto mb-4 h-10 w-10 text-[var(--text-faint)]" />
-                  <p className="text-xl font-bold text-[var(--text-main)]">No models match your filters.</p>
-                  <button onClick={clearAllFilters} className="mt-3 text-[15px] font-semibold text-[var(--accent)] transition-colors hover:text-[var(--accent-strong)] hover:underline">
-                    Reset all filters
-                  </button>
-                </div>
-              ) : (
-                displayModels.map((model) => {
-                  const PipelineIcon = getPipelineIcon(model.pipelineText);
-                  const pText = model.pipelineText || 'Other';
-                  
-                  const isGreenLicense = ['apache-2.0', 'mit', 'cc-by'].some(l => model.licenseInfo?.name?.toLowerCase().includes(l));
-                  const isRunOnLaptop = model.vramEstimates?.fp16 && model.vramEstimates.fp16 <= 8;
-
-                  return (
-                    <article 
-                      key={model.modelId} 
-                      className="group relative flex flex-col justify-between overflow-hidden rounded-[20px] border border-[var(--border-soft)] bg-white p-5 shadow-[0_2px_10px_rgba(48,67,95,0.02)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--border-strong)] hover:shadow-[0_16px_40px_rgba(53,87,132,0.08)]"
-                    >
-                      <div>
-                        {/* Top Meta Row */}
-                        <div className="mb-4 flex items-start justify-between gap-3">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--panel-muted)] px-2.5 py-1 text-[11px] font-bold text-[var(--text-muted)]">
-                              <PipelineIcon className="h-3 w-3 text-[var(--accent)]" />
-                              <span className="truncate max-w-[100px] sm:max-w-none">{pText}</span>
-                            </span>
-                            {isRunOnLaptop && (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(34,197,94,0.1)] px-2.5 py-1 text-[11px] font-bold text-[rgb(21,128,61)]">
-                                <Cpu className="h-3 w-3" /> <span className="hidden sm:inline">Runs on Laptop</span><span className="sm:hidden">Laptop</span>
-                              </span>
-                            )}
-                          </div>
-                          <span className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-widest ${isGreenLicense ? 'bg-[rgba(34,197,94,0.1)] text-[rgb(21,128,61)]' : 'bg-[var(--panel-muted)] text-[var(--text-muted)]'}`}>
-                            {model.licenseInfo?.name ?? 'Unknown'}
-                          </span>
-                        </div>
-
-                        {/* Title */}
-                        <button
-                          onClick={() => onSearch(model.modelId)}
-                          className="block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded"
-                          aria-label={`View details for ${model.name}`}
-                        >
-                          <h3 className="line-clamp-2 leading-tight text-lg font-extrabold text-[var(--text-strong)] transition-colors group-hover:text-[var(--accent)] sm:text-xl">
-                            {model.name}
-                          </h3>
-                        </button>
-                        
-                        <div
-                          className="mt-2 text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide"
-                          title={formatUpdatedTitle(model.lastModified, hydrated)}
-                        >
-                          {hydrated ? formatUpdatedLabel(model.lastModified, Date.now()) : 'Updated recently'}
-                        </div>
-                      </div>
-
-                      {/* Stats Grid */}
-                      <div className="mt-5 grid grid-cols-2 gap-2">
-                        <div className="flex flex-wrap items-center justify-between gap-1 rounded-lg bg-[var(--panel-muted)] px-3 py-2.5">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-faint)]">Params</span>
-                          <span className="font-bold text-[var(--text-main)] text-[13px]">{model.rawParams === 'Unknown' ? 'N/A' : (model.rawParams ?? 'N/A')}</span>
-                        </div>
-                        <div className="flex flex-wrap items-center justify-between gap-1 rounded-lg bg-[var(--panel-muted)] px-3 py-2.5">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-faint)]">VRAM</span>
-                          <span className="font-bold text-[var(--text-main)] text-[13px]">{model.vramEstimates?.fp16 ? `${model.vramEstimates.fp16}GB` : 'N/A'}</span>
-                        </div>
-                        <div className="flex flex-wrap items-center justify-between gap-1 rounded-lg bg-[var(--panel-muted)] px-3 py-2.5">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-faint)]">Context</span>
-                          <span className="font-bold text-[var(--text-main)] text-[13px]">{model.config?.max_position_embeddings > 0 ? `${model.config.max_position_embeddings / 1000}k` : 'N/A'}</span>
-                        </div>
-                        <div className="flex flex-wrap items-center justify-between gap-1 rounded-lg bg-[rgba(53,87,132,0.06)] px-3 py-2.5">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent)] opacity-80">Downs</span>
-                          <span className="flex items-center font-extrabold text-[var(--accent)] text-[13px]">
-                            <TrendingUp className="mr-1 h-3.5 w-3.5" />
-                            {formatNumber(model.downloads)}
-                          </span>
-                        </div>
-                      </div>
-
-                    </article>
-                  );
-                })
-              )}
-            </div>
-
+          <div className="model-index">
+            {modelsLoading ? <p role="status" className="index-empty">Loading trending models…</p> : displayModels.length === 0 ? (
+              <div className="index-empty"><p>{popularModels.length ? 'No models match these filters.' : 'The trending feed is currently unavailable.'}</p>
+                {totalActiveCount > 0 && <button onClick={clearAllFilters}>Clear filters</button>}
+              </div>
+            ) : <div className="index-scroll"><table>
+              <thead><tr>{['Model', 'Task', 'Parameters', 'FP16 VRAM', 'Downloads'].map(label => <th key={label} scope="col">{label}</th>)}</tr></thead>
+              <tbody>{displayModels.map(model => {
+                const Icon = getPipelineIcon(model.pipelineText || '');
+                return <tr key={model.modelId}><th scope="row"><Link href={modelPath(model.modelId)} prefetch={false}>
+                  <span className="model-symbol"><Icon size={18} aria-hidden="true" /></span>
+                  <span><strong>{model.name}</strong><small>{model.modelId.split('/')[0]} · {model.licenseInfo?.name || 'License unavailable'}</small></span>
+                </Link></th><td>{model.pipelineText || '—'}</td><td>{model.rawParams && model.rawParams !== 'Unknown' ? model.rawParams : '—'}</td><td>{model.vramEstimates?.fp16 ? `${model.vramEstimates.fp16} GB` : '—'}</td><td>{formatNumber(model.downloads)}</td></tr>;
+              })}</tbody></table></div>}
             {/* Table footer + pagination */}
             <div className="flex flex-col items-stretch justify-between gap-4 border-t border-[var(--border-soft)] bg-[rgba(245,248,251,0.92)] px-4 py-5 sm:px-6 md:flex-row md:items-center">
               <div className="text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-muted)] md:text-left">
@@ -1599,87 +1079,10 @@ const HomePage = ({ onSearch, loading, initialModels = [] }) => {
           </div>
         </section>
 
-        {/* ══ 4. CORE TOOLS ══════════════════════════════════════════════════ */}
-        <section aria-labelledby="tools-heading" className="shell-container py-12 sm:py-16">
-          <SectionHeading
-            id="tools-heading"
-            kicker="Platform Tools"
-            title="A complete AI model research and deployment workspace"
-            body="Everything you need to go from model discovery to production deployment — in one place."
-          />
-          <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {coreTools.map((tool) => <CardLink key={tool.href} {...tool} />)}
-          </div>
+        <section className="shell-container reference-faq" aria-labelledby="faq-heading">
+          <h2 id="faq-heading">Explorer FAQ</h2>
+          <div>{faqItems.map(({ question, answer }) => <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div>
         </section>
-
-        {/* ══ 5. HOW IT WORKS ════════════════════════════════════════════════ */}
-        <section aria-labelledby="how-heading" className="shell-container pb-12 sm:pb-16">
-          <SectionHeading
-            id="how-heading"
-            kicker="How It Works"
-            title="From model discovery to deployment in 3 steps"
-            body="Follow the workflow most teams actually use when choosing open-source AI models."
-          />
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
-            <StepCard number="01" title="Search the model" body="Filter Hugging Face models by task, architecture, license, downloads, or trending activity to build a strong candidate list." />
-            <StepCard number="02" title="Compare the specs" body="Review parameters, licenses, context length, and popularity side by side with the LLM comparison tool." />
-            <StepCard number="03" title="Estimate deployment needs" body="Use the VRAM calculator and GPU sizing tools to understand hardware fit and deployment cost before shipping." />
-          </div>
-        </section>
-
-        {/* ══ 6. AUDIENCE ════════════════════════════════════════════════════ */}
-        <section aria-labelledby="audience-heading" className="shell-container pb-12 sm:pb-16">
-          <SectionHeading
-            id="audience-heading"
-            kicker="Who It Helps"
-            title="Built for teams making real AI model decisions"
-            body="Whether you are evaluating models for experiments, shipping products, or planning production inference — this shortens the research cycle."
-          />
-          <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {audienceGroups.map((group) => <AudienceCard key={group.title} {...group} />)}
-          </div>
-        </section>
-
-        {/* ══ 7. FAQ ═════════════════════════════════════════════════════════ */}
-        <section aria-labelledby="faq-heading" className="shell-container pb-12 sm:pb-16">
-          <SectionHeading
-            id="faq-heading"
-            kicker="FAQ"
-            title="Common questions about model selection and deployment"
-            body="Answers to the questions teams ask most before selecting a model, estimating VRAM, or planning GPU infrastructure."
-          />
-          <div className="mt-10 grid gap-4 md:grid-cols-2">
-            {faqItems.map((item) => <FaqCard key={item.question} {...item} />)}
-          </div>
-        </section>
-
-        {/* ══ 8. CTA BANNER ══════════════════════════════════════════════════ */}
-        <section aria-labelledby="cta-heading" className="shell-container pb-16">
-          <div className="editorial-panel rounded-[28px] px-6 py-12 text-center sm:rounded-[36px] sm:px-12 sm:py-16">
-            <Sparkles className="mx-auto mb-4 h-8 w-8 text-[var(--accent)]" aria-hidden="true" />
-            <h2 id="cta-heading" className="text-2xl font-black tracking-tight text-[var(--text-strong)] sm:text-3xl">
-              Find your next model in seconds
-            </h2>
-            <p className="mx-auto mt-3 max-w-xl text-base text-[var(--text-muted)] sm:text-lg">
-              Use the recommender to get a personalized shortlist based on your hardware, task, and deployment constraints.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href="/recommender"
-                className="inline-flex items-center gap-2 rounded-2xl bg-[var(--accent)] px-6 py-3.5 text-sm font-black text-white shadow-[0_8px_24px_rgba(53,87,132,0.3)] transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(53,87,132,0.4)]"
-              >
-                <Sparkles className="h-4 w-4" /> Open Recommender
-              </Link>
-              <Link
-                href="/compare"
-                className="inline-flex items-center gap-2 rounded-2xl border border-[var(--border-strong)] bg-white px-6 py-3.5 text-sm font-black text-[var(--text-strong)] transition-all hover:border-[var(--accent)] hover:text-[var(--accent)]"
-              >
-                <BarChart3 className="h-4 w-4" /> Compare Models
-              </Link>
-            </div>
-          </div>
-        </section>
-
       </div>
     </>
   );

@@ -1,485 +1,99 @@
 "use client";
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect, useRef, useContext } from 'react';
-import {
-  Menu,
-  X,
-  ChevronDown,
-  ArrowRight,
-  Scale,
-  BarChart3,
-  AlertTriangle,
-  Sparkles,
-  FlaskConical,
-  Target,
-  BrainCircuit,
-  BookOpen,
-  Cpu,
-  MemoryStick,
-  Gauge,
-  Cloud,
-  Layers,
-  Box,
-  UserCircle,
-} from 'lucide-react';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { Bookmark, ChevronDown, Menu, UserRound, X } from 'lucide-react';
 import { AppContext } from '../providers/AppContext';
 
-const PRIMARY_NAV_ITEMS = [
-  {
-    href: '/compare',
-    label: 'Compare',
-    items: [
-      {
-        href: '/compare',
-        title: 'Model Comparison',
-        description: 'Side-by-side model specs and capability checks',
-        icon: Scale,
-      },
-      {
-        href: '/validation-lab',
-        title: 'Validation Lab',
-        description: 'Generate test prompts, snippets, and decision notes',
-        icon: FlaskConical,
-      },
-      {
-        href: '/coding-model-analysis',
-        title: 'Coding Model Analysis',
-        description: 'Single-page AI coding models, tools, and benchmark guide',
-        icon: BarChart3,
-      },
-      {
-        href: '/guides/model-selection-mistakes',
-        title: 'Selection Pitfalls',
-        description: 'Avoid costly model choice mistakes',
-        icon: AlertTriangle,
-      },
-      {
-        href: '/guides/choose-ai-model-by-gpu-budget',
-        title: 'Budget Framework',
-        description: 'Choose models by GPU and cost limits',
-        icon: Target,
-      },
-    ],
-  },
-  {
-    href: '/recommender',
-    label: 'Recommender',
-    items: [
-      {
-        href: '/recommender',
-        title: 'AI Recommender',
-        description: 'Match models to your task and constraints',
-        icon: Sparkles,
-      },
-      {
-        href: '/gpu/tools/gpu-picker',
-        title: 'GPU Picker',
-        description: 'Find suitable hardware for selected models',
-        icon: Cpu,
-      },
-      {
-        href: '/guides/rag-vs-fine-tuning',
-        title: 'RAG vs Fine-Tuning',
-        description: 'Use the right architecture path',
-        icon: BrainCircuit,
-      },
-      {
-        href: '/guides/prompt-patterns-that-work',
-        title: 'Prompt Patterns',
-        description: 'Reliable prompt structures for production',
-        icon: BookOpen,
-      },
-    ],
-  },
-  {
-    href: '/gpu',
-    label: 'GPU Hub',
-    items: [
-      {
-        href: '/gpu',
-        title: 'GPU Learning Hub',
-        description: 'Architecture, execution, and performance basics',
-        icon: Cpu,
-      },
-      {
-        href: '/gpu/tools/vram-calculator',
-        title: 'VRAM Calculator',
-        description: 'Estimate memory requirements quickly',
-        icon: MemoryStick,
-      },
-      {
-        href: '/gpu/tools/fine-tuning-calculator',
-        title: 'Fine-Tuning Calculator',
-        description: 'Full, LoRA, and QLoRA training memory',
-        icon: MemoryStick,
-      },
-      {
-        href: '/gpu/tools/gpu-picker',
-        title: 'GPU Picker',
-        description: 'Hardware selection for deployment',
-        icon: Layers,
-      },
-      {
-        href: '/gpu/tools/roofline-model-analyzer',
-        title: 'Roofline Analyzer',
-        description: 'Identify memory vs compute bottlenecks',
-        icon: Gauge,
-      },
-      {
-        href: '/can-i-run',
-        title: 'Can I Run It?',
-        description: 'Check if a model fits your GPU across precisions',
-        icon: Target,
-      },
-    ],
-  },
-  {
-    href: '/ai-inference',
-    label: 'AI Inference',
-    items: [
-      {
-        href: '/ai-inference',
-        title: 'Inference Overview',
-        description: 'Providers, workflow, and deployment options',
-        icon: Cloud,
-      },
-      {
-        href: '/ai-inference/tutorial',
-        title: 'Inference Tutorial',
-        description: 'Chapter-based practical learning path',
-        icon: BookOpen,
-      },
-      {
-        href: '/guides/deploy-small-rag-app',
-        title: 'Deploy Small RAG',
-        description: 'Ship a compact RAG system end-to-end',
-        icon: Layers,
-      },
-      {
-        href: '/guides/quantization-4bit-8bit-fp16',
-        title: 'Precision Strategy',
-        description: '4-bit, 8-bit, and FP16 deployment tradeoffs',
-        icon: Box,
-      },
-    ],
-  },
-  {
-    href: '/ai-tutorials',
-    label: 'AI Tutorials',
-    items: [
-      {
-        href: '/ai-tutorials',
-        title: 'Tutorial Hub',
-        description: 'Browse practical AI tutorials in one place',
-        icon: BookOpen,
-      },
-      {
-        href: '/ai-inference/tutorial',
-        title: 'Inference Tutorial',
-        description: 'Learn serving, runtimes, hardware, and production basics',
-        icon: Cloud,
-      },
-      {
-        href: '/ai-tutorials/rag',
-        title: 'RAG Tutorial',
-        description: 'Build retrieval-augmented AI apps step by step',
-        icon: Layers,
-      },
-      {
-        href: '/gpu',
-        title: 'GPU Tutorial',
-        description: 'Learn GPU architecture for AI workloads',
-        icon: Cpu,
-      },
-    ],
-  },
+const groups = [
+  { name: 'Model tools', links: [
+    ['Compare models', '/compare'], ['Model recommender', '/recommender'],
+    ['Validation lab', '/validation-lab'], ['Coding model analysis', '/coding-model-analysis'],
+  ] },
+  { name: 'GPU tools', links: [
+    ['GPU hub', '/gpu'], ['Can I run it?', '/can-i-run'], ['GPU picker', '/gpu/tools/gpu-picker'],
+    ['VRAM calculator', '/gpu/tools/vram-calculator'], ['Fine-tuning calculator', '/gpu/tools/fine-tuning-calculator'],
+    ['Cost calculator', '/gpu/tools/cost-calculator'], ['Roofline analyzer', '/gpu/tools/roofline-model-analyzer'],
+    ['Kernel occupancy', '/gpu/tools/kernel-occupancy-estimator'], ['Warp divergence', '/gpu/tools/warp-divergence'],
+  ] },
+  { name: 'Library', links: [
+    ['Deployment guides', '/guides'], ['AI tutorials', '/ai-tutorials'], ['Inference overview', '/ai-inference'],
+    ['Inference tutorial', '/ai-inference/tutorial'], ['RAG tutorial', '/ai-tutorials/rag'], ['AI updates', '/ai-updates'],
+  ] },
 ];
 
-const NAV_ITEMS = [
-  { href: '/', label: 'Home' },
-  { href: '/guides', label: 'Guides' },
-  { href: '/ai-updates', label: 'AI Updates' },
-  { href: '/editorial-policy', label: 'Editorial Policy' },
-  { href: '/about', label: 'About Us' },
-];
-
-const Header = () => {
+export default function Header() {
   const pathname = usePathname();
-  const appContext = useContext(AppContext);
-  const auth = appContext?.auth;
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [openDesktopMenu, setOpenDesktopMenu] = useState(null);
-  const closeTimerRef = useRef(null);
+  const { auth } = useContext(AppContext);
+  const [openGroup, setOpenGroup] = useState('');
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const header = useRef(null);
+  const mobileToggle = useRef(null);
 
-  const isActive = (path) => {
-    if (path === '/' && pathname === '/') return true;
-    if (path !== '/' && pathname?.startsWith(path)) return true;
-    return false;
-  };
+  function close() {
+    setOpenGroup('');
+    setMobileOpen(false);
+  }
 
   useEffect(() => {
-    const updateSlider = (target) => {
-      if (target && target.type === 'range') {
-        const min = parseFloat(target.min || 0);
-        const max = parseFloat(target.max || 100);
-        const val = parseFloat(target.value);
-        const p = ((val - min) / (max - min)) * 100;
-        target.style.setProperty('--range-progress', `${p}%`);
-      }
+    const outside = event => { if (!header.current?.contains(event.target)) close(); };
+    const escape = event => {
+      if (event.key !== 'Escape') return;
+      if (openGroup) {
+        header.current?.querySelector('[aria-controls="nav-' + groups.findIndex(group => group.name === openGroup) + '"]')?.focus();
+        setOpenGroup('');
+      } else if (mobileOpen) { close(); mobileToggle.current?.focus(); }
     };
-
-    const handleInput = (e) => updateSlider(e.target);
-    
-    // Capture manual dragging
-    document.addEventListener('input', handleInput);
-    
-    // Initialize current sliders
-    const applyToAll = () => {
-      document.querySelectorAll('input[type="range"]').forEach(updateSlider);
-    };
-    
-    applyToAll();
-    // Catch late-rendered elements after routing
-    const timeout = setTimeout(applyToAll, 300);
-
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('keydown', escape);
     return () => {
-      document.removeEventListener('input', handleInput);
-      clearTimeout(timeout);
+      document.removeEventListener('pointerdown', outside);
+      document.removeEventListener('keydown', escape);
     };
+  }, [mobileOpen, openGroup]);
+
+  useEffect(() => {
+    function update(slider) {
+      if (slider.type !== 'range') return;
+      const min = Number(slider.min || 0), max = Number(slider.max || 100);
+      slider.style.setProperty('--range-progress', ((slider.value - min) / (max - min)) * 100 + '%');
+    }
+    const handleInput = event => update(event.target);
+    const init = () => document.querySelectorAll('input[type="range"]').forEach(update);
+    init();
+    const timeout = setTimeout(init, 300);
+    document.addEventListener('input', handleInput);
+    return () => { clearTimeout(timeout); document.removeEventListener('input', handleInput); };
   }, [pathname]);
 
-  const openMenu = (href) => {
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current);
-      closeTimerRef.current = null;
-    }
-    setOpenDesktopMenu(href);
-  };
-
-  const scheduleCloseMenu = () => {
-    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-    closeTimerRef.current = setTimeout(() => {
-      setOpenDesktopMenu(null);
-      closeTimerRef.current = null;
-    }, 180);
-  };
-
-  const cancelCloseMenu = () => {
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current);
-      closeTimerRef.current = null;
-    }
-  };
-
-  const profileLabel = auth?.profile?.displayName || auth?.user?.displayName || auth?.user?.email?.split('@')[0] || 'Profile';
-
-  return (
-    <header className="sticky top-0 z-[200] border-b border-[var(--border-soft)] bg-white">
-      <div className="shell-container flex min-h-[72px] items-center justify-between gap-4 py-3 md:min-h-[78px]">
-        <div className="flex min-w-0 items-center gap-4 lg:gap-8 xl:gap-12">
-          <Link href="/" prefetch={false} className="flex min-w-0 items-center gap-3">
-            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center sm:h-12 sm:w-12">
-              {/* 256px source rather than the 1445px master, and optimization left
-                  on so Next serves a ~2 KiB WebP at the 48px it actually renders. */}
-              <Image
-                src="/images/innoai-logo-256.png"
-                alt="InnoAI logo"
-                width={48}
-                height={48}
-                className="h-full w-full object-contain object-center"
-                priority
-              />
-            </div>
-            <span className="min-w-0 text-[0.98rem] font-extrabold leading-tight tracking-tight text-[var(--text-strong)] sm:text-[1.08rem] md:text-[1.15rem]">
-              <span className="block truncate">InnoAI</span>
-              <span className="block text-[0.78rem] font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)] sm:text-[0.8rem]">
-                AI Explorer
-              </span>
-            </span>
-          </Link>
-
-          <div className="hidden h-full items-center lg:flex">
-            <nav className="flex h-full items-center gap-5 text-[14px] font-medium text-[var(--text-muted)] xl:gap-8 xl:text-[15px]">
-              <Link
-                href="/"
-                prefetch={false}
-                className={`flex h-full items-center border-b-[3px] pt-[3px] transition-colors ${
-                  isActive('/')
-                    ? 'border-[var(--text-strong)] text-[var(--text-strong)]'
-                    : 'border-transparent hover:text-[var(--text-strong)]'
-                }`}
-              >
-                Home
-              </Link>
-              {PRIMARY_NAV_ITEMS.map((item, itemIndex) => {
-                const dropdownOpen = openDesktopMenu === item.href;
-                const alignDropdownRight = itemIndex >= PRIMARY_NAV_ITEMS.length - 2;
-                return (
-                  <div
-                    key={item.href}
-                    className="relative"
-                    onMouseEnter={() => openMenu(item.href)}
-                    onMouseLeave={scheduleCloseMenu}
-                  >
-                    <Link
-                      href={item.href}
-                      prefetch={false}
-                      onFocus={() => openMenu(item.href)}
-                      onBlur={scheduleCloseMenu}
-                      className={`flex h-full items-center gap-1.5 border-b-[3px] pt-[3px] transition-colors ${
-                        isActive(item.href)
-                          ? 'border-[var(--text-strong)] text-[var(--text-strong)]'
-                          : 'border-transparent hover:text-[var(--text-strong)]'
-                      }`}
-                    >
-                      {item.label}
-                      <ChevronDown className={`h-3.5 w-3.5 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
-                    </Link>
-
-                    {dropdownOpen && (
-                      <div
-                        className={`absolute top-full z-[260] w-[420px] pt-2 ${
-                          alignDropdownRight ? 'right-0' : 'left-0'
-                        }`}
-                        onMouseEnter={cancelCloseMenu}
-                        onMouseLeave={scheduleCloseMenu}
-                      >
-                        <div className="rounded-2xl border border-[var(--border-soft)] bg-white p-3 shadow-[0_18px_48px_rgba(24,39,75,0.16)]">
-                          <div className="space-y-1.5">
-                          {(Array.isArray(item.items) ? item.items : []).slice(0, 5).map((subItem, index) => {
-                            const Icon = subItem.icon;
-                            return (
-                              <Link
-                                key={`${subItem.href}-${index}`}
-                                href={subItem.href}
-                                prefetch={false}
-                                className="group flex items-start gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-[var(--panel-muted)]"
-                              >
-                                <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#bceaf2] text-[#123f4c]">
-                                  <Icon className="h-4.5 w-4.5" />
-                                </span>
-                                <span className="min-w-0">
-                                  <span className="flex items-center gap-2 text-[1.06rem] font-bold leading-tight text-[var(--text-strong)]">
-                                    {subItem.title}
-                                    <ArrowRight className="h-3.5 w-3.5 text-[var(--text-faint)] opacity-0 transition-opacity group-hover:opacity-100" />
-                                  </span>
-                                  <span className="mt-0.5 block text-[0.96rem] leading-6 text-[var(--text-muted)]">
-                                    {subItem.description}
-                                  </span>
-                                </span>
-                              </Link>
-                            );
-                          })}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              <Link
-                href="/ai-updates"
-                prefetch={false}
-                className={`flex h-full items-center border-b-[3px] pt-[3px] transition-colors ${
-                  isActive('/ai-updates')
-                    ? 'border-[var(--text-strong)] text-[var(--text-strong)]'
-                    : 'border-transparent hover:text-[var(--text-strong)]'
-                }`}
-              >
-                AI Updates
-              </Link>
-
-            </nav>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 text-[var(--text-muted)]">
-          {auth?.loading ? null : auth?.user ? (
-            <Link
-              href="/profile"
-              prefetch={false}
-              className="hidden items-center gap-2 rounded-xl border border-[var(--border-soft)] bg-[var(--panel-muted)] px-3 py-2 text-sm font-bold text-[var(--text-main)] transition-colors hover:text-[var(--text-strong)] sm:flex"
-            >
-              <UserCircle className="h-4 w-4" />
-              <span className="max-w-[120px] truncate">{profileLabel}</span>
-            </Link>
-          ) : (
-            <Link
-              href="/login"
-              prefetch={false}
-              className="hidden rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[var(--accent-strong)] sm:inline-flex"
-            >
-              Sign in
-            </Link>
-          )}
-          <button
-            type="button"
-            aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-            aria-expanded={mobileMenuOpen}
-            onClick={() => setMobileMenuOpen((open) => !open)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border-soft)] bg-white text-[var(--text-main)] transition-colors hover:text-[var(--text-strong)] lg:hidden"
-          >
-            {mobileMenuOpen ? <X className="h-[18px] w-[18px]" /> : <Menu className="h-[18px] w-[18px]" />}
+  return <header className="masthead" ref={header} onBlur={event => {
+    if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) close();
+  }}>
+    <div className="shell-container masthead-inner">
+      <Link href="/" onClick={close} className="wordmark" aria-label="InnoAI home">
+        <Image src="/images/innoai-logo-96.png" alt="" width={32} height={32} />InnoAI
+      </Link>
+      <nav id="main-navigation" className={'studio-nav' + (mobileOpen ? ' is-open' : '')} aria-label="Main navigation">
+        <Link href="/" onClick={close} aria-current={pathname === '/' ? 'page' : undefined}>Explorer</Link>
+        {groups.map(({ name, links }, index) => <div className="nav-group" key={name}>
+          <button aria-controls={'nav-' + index} aria-expanded={openGroup === name} onClick={() => setOpenGroup(openGroup === name ? '' : name)}
+            className={links.some(([, href]) => pathname === href || pathname.startsWith(href + '/')) ? 'in-section' : ''}>
+            {name}<ChevronDown size={14} />
           </button>
-        </div>
-      </div>
-
-      {mobileMenuOpen && (
-        <div className="border-t border-[var(--border-soft)] bg-[rgba(251,253,255,0.96)] lg:hidden">
-          <div className="shell-container py-4">
-            <nav className="grid gap-2">
-              {auth?.loading ? null : auth?.user ? (
-                <Link
-                  href="/profile"
-                  prefetch={false}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors ${
-                    isActive('/profile')
-                      ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
-                      : 'border-[var(--border-soft)] bg-white text-[var(--text-main)]'
-                  }`}
-                >
-                  Profile
-                </Link>
-              ) : (
-                <Link
-                  href="/login"
-                  prefetch={false}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors ${
-                    isActive('/login')
-                      ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
-                      : 'border-[var(--border-soft)] bg-white text-[var(--text-main)]'
-                  }`}
-                >
-                  Sign in
-                </Link>
-              )}
-              {[...PRIMARY_NAV_ITEMS, ...NAV_ITEMS].map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  prefetch={false}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors ${
-                    isActive(item.href)
-                      ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
-                      : 'border-[var(--border-soft)] bg-white text-[var(--text-main)]'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
+          <div id={'nav-' + index} className="nav-popover" hidden={openGroup !== name}>
+            {links.map(([label, href]) => <Link key={href} href={href} prefetch={false} onClick={close} aria-current={pathname === href ? 'page' : undefined}>{label}</Link>)}
           </div>
-        </div>
-      )}
-    </header>
-  );
-};
-
-export default Header;
-
+        </div>)}
+      </nav>
+      <div className="masthead-actions">
+        <Link href="/favorites" aria-label="Saved models" title="Saved models"><Bookmark size={18} /><span>Saved</span></Link>
+        <Link className="account-link" href={auth?.user ? '/profile' : '/login'}><UserRound size={15}/>{auth?.user ? 'Profile' : 'Sign in'}</Link>
+        <button className="menu-toggle" ref={mobileToggle} aria-controls="main-navigation" aria-expanded={mobileOpen} aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'} onClick={() => mobileOpen ? close() : setMobileOpen(true)}>
+          {mobileOpen ? <X size={21}/> : <Menu size={21}/>}
+        </button>
+      </div>
+    </div>
+  </header>;
+}

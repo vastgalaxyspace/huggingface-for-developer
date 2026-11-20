@@ -228,21 +228,8 @@ const ComparisonPage = () => {
     <div className="py-8 sm:py-12">
       <div className="shell-container relative">
         <div className="relative z-10 mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-start">
-          <div className="max-w-3xl">
-            <p className="section-kicker mb-4">Benchmark Workspace</p>
-            <h1 className="mb-3 text-3xl font-black tracking-tight text-[var(--text-strong)] sm:text-[2.65rem]">
-              Model Comparison
-            </h1>
-            <p className="max-w-2xl text-base font-medium leading-relaxed text-[var(--text-muted)] sm:text-lg">
-              Compare shortlisted models side by side across context, licensing, hardware fit, community adoption, and deployment-facing operator signals.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-[var(--text-faint)]">
-              <span>Up to 3 models at once</span>
-              <span>Context, VRAM, license, ecosystem, and heuristic benchmark view</span>
-              <span>Built for shortlist validation, not hype-based picking</span>
-            </div>
-          </div>
-
+          <header className="page-intro comparison-intro"><h1>Compare models</h1>
+            <p>Select up to three models to compare context, licensing, and estimated memory side by side.</p></header>
           <div className="flex w-full items-center rounded-2xl border border-[var(--border-soft)] bg-[rgba(237,243,249,0.92)] p-1.5 md:w-auto">
             <button
               onClick={() => setViewMode('table')}

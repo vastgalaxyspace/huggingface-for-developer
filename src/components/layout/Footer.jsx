@@ -1,52 +1,16 @@
 import Link from 'next/link';
 
-const Footer = () => {
-  const currentYear = new Date().getFullYear();
-
-  const footerLinks = [
-    { href: '/about', label: 'About' },
-    { href: '/editorial-policy', label: 'Editorial Policy' },
-    { href: '/guides', label: 'Guides' },
-    { href: '/compare', label: 'Compare Models' },
-    { href: '/recommender', label: 'Recommender' },
-    { href: '/gpu', label: 'GPU Tools' },
-    { href: '/ai-updates', label: 'AI Updates' },
-    { href: '/privacy', label: 'Privacy' },
-    { href: '/terms', label: 'Terms' },
-    { href: '/contact', label: 'Contact' },
-  ];
-
-  return (
-    <footer className="border-t border-[var(--border-soft)] bg-[rgba(251,253,255,0.9)]">
-      <div className="shell-container py-10">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-xl">
-            <div className="flex flex-col gap-2 text-sm text-[var(--text-muted)] md:flex-row md:items-center">
-              <span className="font-extrabold uppercase tracking-[0.28em] text-[var(--text-faint)]">InnoAI AI Explorer</span>
-              <span className="hidden text-[var(--border-strong)] md:inline">|</span>
-              <span>&copy; {currentYear} InnoAI AI Explorer. All rights reserved.</span>
-            </div>
-            <p className="mt-4 text-sm leading-7 text-[var(--text-muted)]">
-              Research open-source AI models, compare LLMs, estimate VRAM, and plan GPU infrastructure with tools built for developers, researchers, and ML teams.
-            </p>
-            <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">
-              We publish original guides, practical calculators, and editorial analysis focused on real model selection
-              and deployment decisions.
-            </p>
-          </div>
-
-          <div className="grid gap-2.5 text-sm font-semibold text-[var(--text-muted)] sm:grid-cols-2 lg:min-w-[420px]">
-            {footerLinks.map((link) => (
-              <Link key={link.href} href={link.href} prefetch={false} className="transition-colors hover:text-[var(--text-main)]">
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
+const sections = {
+  Workspace: [['Explorer', '/'], ['Compare models', '/compare'], ['Recommender', '/recommender'], ['GPU tools', '/gpu']],
+  Library: [['Guides', '/guides'], ['AI tutorials', '/ai-tutorials'], ['AI updates', '/ai-updates']],
+  InnoAI: [['About', '/about'], ['Editorial policy', '/editorial-policy'], ['Contact', '/contact']],
 };
 
-export default Footer;
-
+export default function Footer() {
+  return <footer className="studio-footer"><div className="shell-container">
+    <div className="footer-columns"><div><Link href="/" className="wordmark">InnoAI</Link><p>Model research and hardware planning.</p></div>
+      {Object.entries(sections).map(([title, links]) => <nav aria-label={title + ' footer links'} key={title}><strong>{title}</strong>{links.map(([name, href]) => <Link key={href} prefetch={false} href={href}>{name}</Link>)}</nav>)}
+    </div>
+    <div className="footer-base"><span>© {new Date().getFullYear()} InnoAI</span><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div>
+  </div></footer>;
+}

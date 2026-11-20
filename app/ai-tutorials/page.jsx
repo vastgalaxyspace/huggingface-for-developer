@@ -179,19 +179,7 @@ export default async function AiTutorialsPage() {
   return (
     <div className="shell-container py-10">
       <div className="space-y-8">
-        <section className="editorial-panel overflow-hidden rounded-[24px] px-6 py-8 sm:px-10">
-          <div className="max-w-4xl">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]">AI Tutorials</p>
-            <h1 className="mt-3 text-4xl font-black tracking-tight text-[var(--text-strong)] sm:text-5xl">
-              Practical AI tutorials for developers
-            </h1>
-            <p className="mt-4 max-w-3xl text-[15px] leading-8 text-[var(--text-muted)]">
-              Learn AI through focused tutorials covering inference, local assistants, RAG apps, prompt workflows,
-              model selection, and production deployment. This hub is ready to grow as you add more AI tutorials.
-            </p>
-          </div>
-        </section>
-
+        <header className="page-intro"><h1>AI tutorials</h1><p>Build a local assistant, explore inference, or work through a retrieval-augmented generation project.</p></header>
         <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
           {featuredTutorials.map((tutorial) => {
             const Icon = tutorial.icon;

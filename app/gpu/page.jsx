@@ -117,54 +117,16 @@ export default function GpuPage() {
   ];
 
   return (
-    <div className="bg-[#f2f6fb] py-6 md:py-12">
+    <div className="pb-12">
       <div className="shell-container">
-        <section className="overflow-hidden rounded-[22px] border border-[#d7e0ea] bg-white shadow-[0_12px_30px_rgba(31,45,61,0.08)]">
-          <div className="border-b border-[#d7e0ea] bg-[#f8fbff] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6f8298] sm:px-6 sm:text-[11px] sm:tracking-[0.22em]">
-            Main GPU Hub / Hardware + Execution + Performance + Tools
+        <header className="gpu-mast">
+          <div><h1 className="engineering-title">GPU workbench</h1>
+            <p>Size a workload, choose a card, or study how a GPU executes a kernel.</p>
+            <div className="gpu-entry-links"><Link href="/gpu/tools/gpu-picker">Find a GPU</Link>
+              <Link href="/gpu/learning/physical-hardware">Study the architecture</Link></div>
           </div>
-
-          <div className="gpu-grid-light grid gap-8 px-4 py-6 md:grid-cols-[1.12fr_0.88fr] md:px-10 md:py-10">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#4e647b]">For AI Developers</p>
-              <h1 className="mt-3 max-w-[680px] text-3xl font-black leading-[0.95] tracking-[-0.02em] text-[#132336] sm:text-5xl lg:text-[62px]">
-                GPU HUB
-                <br />
-                START HERE
-              </h1>
-              <p className="mt-5 max-w-[620px] text-sm leading-6 text-[#5a6d83]">
-                This is your main GPU page. From here you can jump into architecture,
-                execution internals, performance analysis, and practical GPU tools.
-                The UI is intentionally clean white while keeping the technical style.
-              </p>
-              <div className="mt-7 flex flex-wrap gap-3">
-                <Link href="/gpu/learning/physical-hardware" className="inline-flex items-center gap-2 bg-[#18324f] px-4 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#11253b]">
-                  Start Learning <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-                <Link href="/gpu/tools/gpu-picker" className="border border-[#d2dae5] bg-white px-4 py-2.5 text-xs font-bold uppercase tracking-[0.18em] text-[#2a3b50] transition-colors hover:bg-[#f4f7fb]">
-                  Open GPU Tools
-                </Link>
-              </div>
-            </div>
-
-            <div className="relative min-h-[220px] overflow-hidden rounded-[14px] border border-[#dde4ec] bg-[linear-gradient(130deg,#fbfdff_0%,#f2f6fb_45%,#e9f1f9_100%)]">
-              <Image
-                src="/images/gpu-hub-hero.svg"
-                alt="GPU board illustration for GPU Hub"
-                fill
-                priority
-                className="object-cover"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 divide-y divide-[#d7dfe8] border-t border-[#d7dfe8] bg-white sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-            <Metric label="Learning Tracks" value="7 sections" />
-            <Metric label="Interactive Tools" value="15+ tools" />
-            <Metric label="Supported GPUs" value="50+ GPUs" />
-          </div>
-        </section>
-
+          <Image src="/images/gpu-hub-hero.svg" alt="GPU board architecture" width={560} height={320} />
+        </header>
         <section className="mt-10 rounded-[20px] border border-[#d7dfe8] bg-[#f8fafc] p-6 md:p-8">
           <div className="mb-5 flex items-center justify-between">
             <h2 className="text-2xl font-extrabold tracking-[-0.01em] text-[#1a2635]">
@@ -226,7 +188,7 @@ export default function GpuPage() {
 
         <section className="editorial-panel overflow-hidden rounded-[20px]">
           <h2 className="border-b border-[var(--border-soft)] px-5 py-4 text-2xl font-black tracking-tight text-[var(--text-strong)] sm:px-6 sm:py-5 sm:text-3xl md:px-8">
-            HARDWARE INDEX
+            Hardware index
           </h2>
           <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[980px] text-left">

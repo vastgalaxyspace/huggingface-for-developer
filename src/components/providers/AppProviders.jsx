@@ -7,12 +7,11 @@ import { useModelDatabase as useModelDatabaseOriginal } from '../../hooks/useMod
 import { useAuth } from '../../hooks/useAuth';
 import { AppContext } from './AppContext';
 import ToastHost from '../common/ToastHost';
-import AuthRequiredModal from '../auth/AuthRequiredModal';
 
 export function AppProviders({ children }) {
   const pathname = usePathname();
   const shouldLoadDatabase =
-    pathname?.startsWith('/recommender') || pathname?.startsWith('/model');
+    pathname?.startsWith('/model/');
 
   const favorites = useFavoritesOriginal();
   const comparison = useComparisonOriginal();
@@ -22,7 +21,6 @@ export function AppProviders({ children }) {
   return (
     <AppContext.Provider value={{ favorites, comparison, db, auth }}>
       {children}
-      <AuthRequiredModal auth={auth} disabled={pathname?.startsWith('/login')} />
       <ToastHost />
     </AppContext.Provider>
   );

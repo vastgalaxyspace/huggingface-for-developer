@@ -42,7 +42,7 @@ export const fetchCompleteModelData = async (modelId, options = {}) => {
   };
 };
 
-export const searchModels = async (query, limit = 10) => {
+export const searchModels = async (query, limit = 10, options = {}) => {
   if (!query || query.length < 2) return [];
 
   const params = new URLSearchParams({
@@ -51,9 +51,9 @@ export const searchModels = async (query, limit = 10) => {
   });
 
   try {
-    return await fetchJson(`/api/hf-search?${params.toString()}`);
+    return await fetchJson(`/api/hf-search?${params.toString()}`, options);
   } catch (error) {
-    console.error('Error searching models:', error);
+    if (error.name !== 'AbortError') console.error('Error searching models:', error);
     return [];
   }
 };
